@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+<title>Дубровка — Бронирование</title>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<!-- Видео фон -->
+
+<video autoplay muted loop playsinline class="video-bg">
+<source src="media/bg.mp4" type="video/mp4">
+</video>
+
+<div class="container">
+
+<img src="img/logo.png" class="logo">
+
+<h2 class="subtitle">Бронирование столов</h2>
+
+<p class="desc">
+Кальянный лаунж с приватными зонами, PlayStation и VIP комнатой
+</p>
+
+<label>Дата</label>
+<input type="date" id="date">
+
+<label>Время</label>
+
+<select id="time">
+
+<option>18:00</option>
+<option>19:00</option>
+<option>20:00</option>
+<option>21:00</option>
+<option>22:00</option>
+
+</select>
+
+<label>Выберите стол</label>
+
+<select id="table">
+
+<option>🛋 Приватная лаунж-зона №1 — шторки + PlayStation</option>
+<option>🛋 Приватная лаунж-зона №2 — шторки + PlayStation</option>
+<option>🛋 Приватная лаунж-зона №3 — шторки + PlayStation</option>
+<option>🛋 Приватная лаунж-зона №4 — шторки + PlayStation</option>
+
+<option>🔥 Лаунж-стол №5 — открытая зона</option>
+
+<option>👥 Стол №6 — для 2-3 гостей</option>
+
+<option>👑 VIP комната №7 — депозит</option>
+
+</select>
+
+<label>Ваше имя</label>
+<input type="text" id="name" placeholder="Введите имя">
+
+<label>Телефон</label>
+<input type="text" id="phone" placeholder="+7">
+
+<button onclick="book()">Забронировать стол</button>
+
+<div class="contacts">
+
+<h3>Контакты</h3>
+
+<p>📍 Ермакова 11</p>
+
+<p>
+📞 
+<a href="tel:+79134320101">
++7 (913) 432-01-01
+</a>
+</p>
+
+<a class="mapbtn" href="https://2gis.ru/novokuznetsk/geo/70000001067987554" target="_blank">
+📍 Открыть в 2GIS
+</a>
+
+</div>
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
