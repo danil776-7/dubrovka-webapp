@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<h2>Бронирование — Дубровка</h2>
+
+<label>Дата</label>
+<input type="date" id="date">
+
+<label>Время</label>
+
+<select id="time">
+<option>18:00</option>
+<option>19:00</option>
+<option>20:00</option>
+<option>21:00</option>
+<option>22:00</option>
+</select>
+
+<label>Стол</label>
+
+<select id="table">
+
+<option>Стол 1 (PlayStation)</option>
+<option>Стол 2 (PlayStation)</option>
+<option>Стол 3 (PlayStation)</option>
+<option>Стол 4 (PlayStation)</option>
+<option>Стол 5</option>
+<option>Стол 6 (2-3 человека)</option>
+<option>VIP комната</option>
+
+</select>
+
+<label>Имя</label>
+<input type="text" id="name">
+
+<label>Телефон</label>
+<input type="text" id="phone">
+
+<button onclick="book()">Забронировать</button>
+
+<script src="script.js"></script>
+
+</body>
+</html>
