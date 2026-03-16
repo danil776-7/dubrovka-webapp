@@ -12,11 +12,23 @@ const tableDescriptions = {
 
 "4":"Приватная лаунж-зона со шторками и PlayStation. Вместимость до 5 гостей",
 
-"5":"Открытая лаунж-зона без шторок и без PlayStation. Вместимость до 5 гостей",
+"5":"Открытая зона без шторок и без PlayStation. Вместимость до 5 гостей",
 
-"6":"Компактный стол для 2-3 гостей",
+"6":"Компактный стол для 2–3 гостей",
 
-"VIP":"VIP комната для компаний на большое количество людей. По вопросам депозита уточняйте у администратора"
+"VIP":"VIP комната для больших компаний. Депозит уточняйте у администратора"
+
+}
+
+const tableCapacity = {
+
+"1":7,
+"2":5,
+"3":5,
+"4":5,
+"5":5,
+"6":3,
+"VIP":12
 
 }
 
@@ -39,26 +51,41 @@ tableDescriptions[selectedTable]
 
 })
 
-window.sendBooking = function(){
+document.getElementById("bookBtn").addEventListener("click",function(){
 
 let date = document.getElementById("date").value
 let time = document.getElementById("time").value
 let name = document.getElementById("name").value
 let phone = document.getElementById("phone").value
+let guests = parseInt(document.getElementById("guests").value)
 
 if(!selectedTable){
 
-alert("Пожалуйста выберите стол")
+alert("Выберите стол")
 
 return
 
 }
 
-if(name === "" || phone === ""){
+if(!guests){
 
-alert("Заполните имя и телефон")
+alert("Введите количество гостей")
 
 return
+
+}
+
+if(guests > tableCapacity[selectedTable]){
+
+alert("Этот стол не рассчитан на такое количество гостей")
+
+return
+
+}
+
+if(guests >= 5){
+
+alert("⚠️ Для компаний от 5 человек заказ двух кальянов обязателен")
 
 }
 
@@ -67,6 +94,7 @@ let data = {
 date:date,
 time:time,
 table:selectedTable,
+guests:guests,
 name:name,
 phone:phone
 
@@ -76,14 +104,9 @@ let tg = window.Telegram.WebApp
 
 tg.sendData(JSON.stringify(data))
 
-tg.close()
+})
 
-}
-
-
-/* -------------------------- */
-/* маска телефона +7 */
-/* -------------------------- */
+/* маска телефона */
 
 const phoneInput = document.getElementById("phone")
 
