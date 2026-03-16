@@ -1,10 +1,11 @@
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function(){
 
 const tg = window.Telegram.WebApp
 
 tg.expand()
 
 let selectedTable = null
+
 
 /* описание столов */
 
@@ -20,13 +21,14 @@ const tableDescriptions = {
 
 "5":"Открытая зона без шторок и без PlayStation. До 5 гостей",
 
-"6":"Компактный стол для 2-3 гостей",
+"6":"Компактный стол для 2–3 гостей",
 
-"VIP":"VIP комната для больших компаний"
+"VIP":"VIP комната для больших компаний. Депозит уточняйте у администратора"
 
 }
 
-/* вместимость */
+
+/* вместимость столов */
 
 const tableCapacity = {
 
@@ -40,6 +42,7 @@ const tableCapacity = {
 
 }
 
+
 /* выбор стола */
 
 document.querySelectorAll(".table").forEach(function(table){
@@ -47,7 +50,9 @@ document.querySelectorAll(".table").forEach(function(table){
 table.addEventListener("click", function(){
 
 document.querySelectorAll(".table").forEach(function(t){
+
 t.classList.remove("selected")
+
 })
 
 table.classList.add("selected")
@@ -61,7 +66,8 @@ tableDescriptions[selectedTable]
 
 })
 
-/* кнопка брони */
+
+/* кнопка бронирования */
 
 document.getElementById("bookBtn").addEventListener("click", function(){
 
@@ -71,6 +77,7 @@ let guests = document.getElementById("guests").value
 let name = document.getElementById("name").value
 let phone = document.getElementById("phone").value
 
+
 if(!selectedTable){
 
 alert("Выберите стол")
@@ -78,6 +85,7 @@ alert("Выберите стол")
 return
 
 }
+
 
 if(!date || !time){
 
@@ -87,6 +95,7 @@ return
 
 }
 
+
 if(!guests){
 
 alert("Введите количество гостей")
@@ -94,6 +103,7 @@ alert("Введите количество гостей")
 return
 
 }
+
 
 if(!name || !phone){
 
@@ -103,6 +113,7 @@ return
 
 }
 
+
 if(guests > tableCapacity[selectedTable]){
 
 alert("Этот стол не рассчитан на такое количество гостей")
@@ -111,13 +122,15 @@ return
 
 }
 
+
 if(guests >= 5){
 
 alert("⚠️ Для компаний от 5 человек заказ двух кальянов обязателен")
 
 }
 
-/* данные брони */
+
+/* формируем данные */
 
 let bookingData = {
 
@@ -130,13 +143,21 @@ phone: phone
 
 }
 
-/* отправка в Telegram */
+
+/* выводим в консоль для проверки */
+
+console.log("SEND DATA:", bookingData)
+
+
+/* отправляем боту */
 
 tg.sendData(JSON.stringify(bookingData))
+
 
 alert("Стол забронирован")
 
 })
+
 
 /* маска телефона */
 
