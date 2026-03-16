@@ -26,17 +26,33 @@
 
 <h2 class="subtitle">Бронирование столов</h2>
 
-<p class="desc">Кальянный лаунж с приватными зонами</p>
+<p class="desc">
+Кальянный лаунж с приватными зонами
+</p>
 
-<p class="worktime">🕒 13:00 — 23:00</p>
+<p class="worktime">
 
-<label>Дата бронирования</label>
+🕒 Время работы<br>
+
+Пн–Чт: 11:00 – 01:00<br>
+Пт–Сб: 11:00 – 02:00<br>
+Вс: 11:00 – 01:00
+
+</p>
+
+<div class="warning">
+⚠️ Для компаний от 5 человек заказ двух кальянов обязателен
+</div>
+
+<label>Дата</label>
 <input type="date" id="date">
 
 <label>Время</label>
 
 <select id="time">
 
+<option>11:00</option>
+<option>12:00</option>
 <option>13:00</option>
 <option>14:00</option>
 <option>15:00</option>
@@ -48,6 +64,23 @@
 <option>21:00</option>
 <option>22:00</option>
 <option>23:00</option>
+<option>00:00</option>
+<option>01:00</option>
+<option>02:00</option>
+
+</select>
+
+<label>Количество гостей</label>
+
+<select id="guests">
+
+<option>1</option>
+<option>2</option>
+<option>3</option>
+<option>4</option>
+<option>5</option>
+<option>6</option>
+<option>7</option>
 
 </select>
 
@@ -67,21 +100,37 @@
 
 </div>
 
-<!-- описание стола -->
-
 <div id="tableInfo" class="table-info">
-Выберите стол чтобы увидеть описание
+Нажмите на стол чтобы увидеть описание
 </div>
 
 <label>Ваше имя</label>
 <input type="text" id="name" placeholder="Введите имя">
 
 <label>Телефон</label>
-<input type="tel" id="phone" placeholder="+7 (___) ___-__-__ "
+<input type="tel" id="phone" placeholder="+7">
 
-<button class="neon-btn" onclick="sendBooking()">
+<button id="bookBtn" class="neon-btn">
 Забронировать стол
 </button>
+
+<div class="contacts">
+
+<h3>Контакты</h3>
+
+<p>📍 Ермакова 11</p>
+
+<p>📞 +7 (913) 432-01-01</p>
+
+<a class="mapbtn"
+href="https://2gis.ru/novokuznetsk/geo/70000001067987554"
+target="_blank">
+
+📍 Открыть в 2GIS
+
+</a>
+
+</div>
 
 </div>
 
