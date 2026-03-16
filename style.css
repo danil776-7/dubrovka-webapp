@@ -134,3 +134,22 @@ transition:0.3s;
 .neon-btn:hover{
 box-shadow:0 0 20px #ff0000,0 0 40px #ff0000;
 }
+.table-info{
+
+margin:15px 0;
+
+padding:12px;
+
+background:#1c1c1c;
+
+border-radius:8px;
+
+color:#ccc;
+
+font-size:14px;
+
+text-align:center;
+
+border:1px solid #333;
+
+}
