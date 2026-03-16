@@ -1,16 +1,22 @@
-document.addEventListener("DOMContentLoaded", function(){
+document.addEventListener("DOMContentLoaded", function () {
+
+const tg = window.Telegram.WebApp
+
+tg.expand()
 
 let selectedTable = null
 
+/* описание столов */
+
 const tableDescriptions = {
 
-"1":"Приватная лаунж-зона со шторками и PlayStation. До 7 гостей",
+"1":"Приватная зона со шторками и PlayStation. До 7 гостей",
 
-"2":"Приватная лаунж-зона со шторками и PlayStation. До 5 гостей",
+"2":"Приватная зона со шторками и PlayStation. До 5 гостей",
 
-"3":"Приватная лаунж-зона со шторками и PlayStation. До 5 гостей",
+"3":"Приватная зона со шторками и PlayStation. До 5 гостей",
 
-"4":"Приватная лаунж-зона со шторками и PlayStation. До 5 гостей",
+"4":"Приватная зона со шторками и PlayStation. До 5 гостей",
 
 "5":"Открытая зона без шторок и без PlayStation. До 5 гостей",
 
@@ -19,6 +25,8 @@ const tableDescriptions = {
 "VIP":"VIP комната для больших компаний"
 
 }
+
+/* вместимость */
 
 const tableCapacity = {
 
@@ -36,12 +44,10 @@ const tableCapacity = {
 
 document.querySelectorAll(".table").forEach(function(table){
 
-table.addEventListener("click",function(){
+table.addEventListener("click", function(){
 
 document.querySelectorAll(".table").forEach(function(t){
-
 t.classList.remove("selected")
-
 })
 
 table.classList.add("selected")
@@ -55,19 +61,20 @@ tableDescriptions[selectedTable]
 
 })
 
-/* кнопка бронирования */
+/* кнопка брони */
 
-document.getElementById("bookBtn").addEventListener("click",function(){
+document.getElementById("bookBtn").addEventListener("click", function(){
 
 let date = document.getElementById("date").value
 let time = document.getElementById("time").value
-let guests = parseInt(document.getElementById("guests").value)
+let guests = document.getElementById("guests").value
 let name = document.getElementById("name").value
 let phone = document.getElementById("phone").value
 
 if(!selectedTable){
 
 alert("Выберите стол")
+
 return
 
 }
@@ -75,6 +82,7 @@ return
 if(!date || !time){
 
 alert("Выберите дату и время")
+
 return
 
 }
@@ -82,6 +90,7 @@ return
 if(!guests){
 
 alert("Введите количество гостей")
+
 return
 
 }
@@ -89,6 +98,7 @@ return
 if(!name || !phone){
 
 alert("Введите имя и телефон")
+
 return
 
 }
@@ -96,6 +106,7 @@ return
 if(guests > tableCapacity[selectedTable]){
 
 alert("Этот стол не рассчитан на такое количество гостей")
+
 return
 
 }
@@ -106,31 +117,32 @@ alert("⚠️ Для компаний от 5 человек заказ двух 
 
 }
 
-let data = {
+/* данные брони */
 
-date:date,
-time:time,
-table:selectedTable,
-guests:guests,
-name:name,
-phone:phone
+let bookingData = {
+
+date: date,
+time: time,
+table: selectedTable,
+guests: guests,
+name: name,
+phone: phone
 
 }
 
-let tg = window.Telegram.WebApp
+/* отправка в Telegram */
 
-tg.sendData(JSON.stringify(data))
+tg.sendData(JSON.stringify(bookingData))
 
-alert("✅ Стол успешно забронирован")
+alert("Стол забронирован")
 
 })
-
 
 /* маска телефона */
 
 const phoneInput = document.getElementById("phone")
 
-phoneInput.addEventListener("input",function(){
+phoneInput.addEventListener("input", function(){
 
 let x = phoneInput.value.replace(/\D/g,'')
 
