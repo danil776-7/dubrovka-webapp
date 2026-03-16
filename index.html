@@ -16,15 +16,9 @@
 
 <body>
 
-<!-- видео фон -->
-
 <video autoplay muted loop playsinline class="video-bg">
 <source src="media/bg.mp4" type="video/mp4">
 </video>
-
-<!-- дым -->
-
-<div class="smoke"></div>
 
 <div class="container">
 
@@ -36,7 +30,7 @@
 
 <p class="worktime">🕒 13:00 — 23:00</p>
 
-<label>Дата</label>
+<label>Дата бронирования</label>
 <input type="date" id="date">
 
 <label>Время</label>
@@ -57,7 +51,7 @@
 
 </select>
 
-<h3 class="tables-title">Выберите стол</h3>
+<h3>Выберите стол</h3>
 
 <div class="tables">
 
@@ -73,11 +67,17 @@
 
 </div>
 
+<!-- описание стола -->
+
+<div id="tableInfo" class="table-info">
+Выберите стол чтобы увидеть описание
+</div>
+
 <label>Ваше имя</label>
-<input type="text" id="name">
+<input type="text" id="name" placeholder="Введите имя">
 
 <label>Телефон</label>
-<input type="text" id="phone">
+<input type="text" id="phone" placeholder="+7">
 
 <button class="neon-btn" onclick="sendBooking()">
 Забронировать стол
