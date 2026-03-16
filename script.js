@@ -4,19 +4,19 @@ let selectedTable = null
 
 const tableDescriptions = {
 
-"1":"Приватная лаунж-зона со шторками и PlayStation. Вместимость до 7 гостей",
+"1":"Приватная лаунж-зона со шторками и PlayStation. До 7 гостей",
 
-"2":"Приватная лаунж-зона со шторками и PlayStation. Вместимость до 5 гостей",
+"2":"Приватная лаунж-зона со шторками и PlayStation. До 5 гостей",
 
-"3":"Приватная лаунж-зона со шторками и PlayStation. Вместимость до 5 гостей",
+"3":"Приватная лаунж-зона со шторками и PlayStation. До 5 гостей",
 
-"4":"Приватная лаунж-зона со шторками и PlayStation. Вместимость до 5 гостей",
+"4":"Приватная лаунж-зона со шторками и PlayStation. До 5 гостей",
 
-"5":"Открытая зона без шторок и без PlayStation. Вместимость до 5 гостей",
+"5":"Открытая зона без шторок и без PlayStation. До 5 гостей",
 
-"6":"Компактный стол для 2–3 гостей",
+"6":"Компактный стол для 2-3 гостей",
 
-"VIP":"VIP комната для больших компаний. Депозит уточняйте у администратора"
+"VIP":"VIP комната для больших компаний"
 
 }
 
@@ -32,12 +32,16 @@ const tableCapacity = {
 
 }
 
+/* выбор стола */
+
 document.querySelectorAll(".table").forEach(function(table){
 
 table.addEventListener("click",function(){
 
 document.querySelectorAll(".table").forEach(function(t){
+
 t.classList.remove("selected")
+
 })
 
 table.classList.add("selected")
@@ -51,18 +55,26 @@ tableDescriptions[selectedTable]
 
 })
 
+/* кнопка бронирования */
+
 document.getElementById("bookBtn").addEventListener("click",function(){
 
 let date = document.getElementById("date").value
 let time = document.getElementById("time").value
+let guests = parseInt(document.getElementById("guests").value)
 let name = document.getElementById("name").value
 let phone = document.getElementById("phone").value
-let guests = parseInt(document.getElementById("guests").value)
 
 if(!selectedTable){
 
 alert("Выберите стол")
+return
 
+}
+
+if(!date || !time){
+
+alert("Выберите дату и время")
 return
 
 }
@@ -70,7 +82,13 @@ return
 if(!guests){
 
 alert("Введите количество гостей")
+return
 
+}
+
+if(!name || !phone){
+
+alert("Введите имя и телефон")
 return
 
 }
@@ -78,7 +96,6 @@ return
 if(guests > tableCapacity[selectedTable]){
 
 alert("Этот стол не рассчитан на такое количество гостей")
-
 return
 
 }
@@ -104,13 +121,16 @@ let tg = window.Telegram.WebApp
 
 tg.sendData(JSON.stringify(data))
 
+alert("✅ Стол успешно забронирован")
+
 })
+
 
 /* маска телефона */
 
 const phoneInput = document.getElementById("phone")
 
-phoneInput.addEventListener("input", function(){
+phoneInput.addEventListener("input",function(){
 
 let x = phoneInput.value.replace(/\D/g,'')
 
