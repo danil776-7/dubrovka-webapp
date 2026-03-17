@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <h1>Тест отправки</h1>
+    <button onclick="sendTest()">Отправить тестовые данные</button>
+
+    <script>
+        function sendTest() {
+            const tg = window.Telegram.WebApp;
+            tg.ready();
+            
+            // Простые тестовые данные
+            const testData = {
+                test: "hello",
+                time: new Date().toString()
+            };
+            
+            console.log("Отправляем:", testData);
+            tg.sendData(JSON.stringify(testData));
+            alert("Отправлено!");
+        }
+    </script>
+</body>
+</html>
