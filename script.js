@@ -126,11 +126,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         
         // ===== ПОДГОТОВКА ДАННЫХ =====
-       let bookingData = {
+let bookingData = {
     date: date,
     time: time,
     table: selectedTable,
-    guests: guests,  //
+    guests: guests,  // ← ДОЛЖНО БЫТЬ ТАК!
     name: name,
     phone: phone
 };
