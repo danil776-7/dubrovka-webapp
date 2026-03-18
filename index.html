@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Дубровка — Бронирование</title>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<video autoplay muted loop playsinline class="video-bg">
+<source src="media/bg.mp4" type="video/mp4">
+</video>
+
+<div class="container">
+
+<img src="img/logo.png" class="logo">
+
+<h2 class="subtitle">Бронирование столов</h2>
+
+<p class="desc">Кальянный лаунж с приватными зонами</p>
+
+<p class="worktime">
+🕒 Время работы<br>
+Пн–Чт: 11:00 – 01:00<br>
+Пт–Сб: 11:00 – 02:00<br>
+Вс: 11:00 – 01:00
+</p>
+
+<div class="warning">
+⚠️ Для компаний от 5 человек заказ двух кальянов обязателен
+</div>
+
+<label>Дата</label>
+<input type="date" id="date">
+
+<label>Время</label>
+<select id="time">
+<option value="">Выберите время</option>
+<option>11:00</option>
+<option>12:00</option>
+<option>13:00</option>
+<option>14:00</option>
+<option>15:00</option>
+<option>16:00</option>
+<option>17:00</option>
+<option>18:00</option>
+<option>19:00</option>
+<option>20:00</option>
+<option>21:00</option>
+<option>22:00</option>
+<option>23:00</option>
+<option>00:00</option>
+<option>01:00</option>
+<option>02:00</option>
+</select>
+
+<h3>Выберите стол</h3>
+
+<div class="tables">
+<div class="table" data-table="1">1</div>
+<div class="table" data-table="2">2</div>
+<div class="table" data-table="3">3</div>
+<div class="table" data-table="4">4</div>
+<div class="table" data-table="5">5</div>
+<div class="table" data-table="6">6</div>
+<div class="table vip" data-table="VIP">VIP</div>
+</div>
+
+<div id="tableInfo" class="table-info">
+Выберите стол — появится описание
+</div>
+
+<label>Количество гостей</label>
+<input type="number" id="guests" min="1" max="12">
+
+<label>Ваше имя</label>
+<input type="text" id="name">
+
+<label>Телефон</label>
+<input type="tel" id="phone" placeholder="+7">
+
+<button id="bookBtn" class="neon-btn">
+Забронировать стол
+</button>
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
