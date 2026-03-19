@@ -4,6 +4,10 @@ from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
 from datetime import datetime
 
+# =====================
+# БАЗА (SQLite для Render)
+# =====================
+
 DATABASE_URL = "sqlite:///./db.sqlite"
 
 engine = create_engine(
@@ -13,6 +17,10 @@ engine = create_engine(
 
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
+
+# =====================
+# МОДЕЛЬ
+# =====================
 
 class Booking(Base):
     tablename = "bookings"
@@ -25,9 +33,13 @@ class Booking(Base):
     date = Column(String)
     time = Column(String)
     user_id = Column(Integer)
-    status = Column(String, default="pending")
+    status = Column(String, default="pending")  # pending / done
 
 Base.metadata.create_all(bind=engine)
+
+# =====================
+# APP
+# =====================
 
 app = FastAPI()
 
@@ -39,16 +51,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# =====================
+# ПРОВЕРКА
+# =====================
+
 @app.get("/")
 def root():
     return {"status": "ok"}
 
-
-@app.get("/bookings")
-def get_bookings():
-    db = SessionLocal()
-    return db.query(Booking).all()
-
+# =====================
+# НОРМАЛИЗАЦИЯ ДАТЫ
+# =====================
 
 def normalize_date(date_str):
     try:
@@ -56,6 +69,32 @@ def normalize_date(date_str):
     except:
         return date_str
 
+# =====================
+# ВСЕ БРОНИ
+# =====================
+
+@app.get("/bookings")
+def get_bookings():
+    db = SessionLocal()
+    bookings = db.query(Booking).all()
+
+    return [
+        {
+            "id": b.id,
+            "name": b.name,
+            "phone": b.phone,
+            "guests": b.guests,
+            "table": b.table,
+            "date": b.date,
+            "time": b.time,
+            "status": b.status
+        }
+        for b in bookings
+    ]
+
+# =====================
+# ЗАНЯТЫЕ СЛОТЫ (КЛЮЧЕВОЕ)
+# =====================
 
 @app.get("/busy_times")
 def busy_times(date: str, table: str):
@@ -66,24 +105,30 @@ def busy_times(date: str, table: str):
     bookings = db.query(Booking).filter(
         Booking.date == date,
         Booking.table == table,
-        Booking.status != "done"
+        Booking.status != "done"  # только активные брони
     ).all()
 
     return [b.time for b in bookings]
 
+# =====================
+# СОЗДАНИЕ БРОНИ
+# =====================
 
 @app.post("/booking")
 def create_booking(data: dict):
     db = SessionLocal()
 
     date = normalize_date(data["date"])
-    table = str(data["table"])
     time = data["time"]
+    table = str(data["table"])
 
+    print("ПРОВЕРКА:", date, time, table)
+
+    # ❗ защита от двойной брони
     existing = db.query(Booking).filter(
         Booking.date == date,
-        Booking.table == table,
         Booking.time == time,
+        Booking.table == table,
         Booking.status != "done"
     ).first()
 
@@ -104,11 +149,16 @@ def create_booking(data: dict):
     db.add(booking)
     db.commit()
 
-    return {"ok": True}
+    print("✅ СОЗДАНО:", booking.id)
 
+    return {"ok": True, "id": booking.id}
 
-@app.post("/update_status/{booking_id}")
-def update_status(booking_id: int):
+# =====================
+# ГОСТЬ УШЕЛ (ОСВОБОЖДАЕМ СТОЛ)
+# =====================
+
+@app.post("/done/{booking_id}")
+def done_booking(booking_id: int):
     db = SessionLocal()
 
     booking = db.query(Booking).filter(
@@ -123,6 +173,28 @@ def update_status(booking_id: int):
 
     return {"ok": True}
 
+# =====================
+# УДАЛЕНИЕ БРОНИ
+# =====================
+
+@app.delete("/booking/{booking_id}")
+def delete_booking(booking_id: int):
+    db = SessionLocal()
+
+    booking = db.query(Booking).filter(
+        Booking.id == booking_id
+    ).first()
+
+    if not booking:
+        return {"error": "not_found"}
+
+    db.delete(booking)
+    db.commit()
+
+    return {"ok": True}
+    # =====================
+# ОЧИСТКА БАЗЫ (ТЕСТ)
+# =====================
 
 @app.get("/clear")
 def clear():
