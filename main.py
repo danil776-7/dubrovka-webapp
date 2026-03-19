@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
 
@@ -35,13 +34,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ✅ ЭТО ВАЖНО
 @app.get("/")
 def root():
     return {"status": "ok"}
 
+# 🔥 занятые слоты
+@app.get("/busy_times")
+def busy_times(date: str, table: str):
+    db = SessionLocal()
 
-# ✅ БРОНЬ
+    bookings = db.query(Booking).filter(
+        Booking.date == date,
+        Booking.table == table
+    ).all()
+
+    return [b.time for b in bookings]
+
+# 🔥 бронь
 @app.post("/booking")
 def create_booking(data: dict):
     db = SessionLocal()
@@ -70,10 +79,3 @@ def create_booking(data: dict):
     db.commit()
 
     return {"ok": True}
-
-
-# ✅ ПРОВЕРКА
-@app.get("/bookings")
-def get_bookings():
-    db = SessionLocal()
-    return db.query(Booking).all()
