@@ -1,3 +1,7 @@
+const nameInput = document.getElementById("name");
+const guestsInput = document.getElementById("guests");
+const phoneInput = document.getElementById("phone");
+const bookBtn = document.getElementById("bookBtn");
 const API = "https://dubrovka-webapp-1.onrender.com";
 
 let selectedTable = null;
