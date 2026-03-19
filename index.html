@@ -22,7 +22,6 @@ padding:20px;
 border-radius:20px;
 }
 
-/* столы */
 .tables{
 display:grid;
 grid-template-columns:repeat(2,1fr);
@@ -39,13 +38,6 @@ cursor:pointer;
 
 .table.selected{background:#d6b36a;color:black;}
 
-.table.busy{
-background:#444;
-opacity:0.5;
-pointer-events:none;
-}
-
-/* описание */
 .desc{
 background:#111;
 padding:10px;
@@ -54,7 +46,6 @@ margin:10px 0;
 white-space:pre-line;
 }
 
-/* поля */
 input, select{
 width:100%;
 padding:12px;
@@ -63,16 +54,15 @@ border-radius:10px;
 border:none;
 }
 
-/* кнопка */
 button{
 width:100%;
 padding:14px;
 background:#d6b36a;
 border:none;
 border-radius:10px;
+cursor:pointer;
 }
 
-/* футер */
 .footer{
 margin-top:20px;
 text-align:center;
@@ -123,7 +113,7 @@ color:white;
 <option value="">Выберите время</option>
 </select>
 
-<input id="guests" placeholder="Гости">
+<input id="guests" placeholder="Количество гостей">
 <input id="name" placeholder="Имя">
 <input id="phone" placeholder="+7999" maxlength="12">
 
@@ -142,15 +132,21 @@ color:white;
 </div>
 
 <script>
+document.addEventListener("DOMContentLoaded", () => {
+
 const API = "https://dubrovka-webapp-8.onrender.com";
 
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-const phone = document.getElementById("phone");
-const date = document.getElementById("date");
+/* элементы */
+const phoneInput = document.getElementById("phone");
+const nameInput = document.getElementById("name");
+const guestsInput = document.getElementById("guests");
+const dateInput = document.getElementById("date");
 const timeSelect = document.getElementById("time");
 const tableInfo = document.getElementById("tableInfo");
+const bookBtn = document.getElementById("bookBtn");
 
 let selectedTable = null;
 
@@ -162,17 +158,15 @@ const tables = {
 "4": "Приватная зона со шторками и PlayStation\nДо 5 гостей",
 "5": "Открытая зона без шторок\nДо 5 гостей",
 "6": "Компактный стол для 2–3 гостей",
-"VIP": "VIP комната (депозитная)\nБронь через администратора"
+"VIP": "VIP комната (депозитная)\nЧерез администратора"
 };
 
 /* дата */
-date.min = new Date().toISOString().split("T")[0];
+dateInput.min = new Date().toISOString().split("T")[0];
 
 /* выбор стола */
 document.querySelectorAll(".table").forEach(el=>{
 el.onclick=()=>{
-if(el.classList.contains("busy")) return;
-
 document.querySelectorAll(".table").forEach(t=>t.classList.remove("selected"));
 el.classList.add("selected");
 
@@ -184,14 +178,14 @@ loadTimes();
 });
 
 /* генерация времени */
-function generateTimes(selectedDate){
+function generateTimes(date){
 let times=[];
-let day=new Date(selectedDate).getDay();
+let day=new Date(date).getDay();
 
-let endHour=23;
-if(day===5||day===6) endHour=24;
+let end=23;
+if(day===5||day===6) end=24;
 
-for(let h=13;h<endHour;h++){
+for(let h=13;h<end;h++){
 times.push(`${String(h).padStart(2,'0')}:00`);
 times.push(`${String(h).padStart(2,'0')}:30`);
 }
@@ -201,12 +195,12 @@ return times;
 
 /* загрузка времени */
 async function loadTimes(){
-if(!date.value||!selectedTable) return;
+if(!dateInput.value||!selectedTable) return;
 
-let res=await fetch(API+`/busy_times?date=${date.value}&table=${selectedTable}`);
-let busy=await res.json();
+let res = await fetch(API+`/busy_times?date=${dateInput.value}&table=${selectedTable}`);
+let busy = await res.json();
 
-let allTimes=generateTimes(date.value);
+let allTimes = generateTimes(dateInput.value);
 
 timeSelect.innerHTML='<option value="">Выберите время</option>';
 
@@ -214,46 +208,81 @@ let now=new Date();
 
 allTimes.forEach(t=>{
 let [h,m]=t.split(":");
-let slot=new Date(date.value);
+
+let slot=new Date(dateInput.value);
 slot.setHours(h,m);
 
 if(slot<now) return;
 
 if(!busy.includes(t)){
-let option=document.createElement("option");
-option.value=t;
-option.innerText=t;
-timeSelect.appendChild(option);
+let opt=document.createElement("option");
+opt.value=t;
+opt.innerText=t;
+timeSelect.appendChild(opt);
 }
 });
 }
 
-date.addEventListener("change", loadTimes);
+dateInput.addEventListener("change", loadTimes);
 
 /* телефон */
-phone.addEventListener("input",()=>{
-let v=phone.value.replace(/\D/g,"");
+phoneInput.addEventListener("input",()=>{
+let v=phoneInput.value.replace(/\D/g,"");
 if(!v.startsWith("7")) v="7"+v;
 v=v.slice(0,11);
-phone.value="+"+v;
+phoneInput.value="+"+v;
 });
 
-/* бронь */
-document.getElementById("bookBtn").onclick=async()=>{
+/* кнопка */
+bookBtn.onclick = async ()=>{
 
-if(!selectedTable) return alert("Выберите стол");
-if(selectedTable==="VIP") return alert("VIP через администратора");
-if(!timeSelect.value) return alert("Выберите время");
+console.log("КНОПКА НАЖАТА");
+
+if(!selectedTable){
+alert("Выберите стол");
+return;
+}
+
+if(selectedTable==="VIP"){
+alert("VIP бронируется через администратора");
+return;
+}
+
+if(!dateInput.value){
+alert("Выберите дату");
+return;
+}
+
+if(!timeSelect.value){
+alert("Выберите время");
+return;
+}
+
+let nameVal=nameInput.value.trim();
+let phoneVal=phoneInput.value;
+let guestsVal=parseInt(guestsInput.value||0);
+
+if(!nameVal){
+alert("Введите имя");
+return;
+}
+
+if(phoneVal.length!==12){
+alert("Введите корректный номер");
+return;
+}
 
 let data={
-name:name.value,
-phone:phone.value,
-guests:guests.value,
+name:nameVal,
+phone:phoneVal,
+guests:guestsVal,
 table:selectedTable,
-date:date.value,
+date:dateInput.value,
 time:timeSelect.value,
 user_id: tg.initDataUnsafe?.user?.id||0
 };
+
+try{
 
 let res=await fetch(API+"/booking",{
 method:"POST",
@@ -264,14 +293,22 @@ body:JSON.stringify(data)
 let result=await res.json();
 
 if(result.error){
-alert("❌ Стол занят");
+alert("❌ Стол уже занят");
 return;
 }
 
 tg.sendData(JSON.stringify(data));
 
 alert("✅ Бронь отправлена");
+
+}catch(e){
+console.error(e);
+alert("Ошибка соединения с сервером");
+}
+
 };
+
+});
 </script>
 
 </body>
