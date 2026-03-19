@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
-from datetime import datetime, timedelta
+from datetime import datetime
 
 DATABASE_URL = "sqlite:///./db.sqlite"
 
@@ -15,7 +15,7 @@ SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
 class Booking(Base):
-    __tablename__ = "bookings"
+    tablename = "bookings"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
@@ -69,16 +69,7 @@ def busy_times(date: str, table: str):
         Booking.status != "done"
     ).all()
 
-    busy = []
-
-    for b in bookings:
-        base = datetime.strptime(b.time, "%H:%M")
-
-        for i in range(-2, 3):
-            t = (base + timedelta(hours=i)).strftime("%H:%M")
-            busy.append(t)
-
-    return list(set(busy))
+    return [b.time for b in bookings]
 
 
 @app.post("/booking")
@@ -87,21 +78,17 @@ def create_booking(data: dict):
 
     date = normalize_date(data["date"])
     table = str(data["table"])
-    new_time = datetime.strptime(data["time"], "%H:%M")
+    time = data["time"]
 
-    bookings = db.query(Booking).filter(
+    existing = db.query(Booking).filter(
         Booking.date == date,
         Booking.table == table,
+        Booking.time == time,
         Booking.status != "done"
-    ).all()
+    ).first()
 
-    for b in bookings:
-        existing_time = datetime.strptime(b.time, "%H:%M")
-
-        diff = abs((existing_time - new_time).total_seconds()) / 60
-
-        if diff < 120:
-            return {"error": "time_conflict"}
+    if existing:
+        return {"error": "busy"}
 
     booking = Booking(
         name=data["name"],
@@ -109,7 +96,7 @@ def create_booking(data: dict):
         guests=int(data["guests"]),
         table=table,
         date=date,
-        time=data["time"],
+        time=time,
         user_id=int(data.get("user_id", 0)),
         status="pending"
     )
@@ -134,4 +121,12 @@ def update_status(booking_id: int):
     booking.status = "done"
     db.commit()
 
+    return {"ok": True}
+
+
+@app.get("/clear")
+def clear():
+    db = SessionLocal()
+    db.query(Booking).delete()
+    db.commit()
     return {"ok": True}
