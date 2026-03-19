@@ -1,192 +1,163 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-const API = "https://dubrovka-webapp-8.onrender.com";
+const API = "https://dubrovka-webapp-9.onrender.com";
 
-const tg = window.Telegram.WebApp;
-tg.expand();
-
-/* элементы */
-const phoneInput = document.getElementById("phone");
-const nameInput = document.getElementById("name");
-const guestsInput = document.getElementById("guests");
 const dateInput = document.getElementById("date");
 const timeSelect = document.getElementById("time");
-const tableInfo = document.getElementById("tableInfo");
-const bookBtn = document.getElementById("bookBtn");
 
 let selectedTable = null;
 
-/* описание столов */
-const tables = {
-"1": "Приватная зона со шторками и PlayStation\nДо 7 гостей",
-"2": "Приватная зона со шторками и PlayStation\nДо 5 гостей",
-"3": "Приватная зона со шторками и PlayStation\nДо 5 гостей",
-"4": "Приватная зона со шторками и PlayStation\nДо 5 гостей",
-"5": "Открытая зона без шторок\nДо 5 гостей",
-"6": "Компактный стол для 2–3 гостей",
-"VIP": "VIP комната (депозитная)\nЧерез администратора"
+// ======================
+// ВЫБОР СТОЛА
+// ======================
+
+document.querySelectorAll(".table").forEach(el=>{
+el.onclick=()=>{
+document.querySelectorAll(".table").forEach(t=>t.classList.remove("selected"));
+el.classList.add("selected");
+
+selectedTable = el.dataset.table;
+
+console.log("СТОЛ:", selectedTable);
+
+loadTimes();
 };
-
-/* дата минимум сегодня */
-dateInput.min = new Date().toISOString().split("T")[0];
-
-/* выбор стола */
-document.querySelectorAll(".table").forEach(el => {
-    el.addEventListener("click", () => {
-
-        document.querySelectorAll(".table").forEach(t => t.classList.remove("selected"));
-        el.classList.add("selected");
-
-        selectedTable = el.dataset.table;
-        tableInfo.innerText = tables[selectedTable];
-
-        loadTimes();
-    });
 });
 
-/* генерация времени */
+// ======================
+// ГЕНЕРАЦИЯ ВРЕМЕНИ
+// ======================
+
 function generateTimes(date){
-    let times = [];
-    let day = new Date(date).getDay();
 
-    let end = 23;
-    if(day === 5 || day === 6) end = 24;
+let times = [];
+let day = new Date(date).getDay();
 
-    for(let h = 13; h < end; h++){
-        times.push(`${String(h).padStart(2,'0')}:00`);
-        times.push(`${String(h).padStart(2,'0')}:30`);
-    }
+// Пт-Сб до 00:00
+let end = (day === 5 || day === 6) ? 24 : 23;
 
-    return times;
+for(let h=13;h<end;h++){
+times.push(`${String(h).padStart(2,'0')}:00`);
+times.push(`${String(h).padStart(2,'0')}:30`);
 }
 
-/* загрузка занятых слотов */
+return times;
+}
+
+// ======================
+// ЗАГРУЗКА ВРЕМЕНИ
+// ======================
+
 async function loadTimes(){
 
-    if(!dateInput.value || !selectedTable) return;
-
-    try{
-
-        let res = await fetch(`${API}/busy_times?date=${dateInput.value}&table=${selectedTable}`);
-        let busy = await res.json();
-
-        let allTimes = generateTimes(dateInput.value);
-
-        timeSelect.innerHTML = '<option value="">Выберите время</option>';
-
-        let now = new Date();
-
-        allTimes.forEach(t => {
-
-            let [h, m] = t.split(":");
-
-            let slot = new Date(dateInput.value);
-            slot.setHours(h, m);
-
-            if(slot < now) return;
-
-            if(!busy.includes(t)){
-                let option = document.createElement("option");
-                option.value = t;
-                option.innerText = t;
-                timeSelect.appendChild(option);
-            }
-
-        });
-
-    }catch(e){
-        console.error("Ошибка загрузки времени:", e);
-    }
+if(!dateInput.value || !selectedTable){
+console.log("Нет даты или стола");
+return;
 }
 
-/* обновление при смене даты */
-dateInput.addEventListener("change", loadTimes);
+console.log("ЗАГРУЗКА СЛОТОВ...");
 
-/* формат телефона */
-phoneInput.addEventListener("input", () => {
+try{
 
-    let v = phoneInput.value.replace(/\D/g,"");
+let res = await fetch(`${API}/busy_times?date=${dateInput.value}&table=${selectedTable}`);
+let busy = await res.json();
 
-    if(!v.startsWith("7")) v = "7" + v;
+console.log("BUSY:", busy);
 
-    v = v.slice(0,11);
+// если backend вернул не массив
+if(!Array.isArray(busy)) busy = [];
 
-    phoneInput.value = "+" + v;
+let allTimes = generateTimes(dateInput.value);
+
+// очищаем select
+timeSelect.innerHTML = "";
+
+// добавляем placeholder
+let first = document.createElement("option");
+first.value = "";
+first.innerText = "Выберите время";
+timeSelect.appendChild(first);
+
+let now = new Date();
+let today = new Date().toISOString().split("T")[0];
+
+allTimes.forEach(t=>{
+
+let [h,m] = t.split(":");
+
+let slot = new Date(dateInput.value);
+slot.setHours(h,m);
+
+// фильтр только для сегодняшнего дня
+if(dateInput.value === today && slot < now) return;
+
+// если не занято
+if(!busy.includes(t)){
+let option = document.createElement("option");
+option.value = t;
+option.innerText = t;
+timeSelect.appendChild(option);
+}
 });
 
-/* кнопка брони */
-bookBtn.addEventListener("click", async () => {
+if(timeSelect.options.length === 1){
+console.log("НЕТ СВОБОДНЫХ СЛОТОВ");
+}
 
-    console.log("КНОПКА НАЖАТА");
+}catch(e){
+console.error("ОШИБКА:", e);
+}
+}
 
-    if(!selectedTable){
-        alert("Выберите стол");
-        return;
-    }
+// ======================
+// СОБЫТИЕ ДАТЫ
+// ======================
 
-    if(selectedTable === "VIP"){
-        alert("VIP бронируется через администратора");
-        return;
-    }
-
-    if(!dateInput.value){
-        alert("Выберите дату");
-        return;
-    }
-
-    if(!timeSelect.value){
-        alert("Выберите время");
-        return;
-    }
-
-    let nameVal = nameInput.value.trim();
-    let phoneVal = phoneInput.value;
-    let guestsVal = parseInt(guestsInput.value || 0);
-
-    if(!nameVal){
-        alert("Введите имя");
-        return;
-    }
-
-    if(phoneVal.length !== 12){
-        alert("Введите корректный номер");
-        return;
-    }
-
-    let data = {
-        name: nameVal,
-        phone: phoneVal,
-        guests: guestsVal,
-        table: selectedTable,
-        date: dateInput.value,
-        time: timeSelect.value,
-        user_id: tg.initDataUnsafe?.user?.id || 0
-    };
-
-    try{
-
-        let res = await fetch(API + "/booking", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify(data)
-        });
-
-        let result = await res.json();
-
-        if(result.error){
-            alert("❌ Стол уже занят");
-            return;
-        }
-
-        tg.sendData(JSON.stringify(data));
-
-        alert("✅ Бронь отправлена");
-
-    }catch(e){
-        console.error("Ошибка:", e);
-        alert("Ошибка соединения с сервером");
-    }
-
+dateInput.addEventListener("change", ()=>{
+console.log("ДАТА:", dateInput.value);
+loadTimes();
 });
+
+// ======================
+// БРОНИРОВАНИЕ
+// ======================
+
+document.getElementById("bookBtn").onclick = async ()=>{
+
+if(!selectedTable) return alert("Выберите стол");
+if(!dateInput.value) return alert("Выберите дату");
+if(!timeSelect.value) return alert("Выберите время");
+
+let data = {
+name: document.getElementById("name").value,
+phone: document.getElementById("phone").value,
+guests: document.getElementById("guests").value,
+table: selectedTable,
+date: dateInput.value,
+time: timeSelect.value
+};
+
+let res = await fetch(API + "/booking",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body: JSON.stringify(data)
+});
+
+let result = await res.json();
+
+if(result.error){
+
+if(result.error === "time_conflict"){
+alert("⛔ Стол занят в это время");
+return;
+}
+
+alert("Ошибка брони");
+return;
+}
+
+alert("✅ Бронь создана");
+
+};
 
 });
