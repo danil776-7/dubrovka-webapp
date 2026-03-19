@@ -1,0 +1,49 @@
+body {
+font-family: Arial;
+background: #111;
+color: white;
+margin: 0;
+}
+
+.container {
+max-width: 400px;
+margin: 40px auto;
+padding: 20px;
+background: #222;
+border-radius: 10px;
+}
+
+input, select {
+width: 100%;
+padding: 10px;
+margin: 10px 0;
+border-radius: 6px;
+border: none;
+}
+
+.tables {
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+gap: 10px;
+}
+
+.table {
+background: #333;
+padding: 15px;
+text-align: center;
+cursor: pointer;
+}
+
+.table.selected {
+background: red;
+}
+
+button {
+width: 100%;
+padding: 12px;
+background: red;
+color: white;
+border: none;
+border-radius: 6px;
+cursor: pointer;
+}
