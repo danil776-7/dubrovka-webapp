@@ -38,19 +38,17 @@ app.add_middleware(
 def root():
     return {"status": "ok"}
 
-# 🔥 занятые слоты
+# занятые слоты
 @app.get("/busy_times")
 def busy_times(date: str, table: str):
     db = SessionLocal()
-
     bookings = db.query(Booking).filter(
         Booking.date == date,
         Booking.table == table
     ).all()
-
     return [b.time for b in bookings]
 
-# 🔥 бронь
+# создание брони
 @app.post("/booking")
 def create_booking(data: dict):
     db = SessionLocal()
@@ -76,6 +74,21 @@ def create_booking(data: dict):
     )
 
     db.add(booking)
+    db.commit()
+
+    return {"ok": True, "id": booking.id}
+
+# удаление брони
+@app.delete("/booking/{booking_id}")
+def delete_booking(booking_id: int):
+    db = SessionLocal()
+
+    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+
+    if not booking:
+        return {"error": "not_found"}
+
+    db.delete(booking)
     db.commit()
 
     return {"ok": True}
