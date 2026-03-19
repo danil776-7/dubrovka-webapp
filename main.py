@@ -1,23 +1,8 @@
-исправлена проблема “всё занято”
-✔ нормализуется дата
-✔ защита от двойной брони работает корректно
-✔ есть /bookings
-✔ есть /clear
-✔ всё стабильно под Render
-
-🚀 ПОЛНЫЙ main.py (ФИНАЛ БЕЗ БАГОВ)
-
-👉 просто замени весь файл
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
 from datetime import datetime
-
-# =====================
-# БАЗА
-# =====================
 
 DATABASE_URL = "sqlite:///./db.sqlite"
 
@@ -28,10 +13,6 @@ engine = create_engine(
 
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
-
-# =====================
-# МОДЕЛЬ
-# =====================
 
 class Booking(Base):
     __tablename__ = "bookings"
@@ -48,10 +29,6 @@ class Booking(Base):
 
 Base.metadata.create_all(bind=engine)
 
-# =====================
-# APP
-# =====================
-
 app = FastAPI()
 
 app.add_middleware(
@@ -62,18 +39,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# =====================
-# ПРОВЕРКА
-# =====================
-
 @app.get("/")
 def root():
     return {"status": "ok"}
 
-
-# =====================
-# ВСЕ БРОНИ
-# =====================
 
 @app.get("/bookings")
 def get_bookings():
@@ -95,20 +64,12 @@ def get_bookings():
     ]
 
 
-# =====================
-# НОРМАЛИЗАЦИЯ ДАТЫ
-# =====================
-
 def normalize_date(date_str):
     try:
         return datetime.strptime(date_str, "%Y-%m-%d").strftime("%Y-%m-%d")
     except:
         return date_str
 
-
-# =====================
-# ЗАНЯТЫЕ СЛОТЫ
-# =====================
 
 @app.get("/busy_times")
 def busy_times(date: str, table: str):
@@ -124,10 +85,6 @@ def busy_times(date: str, table: str):
     return [b.time for b in bookings]
 
 
-# =====================
-# СОЗДАНИЕ БРОНИ
-# =====================
-
 @app.post("/booking")
 def create_booking(data: dict):
     db = SessionLocal()
@@ -136,8 +93,6 @@ def create_booking(data: dict):
     time = data["time"]
     table = str(data["table"])
 
-    print("ПРОВЕРКА:", date, time, table)
-
     existing = db.query(Booking).filter(
         Booking.date == date,
         Booking.time == time,
@@ -145,7 +100,6 @@ def create_booking(data: dict):
     ).first()
 
     if existing:
-        print("❌ УЖЕ ЗАНЯТО")
         return {"error": "busy"}
 
     booking = Booking(
@@ -162,14 +116,8 @@ def create_booking(data: dict):
     db.add(booking)
     db.commit()
 
-    print("✅ СОЗДАНО:", booking.id)
-
     return {"ok": True, "id": booking.id}
 
-
-# =====================
-# УДАЛЕНИЕ БРОНИ
-# =====================
 
 @app.delete("/booking/{booking_id}")
 def delete_booking(booking_id: int):
@@ -187,10 +135,6 @@ def delete_booking(booking_id: int):
 
     return {"ok": True}
 
-
-# =====================
-# ОЧИСТКА БАЗЫ
-# =====================
 
 @app.get("/clear")
 def clear():
