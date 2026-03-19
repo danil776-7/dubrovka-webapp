@@ -23,7 +23,7 @@ Base = declarative_base()
 # =====================
 
 class Booking(Base):
-    tablename = "bookings"  # ❗ обязательно
+    tablename = "bookings"  # ОБЯЗАТЕЛЬНО!
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
@@ -33,8 +33,9 @@ class Booking(Base):
     date = Column(String)
     time = Column(String)
     user_id = Column(Integer)
-    status = Column(String, default="pending")  # pending / done
+    status = Column(String, default="pending")
 
+# создаем таблицу
 Base.metadata.create_all(bind=engine)
 
 # =====================
@@ -60,7 +61,7 @@ def root():
     return {"status": "ok"}
 
 # =====================
-# DATE FIX
+# НОРМАЛИЗАЦИЯ ДАТЫ
 # =====================
 
 def normalize_date(date_str):
@@ -70,13 +71,14 @@ def normalize_date(date_str):
         return date_str
 
 # =====================
-# GET BOOKINGS
+# ВСЕ БРОНИ
 # =====================
 
 @app.get("/bookings")
 def get_bookings():
     db = SessionLocal()
     bookings = db.query(Booking).all()
+    db.close()
 
     return [
         {
@@ -93,7 +95,7 @@ def get_bookings():
     ]
 
 # =====================
-# BUSY TIMES
+# ЗАНЯТЫЕ СЛОТЫ
 # =====================
 
 @app.get("/busy_times")
@@ -108,10 +110,12 @@ def busy_times(date: str, table: str):
         Booking.status != "done"
     ).all()
 
+    db.close()
+
     return [b.time for b in bookings]
 
 # =====================
-# CREATE BOOKING
+# СОЗДАНИЕ БРОНИ
 # =====================
 
 @app.post("/booking")
@@ -122,6 +126,7 @@ def create_booking(data: dict):
     time = data["time"]
     table = str(data["table"])
 
+    # проверка занятости
     existing = db.query(Booking).filter(
         Booking.date == date,
         Booking.time == time,
@@ -130,6 +135,7 @@ def create_booking(data: dict):
     ).first()
 
     if existing:
+        db.close()
         return {"error": "busy"}
 
     booking = Booking(
@@ -145,11 +151,12 @@ def create_booking(data: dict):
 
     db.add(booking)
     db.commit()
+    db.close()
 
     return {"ok": True}
 
 # =====================
-# DONE (освободить стол)
+# ОСВОБОДИТЬ СТОЛ
 # =====================
 
 @app.post("/done/{booking_id}")
@@ -161,15 +168,17 @@ def done_booking(booking_id: int):
     ).first()
 
     if not booking:
+        db.close()
         return {"error": "not_found"}
 
     booking.status = "done"
     db.commit()
+    db.close()
 
     return {"ok": True}
 
 # =====================
-# DELETE
+# УДАЛЕНИЕ БРОНИ
 # =====================
 
 @app.delete("/booking/{booking_id}")
@@ -181,9 +190,23 @@ def delete_booking(booking_id: int):
     ).first()
 
     if not booking:
+        db.close()
         return {"error": "not_found"}
 
     db.delete(booking)
     db.commit()
+    db.close()
 
+    return {"ok": True}
+
+# =====================
+# ОЧИСТКА (ДЛЯ ТЕСТА)
+# =====================
+
+@app.get("/clear")
+def clear():
+    db = SessionLocal()
+    db.query(Booking).delete()
+    db.commit()
+    db.close()
     return {"ok": True}
