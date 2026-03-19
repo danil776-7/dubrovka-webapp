@@ -22,6 +22,7 @@ padding:20px;
 border-radius:20px;
 }
 
+/* столы */
 .tables{
 display:grid;
 grid-template-columns:repeat(2,1fr);
@@ -38,8 +39,22 @@ cursor:pointer;
 
 .table.selected{background:#d6b36a;color:black;}
 
-.desc{background:#111;padding:10px;border-radius:10px;margin:10px 0;}
+.table.busy{
+background:#444;
+opacity:0.5;
+pointer-events:none;
+}
 
+/* описание */
+.desc{
+background:#111;
+padding:10px;
+border-radius:10px;
+margin:10px 0;
+white-space:pre-line;
+}
+
+/* поля */
 input, select{
 width:100%;
 padding:12px;
@@ -48,12 +63,31 @@ border-radius:10px;
 border:none;
 }
 
+/* кнопка */
 button{
 width:100%;
 padding:14px;
 background:#d6b36a;
 border:none;
 border-radius:10px;
+}
+
+/* футер */
+.footer{
+margin-top:20px;
+text-align:center;
+font-size:14px;
+color:#ccc;
+}
+
+.map-btn{
+display:block;
+margin-top:10px;
+padding:10px;
+background:#222;
+border-radius:8px;
+text-decoration:none;
+color:white;
 }
 </style>
 </head>
@@ -84,6 +118,7 @@ border-radius:10px;
 <div id="tableInfo" class="desc">Выберите стол</div>
 
 <input id="date" type="date">
+
 <select id="time">
 <option value="">Выберите время</option>
 </select>
@@ -93,6 +128,15 @@ border-radius:10px;
 <input id="phone" placeholder="+7999" maxlength="12">
 
 <button id="bookBtn">Забронировать</button>
+
+<div class="footer">
+📍 Ермакова 11<br>
+📞 +7 999 123 45 67
+
+<a class="map-btn" href="https://2gis.ru/" target="_blank">
+Открыть в 2ГИС
+</a>
+</div>
 
 </div>
 </div>
@@ -106,34 +150,48 @@ tg.expand();
 const phone = document.getElementById("phone");
 const date = document.getElementById("date");
 const timeSelect = document.getElementById("time");
+const tableInfo = document.getElementById("tableInfo");
 
 let selectedTable = null;
 
-/* ограничение даты */
+/* описание столов */
+const tables = {
+"1": "Приватная зона со шторками и PlayStation\nДо 7 гостей",
+"2": "Приватная зона со шторками и PlayStation\nДо 5 гостей",
+"3": "Приватная зона со шторками и PlayStation\nДо 5 гостей",
+"4": "Приватная зона со шторками и PlayStation\nДо 5 гостей",
+"5": "Открытая зона без шторок\nДо 5 гостей",
+"6": "Компактный стол для 2–3 гостей",
+"VIP": "VIP комната (депозитная)\nБронь через администратора"
+};
+
+/* дата */
 date.min = new Date().toISOString().split("T")[0];
 
 /* выбор стола */
 document.querySelectorAll(".table").forEach(el=>{
 el.onclick=()=>{
+if(el.classList.contains("busy")) return;
+
 document.querySelectorAll(".table").forEach(t=>t.classList.remove("selected"));
 el.classList.add("selected");
+
 selectedTable=el.dataset.table;
+tableInfo.innerText=tables[selectedTable];
+
 loadTimes();
 };
 });
 
 /* генерация времени */
 function generateTimes(selectedDate){
-let times = [];
-let day = new Date(selectedDate).getDay();
+let times=[];
+let day=new Date(selectedDate).getDay();
 
-let endHour = 23;
+let endHour=23;
+if(day===5||day===6) endHour=24;
 
-if(day === 5 || day === 6){
-endHour = 24;
-}
-
-for(let h = 13; h < endHour; h++){
+for(let h=13;h<endHour;h++){
 times.push(`${String(h).padStart(2,'0')}:00`);
 times.push(`${String(h).padStart(2,'0')}:30`);
 }
@@ -141,31 +199,30 @@ times.push(`${String(h).padStart(2,'0')}:30`);
 return times;
 }
 
-/* загрузка занятых */
+/* загрузка времени */
 async function loadTimes(){
-if(!date.value || !selectedTable) return;
+if(!date.value||!selectedTable) return;
 
-let res = await fetch(API + `/busy_times?date=${date.value}&table=${selectedTable}`);
-let busy = await res.json();
+let res=await fetch(API+`/busy_times?date=${date.value}&table=${selectedTable}`);
+let busy=await res.json();
 
-let allTimes = generateTimes(date.value);
+let allTimes=generateTimes(date.value);
 
-timeSelect.innerHTML = '<option value="">Выберите время</option>';
+timeSelect.innerHTML='<option value="">Выберите время</option>';
 
-let now = new Date();
+let now=new Date();
 
 allTimes.forEach(t=>{
-let [h,m] = t.split(":");
-
-let slot = new Date(date.value);
+let [h,m]=t.split(":");
+let slot=new Date(date.value);
 slot.setHours(h,m);
 
-if(slot < now) return;
+if(slot<now) return;
 
 if(!busy.includes(t)){
-let option = document.createElement("option");
-option.value = t;
-option.innerText = t;
+let option=document.createElement("option");
+option.value=t;
+option.innerText=t;
 timeSelect.appendChild(option);
 }
 });
@@ -182,31 +239,32 @@ phone.value="+"+v;
 });
 
 /* бронь */
-document.getElementById("bookBtn").onclick = async ()=>{
+document.getElementById("bookBtn").onclick=async()=>{
 
 if(!selectedTable) return alert("Выберите стол");
+if(selectedTable==="VIP") return alert("VIP через администратора");
 if(!timeSelect.value) return alert("Выберите время");
 
-let data = {
+let data={
 name:name.value,
 phone:phone.value,
 guests:guests.value,
 table:selectedTable,
 date:date.value,
 time:timeSelect.value,
-user_id: tg.initDataUnsafe?.user?.id || 0
+user_id: tg.initDataUnsafe?.user?.id||0
 };
 
-let res = await fetch(API+"/booking",{
+let res=await fetch(API+"/booking",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
 body:JSON.stringify(data)
 });
 
-let result = await res.json();
+let result=await res.json();
 
 if(result.error){
-alert("❌ Стол уже занят");
+alert("❌ Стол занят");
 return;
 }
 
