@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Dubrovka Admin</title>
+
+<style>
+body{
+background:#0d0d0d;
+color:#fff;
+font-family:Arial;
+padding:20px;
+}
+
+h2{
+text-align:center;
+}
+
+.card{
+background:#1c1c1c;
+padding:15px;
+margin-bottom:12px;
+border-radius:12px;
+}
+
+button{
+margin-top:10px;
+padding:8px 12px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+.done{background:#28a745;}
+.delete{background:#dc3545;}
+</style>
+</head>
+
+<body>
+
+<h2>📊 Админ панель</h2>
+
+<div id="list"></div>
+
+<script>
+const API = "https://ТВОЙ-САЙТ.onrender.com";
+
+async function load(){
+
+let res = await fetch(API + "/bookings");
+let data = await res.json();
+
+let html = "";
+
+data.reverse().forEach(b=>{
+
+html += `
+<div class="card">
+
+<b>${b.name}</b> (${b.phone})<br>
+📅 ${b.date} ${b.time}<br>
+🪑 Стол: ${b.table}<br>
+👥 ${b.guests}<br>
+📌 Статус: ${b.status}
+
+<br>
+
+<button class="done" onclick="done(${b.id})">
+Гость ушёл
+</button>
+
+</div>
+`;
+});
+
+document.getElementById("list").innerHTML = html;
+}
+
+async function done(id){
+await fetch(API + "/update_status/" + id,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body: JSON.stringify({status:"done"})
+});
+load();
+}
+
+setInterval(load, 3000);
+load();
+</script>
+
+</body>
+</html>
