@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from datetime import datetime
 
 # =====================
-# БАЗА (SQLite для Render)
+# DATABASE
 # =====================
 
 DATABASE_URL = "sqlite:///./db.sqlite"
@@ -19,11 +19,11 @@ SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
 # =====================
-# МОДЕЛЬ
+# MODEL
 # =====================
 
 class Booking(Base):
-    tablename = "bookings"
+    tablename = "bookings"  # ❗ обязательно
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
@@ -52,7 +52,7 @@ app.add_middleware(
 )
 
 # =====================
-# ПРОВЕРКА
+# ROOT
 # =====================
 
 @app.get("/")
@@ -60,7 +60,7 @@ def root():
     return {"status": "ok"}
 
 # =====================
-# НОРМАЛИЗАЦИЯ ДАТЫ
+# DATE FIX
 # =====================
 
 def normalize_date(date_str):
@@ -70,7 +70,7 @@ def normalize_date(date_str):
         return date_str
 
 # =====================
-# ВСЕ БРОНИ
+# GET BOOKINGS
 # =====================
 
 @app.get("/bookings")
@@ -93,7 +93,7 @@ def get_bookings():
     ]
 
 # =====================
-# ЗАНЯТЫЕ СЛОТЫ (КЛЮЧЕВОЕ)
+# BUSY TIMES
 # =====================
 
 @app.get("/busy_times")
@@ -105,13 +105,13 @@ def busy_times(date: str, table: str):
     bookings = db.query(Booking).filter(
         Booking.date == date,
         Booking.table == table,
-        Booking.status != "done"  # только активные брони
+        Booking.status != "done"
     ).all()
 
     return [b.time for b in bookings]
 
 # =====================
-# СОЗДАНИЕ БРОНИ
+# CREATE BOOKING
 # =====================
 
 @app.post("/booking")
@@ -122,9 +122,6 @@ def create_booking(data: dict):
     time = data["time"]
     table = str(data["table"])
 
-    print("ПРОВЕРКА:", date, time, table)
-
-    # ❗ защита от двойной брони
     existing = db.query(Booking).filter(
         Booking.date == date,
         Booking.time == time,
@@ -149,12 +146,10 @@ def create_booking(data: dict):
     db.add(booking)
     db.commit()
 
-    print("✅ СОЗДАНО:", booking.id)
-
-    return {"ok": True, "id": booking.id}
+    return {"ok": True}
 
 # =====================
-# ГОСТЬ УШЕЛ (ОСВОБОЖДАЕМ СТОЛ)
+# DONE (освободить стол)
 # =====================
 
 @app.post("/done/{booking_id}")
@@ -174,7 +169,7 @@ def done_booking(booking_id: int):
     return {"ok": True}
 
 # =====================
-# УДАЛЕНИЕ БРОНИ
+# DELETE
 # =====================
 
 @app.delete("/booking/{booking_id}")
@@ -191,14 +186,4 @@ def delete_booking(booking_id: int):
     db.delete(booking)
     db.commit()
 
-    return {"ok": True}
-    # =====================
-# ОЧИСТКА БАЗЫ (ТЕСТ)
-# =====================
-
-@app.get("/clear")
-def clear():
-    db = SessionLocal()
-    db.query(Booking).delete()
-    db.commit()
     return {"ok": True}
