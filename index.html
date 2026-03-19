@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+body {
+    font-family: Arial;
+    background: #0f172a;
+    color: white;
+    margin: 0;
+}
+
+.container {
+    max-width: 400px;
+    margin: auto;
+    padding: 20px;
+}
+
+input, select, button {
+    width: 100%;
+    padding: 14px;
+    margin: 10px 0;
+    border-radius: 12px;
+    border: none;
+}
+
+button {
+    background: #22c55e;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h2>🍽 Бронирование</h2>
+
+<input id="name" placeholder="Имя">
+<input id="phone" placeholder="+7999...">
+
+<select id="guests">
+<option>1</option>
+<option>2</option>
+<option>3</option>
+<option>4</option>
+</select>
+
+<input type="date" id="date">
+<input type="time" id="time">
+
+<button onclick="send()">Забронировать</button>
+</div>
+
+<script>
+const API = "http://127.0.0.1:8000"; // потом заменишь на сервер
+
+async function send(){
+
+    let userId = 0;
+
+    if (window.Telegram?.WebApp) {
+        userId = Telegram.WebApp.initDataUnsafe?.user?.id || 0;
+    }
+
+    let data = {
+        name: document.getElementById("name").value,
+        phone: document.getElementById("phone").value,
+        guests: document.getElementById("guests").value,
+        table: "auto",
+        date: document.getElementById("date").value,
+        time: document.getElementById("time").value,
+        user_id: userId
+    };
+
+    let res = await fetch("http://127.0.0.1:8000/booking", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(data)
+    });
+
+    alert("Заявка отправлена!");
+}
+</script>
+
+</body>
+</html>
