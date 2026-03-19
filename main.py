@@ -4,18 +4,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# БД (SQLite — проще и работает сразу)
 DATABASE_URL = "sqlite:///./db.sqlite"
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
-# Модель
 class Booking(Base):
     __tablename__ = "bookings"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String)
     phone = Column(String)
     guests = Column(Integer)
@@ -23,13 +21,12 @@ class Booking(Base):
     date = Column(String)
     time = Column(String)
     user_id = Column(Integer)
-    status = Column(String, default="pending")
+    status = Column(String)
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-# CORS (ВАЖНО ДЛЯ САЙТА)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -38,17 +35,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Проверка
+# ✅ ЭТО ВАЖНО
 @app.get("/")
 def root():
     return {"status": "ok"}
 
-# 📥 БРОНИРОВАНИЕ
+
+# ✅ БРОНЬ
 @app.post("/booking")
 def create_booking(data: dict):
     db = SessionLocal()
 
-    # ❌ защита от двойной брони
     existing = db.query(Booking).filter(
         Booking.date == data["date"],
         Booking.time == data["time"],
@@ -74,7 +71,8 @@ def create_booking(data: dict):
 
     return {"ok": True}
 
-# 📊 список (для проверки)
+
+# ✅ ПРОВЕРКА
 @app.get("/bookings")
 def get_bookings():
     db = SessionLocal()
