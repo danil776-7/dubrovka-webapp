@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Admin</title>
+
+<style>
+body{background:#111;color:#fff;font-family:Arial;padding:20px;}
+input{width:100%;padding:10px;margin:5px 0;border-radius:8px;}
+button{padding:10px;background:#d6b36a;border:none;border-radius:8px;}
+.card{background:#222;padding:10px;margin:10px 0;border-radius:10px;}
+</style>
+</head>
+
+<body>
+
+<div id="loginBox">
+<h2>🔐 Вход</h2>
+<input id="login" placeholder="Логин">
+<input id="password" type="password" placeholder="Пароль">
+<button onclick="login()">Войти</button>
+</div>
+
+<div id="panel" style="display:none;">
+<h2>📊 Брони</h2>
+<div id="list"></div>
+</div>
+
+<script>
+const API = "https://dubrovka-webapp-9.onrender.com";
+
+async function login(){
+let res = await fetch(API+"/login",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body: JSON.stringify({
+login: login.value,
+password: password.value
+})
+});
+
+let data = await res.json();
+
+if(data.ok){
+localStorage.setItem("admin", "1");
+loginBox.style.display="none";
+panel.style.display="block";
+load();
+}else{
+alert("Неверно");
+}
+}
+
+if(localStorage.getItem("admin")){
+loginBox.style.display="none";
+panel.style.display="block";
+load();
+}
+
+async function load(){
+let res = await fetch(API+"/bookings");
+let data = await res.json();
+
+let html="";
+data.reverse().forEach(b=>{
+html+=`
+<div class="card">
+<b>${b.name}</b><br>
+${b.date} ${b.time}<br>
+Стол ${b.table}<br>
+Гостей ${b.guests}<br>
+<button onclick="done(${b.id})">Освободить</button>
+</div>`;
+});
+
+list.innerHTML=html;
+}
+
+async function done(id){
+await fetch(API+"/done/"+id,{method:"POST"});
+load();
+}
+
+setInterval(load,2000);
+</script>
+
+</body>
+</html>
