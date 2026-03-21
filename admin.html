@@ -1,87 +1,178 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Admin</title>
+<title>Админ панель</title>
 
 <style>
-body{background:#111;color:#fff;font-family:Arial;padding:20px;}
-input{width:100%;padding:10px;margin:5px 0;border-radius:8px;}
-button{padding:10px;background:#d6b36a;border:none;border-radius:8px;}
-.card{background:#222;padding:10px;margin:10px 0;border-radius:10px;}
+body{
+background:#111;
+color:#fff;
+font-family:Arial;
+padding:20px;
+}
+
+input{
+width:100%;
+padding:10px;
+margin:6px 0;
+border-radius:8px;
+border:none;
+}
+
+button{
+width:100%;
+padding:10px;
+background:#d6b36a;
+border:none;
+border-radius:8px;
+cursor:pointer;
+}
+
+.card{
+background:#222;
+padding:12px;
+margin:10px 0;
+border-radius:10px;
+}
+
+h2{
+text-align:center;
+}
 </style>
 </head>
 
 <body>
 
+<!-- LOGIN -->
 <div id="loginBox">
 <h2>🔐 Вход</h2>
-<input id="login" placeholder="Логин">
-<input id="password" type="password" placeholder="Пароль">
-<button onclick="login()">Войти</button>
+
+<input id="loginInput" placeholder="Логин">
+<input id="passwordInput" type="password" placeholder="Пароль">
+
+<button onclick="adminLogin()">Войти</button>
 </div>
 
+<!-- PANEL -->
 <div id="panel" style="display:none;">
 <h2>📊 Брони</h2>
-<div id="list"></div>
+<div id="list">Загрузка...</div>
 </div>
 
 <script>
 const API = "https://dubrovka-webapp-9.onrender.com";
 
-async function login(){
-let res = await fetch(API+"/login",{
+// =====================
+// ЛОГИН (БЕЗ БАГОВ)
+// =====================
+
+async function adminLogin(){
+
+let loginValue = document.getElementById("loginInput").value;
+let passwordValue = document.getElementById("passwordInput").value;
+
+try{
+
+let res = await fetch(API + "/login",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
 body: JSON.stringify({
-login: login.value,
-password: password.value
+login: loginValue,
+password: passwordValue
 })
 });
 
 let data = await res.json();
 
 if(data.ok){
-localStorage.setItem("admin", "1");
-loginBox.style.display="none";
-panel.style.display="block";
-load();
+
+localStorage.setItem("admin","1");
+
+document.getElementById("loginBox").style.display="none";
+document.getElementById("panel").style.display="block";
+
+loadBookings();
+
 }else{
-alert("Неверно");
+alert("❌ Неверный логин или пароль");
+}
+
+}catch(e){
+alert("Ошибка соединения");
+console.error(e);
 }
 }
+
+// =====================
+// ПРОВЕРКА СЕССИИ
+// =====================
 
 if(localStorage.getItem("admin")){
-loginBox.style.display="none";
-panel.style.display="block";
-load();
+document.getElementById("loginBox").style.display="none";
+document.getElementById("panel").style.display="block";
+loadBookings();
 }
 
-async function load(){
-let res = await fetch(API+"/bookings");
+// =====================
+// ЗАГРУЗКА БРОНЕЙ
+// =====================
+
+async function loadBookings(){
+
+try{
+
+let res = await fetch(API + "/bookings");
 let data = await res.json();
 
-let html="";
+let html = "";
+
+if(data.length === 0){
+html = "Нет броней";
+}else{
+
 data.reverse().forEach(b=>{
-html+=`
+html += `
 <div class="card">
 <b>${b.name}</b><br>
-${b.date} ${b.time}<br>
-Стол ${b.table}<br>
-Гостей ${b.guests}<br>
-<button onclick="done(${b.id})">Освободить</button>
-</div>`;
+📅 ${b.date} ${b.time}<br>
+📞 ${b.phone}<br>
+🪑 Стол: ${b.table}<br>
+👥 ${b.guests}<br>
+
+<button onclick="doneBooking(${b.id})">
+Гость ушёл
+</button>
+</div>
+`;
+});
+}
+
+document.getElementById("list").innerHTML = html;
+
+}catch(e){
+document.getElementById("list").innerHTML = "Ошибка загрузки";
+}
+}
+
+// =====================
+// ОСВОБОДИТЬ СТОЛ
+// =====================
+
+async function doneBooking(id){
+
+await fetch(API + "/done/" + id,{
+method:"POST"
 });
 
-list.innerHTML=html;
+loadBookings();
 }
 
-async function done(id){
-await fetch(API+"/done/"+id,{method:"POST"});
-load();
-}
+// =====================
+// АВТО ОБНОВЛЕНИЕ
+// =====================
 
-setInterval(load,2000);
+setInterval(loadBookings, 2000);
 </script>
 
 </body>
