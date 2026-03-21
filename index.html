@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<title>Dubrovka Lounge</title>
+
+<style>
+*{box-sizing:border-box;}
+
+body{
+margin:0;
+font-family:Arial;
+color:#fff;
+}
+
+/* 🎥 фон */
+.video-bg{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+object-fit:cover;
+z-index:-2;
+}
+
+.overlay{
+position:fixed;
+width:100%;
+height:100%;
+background:#000000dd;
+z-index:-1;
+}
+
+/* контейнер */
+.container{
+max-width:500px;
+margin:auto;
+padding:15px;
+}
+
+/* логотип */
+.logo{
+width:140px;
+display:block;
+margin:10px auto;
+}
+
+/* текст */
+.title{text-align:center;color:#ff2a2a;}
+.subtitle{text-align:center;color:#aaa;margin-bottom:10px;}
+
+/* карточка */
+.card{
+background:rgba(20,20,20,0.7);
+backdrop-filter:blur(10px);
+border-radius:16px;
+padding:15px;
+}
+
+/* столы */
+.grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+}
+
+.table{
+padding:14px;
+background:#1a1a1a;
+border-radius:10px;
+text-align:center;
+cursor:pointer;
+}
+
+.table.active{
+background:#ff2a2a;
+}
+
+.vip{
+grid-column:1/-1;
+}
+
+/* описание */
+.info{
+margin:10px 0;
+font-size:14px;
+color:#ddd;
+min-height:40px;
+}
+
+/* inputs */
+input,select{
+width:100%;
+padding:12px;
+margin-top:8px;
+border-radius:10px;
+border:none;
+background:#111;
+color:#fff;
+}
+
+/* кнопка */
+button{
+width:100%;
+padding:14px;
+margin-top:12px;
+background:#ff2a2a;
+border:none;
+border-radius:12px;
+font-size:16px;
+}
+
+/* footer */
+.footer{
+margin-top:15px;
+text-align:center;
+font-size:12px;
+color:#aaa;
+}
+
+/* 📱 mobile */
+@media(max-width:500px){
+.container{padding:10px;}
+}
+
+/* 💻 desktop */
+@media(min-width:900px){
+.container{max-width:600px;}
+}
+</style>
+</head>
+
+<body>
+
+<video autoplay muted loop playsinline class="video-bg">
+<source src="bg.mp4" type="video/mp4">
+</video>
+
+<div class="overlay"></div>
+
+<div class="container">
+
+<img src="logo.png" class="logo">
+
+<div class="title">Дубровка Lounge</div>
+<div class="subtitle">Выберите стол</div>
+
+<div class="card">
+
+<div class="grid">
+<div class="table" onclick="selectTable('1', event)">1</div>
+<div class="table" onclick="selectTable('2', event)">2</div>
+<div class="table" onclick="selectTable('3', event)">3</div>
+<div class="table" onclick="selectTable('4', event)">4</div>
+<div class="table" onclick="selectTable('5', event)">5</div>
+<div class="table" onclick="selectTable('6', event)">6</div>
+<div class="table vip" onclick="selectTable('VIP', event)">VIP</div>
+</div>
+
+<div id="info" class="info"></div>
+
+<input type="date" id="date">
+<select id="time"></select>
+
+<!-- 🔥 ВЕРНУЛИ ГОСТЕЙ -->
+<input id="guests" placeholder="Количество гостей">
+
+<input id="name" placeholder="Имя">
+<input id="phone" placeholder="Телефон">
+
+<button onclick="book()">Забронировать</button>
+
+</div>
+
+<div class="footer">
+📍 Ермакова 11<br>
+🕐 Вс–Чт: 13:00–23:00<br>
+🕐 Пт–Сб: 13:00–00:00
+</div>
+
+</div>
+
+<script>
+const API="https://dubrovka-webapp-9.onrender.com";
+const tg=window.Telegram.WebApp;
+tg.expand();
+
+let selectedTable=null;
+
+/* описания */
+const tableInfo={
+"1":"Приват • PS • Шторки",
+"2":"Приват • PS • Шторки",
+"3":"Приват • PS • Шторки",
+"4":"Приват • PS • Шторки",
+"5":"Открытая зона",
+"6":"2-3 гостя",
+"VIP":"VIP депозит"
+};
+
+function selectTable(t,e){
+
+selectedTable=t;
+
+document.querySelectorAll(".table").forEach(el=>el.classList.remove("active"));
+e.target.classList.add("active");
+
+info.innerText=tableInfo[t];
+
+loadTimes();
+}
+
+function getTimes(){
+let d=new Date(date.value);
+let day=d.getDay();
+let end=(day===5||day===6)?24:23;
+
+let arr=[];
+for(let h=13;h<=end;h++){
+arr.push((h+"").padStart(2,"0")+":00");
+}
+return arr;
+}
+
+async function loadTimes(){
+
+if(!selectedTable||!date.value)return;
+
+let res=await fetch(`${API}/busy_times?date=${date.value}&table=${selectedTable}`);
+let busy=await res.json();
+
+let html="";
+
+getTimes().forEach(t=>{
+if(!busy.includes(t)){
+html+=`<option>${t}</option>`;
+}
+});
+
+time.innerHTML=html;
+}
+
+date.onchange=loadTimes;
+
+async function book(){
+
+// 🔥 ПРОВЕРКИ
+if(!selectedTable){
+alert("Выберите стол");
+return;
+}
+
+if(!date.value){
+alert("Выберите дату");
+return;
+}
+
+if(!time.value){
+alert("Выберите время");
+return;
+}
+
+if(!name.value){
+alert("Введите имя");
+return;
+}
+
+if(!phone.value){
+alert("Введите телефон");
+return;
+}
+
+// VIP
+if(selectedTable==="VIP"){
+alert("VIP через администратора");
+return;
+}
+
+let data={
+name:name.value,
+phone:phone.value,
+guests:parseInt(guests.value)||1,
+table:selectedTable,
+date:date.value,
+time:time.value
+};
+
+try{
+
+let res=await fetch(API+"/booking",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify(data)
+});
+
+let r=await res.json();
+
+if(r.error==="busy"){
+alert("Стол занят");
+return;
+}
+
+if(r.error==="guests_limit"){
+alert("Слишком много гостей");
+return;
+}
+
+alert("Бронь создана");
+
+// telegram
+tg.sendData(JSON.stringify(data));
+
+loadTimes();
+
+}catch(e){
+alert("Ошибка соединения");
+}
+}
+</script>
+
+</body>
+</html>
