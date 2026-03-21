@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<div id="loginBox">
+<input id="l"><input id="p">
+<button onclick="login()">вход</button>
+</div>
+
+<div id="panel" style="display:none">
+<button onclick="today()">Сегодня</button>
+<input type="date" id="d">
+<button onclick="byDate()">Календарь</button>
+<div id="list"></div>
+</div>
+
+<script>
+const API="https://dubrovka-webapp-9.onrender.com";
+
+async function login(){
+let r=await fetch(API+"/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({login:l.value,password:p.value})});
+let dta=await r.json();
+if(dta.ok){loginBox.style.display="none";panel.style.display="block";today();}
+}
+
+async function today(){
+let t=new Date().toISOString().split("T")[0];
+load(t);
+}
+
+async function byDate(){
+load(d.value);
+}
+
+async function load(date){
+let r=await fetch(`${API}/bookings_by_date?date=${date}`);
+let data=await r.json();
+
+list.innerHTML=data.map(b=>`${b.name} ${b.time} <button onclick="done(${b.id})">X</button>`).join("");
+}
+
+async function done(id){
+await fetch(API+"/done/"+id,{method:"POST"});
+today();
+}
+
+setInterval(today,3000);
+</script>
+
+</body>
+</html>
