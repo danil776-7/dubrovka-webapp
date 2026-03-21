@@ -31,7 +31,7 @@ Base = declarative_base()
 # =====================
 
 class Booking(Base):
-    tablename = "bookings"
+    __tablename__ = "bookings"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
