@@ -1,12 +1,10 @@
 from fastapi import FastAPI
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
-import os
 
 app = FastAPI()
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATABASE_URL = f"sqlite:///{BASE_DIR}/db.sqlite"
+DATABASE_URL = "sqlite:////tmp/db.sqlite"
 
 engine = create_engine(
     DATABASE_URL,
@@ -17,7 +15,7 @@ SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
 class Booking(Base):
-    tablename = "bookings"
+    __tablename__ = "bookings"
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
@@ -41,7 +39,7 @@ def get_bookings():
     db.close()
     return [b.__dict__ for b in data]
 
-@app.post("/booking")
+"/booking"
 def create_booking(data: dict):
     db = SessionLocal()
 
