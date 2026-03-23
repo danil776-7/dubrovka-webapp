@@ -54,8 +54,8 @@ app.add_middleware(
 # CONFIG
 # =====================
 
-TELEGRAM_BOT_TOKEN = "PASTE_TOKEN"
-ADMIN_CHAT_ID = "PASTE_CHAT_ID"
+TELEGRAM_BOT_TOKEN = "8769949339:AAFwvdkPFgj7l4BQwGfmcljauMWXRx7qves"
+ADMIN_CHAT_ID = "7545540622"
 
 # =====================
 # LIMITS
