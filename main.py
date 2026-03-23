@@ -6,7 +6,7 @@ from datetime import datetime
 import requests
 
 # =====================
-# DATABASE
+# DATABASE (Render safe)
 # =====================
 DATABASE_URL = "sqlite:////tmp/db.sqlite"
 
@@ -40,8 +40,6 @@ class Log(Base):
     text = Column(String)
     created_at = Column(String)
 
-Base.metadata.create_all(bind=engine)
-
 # =====================
 # APP
 # =====================
@@ -53,6 +51,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# =====================
+# STARTUP (ВАЖНО)
+# =====================
+@app.on_event("startup")
+def startup():
+    Base.metadata.create_all(bind=engine)
 
 # =====================
 # CONFIG
@@ -74,7 +79,7 @@ TABLE_LIMITS = {
 }
 
 # =====================
-# TELEGRAM
+# TELEGRAM (FIX)
 # =====================
 def send_telegram(text):
     try:
@@ -82,9 +87,9 @@ def send_telegram(text):
             f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
             json={
                 "chat_id": ADMIN_CHAT_ID,
-                "text": text,
-                "parse_mode": "HTML"
-            }
+                "text": text
+            },
+            timeout=3
         )
     except Exception as e:
         print("TG ERROR:", e)
@@ -106,7 +111,7 @@ def root():
     return {"status": "ok"}
 
 # =====================
-# ВСЕ БРОНИ (АДМИНКА)
+# ВСЕ БРОНИ
 # =====================
 @app.get("/bookings")
 def get_bookings():
@@ -185,14 +190,15 @@ def create_booking(data: dict):
     date = normalize_date(data["date"])
     table = str(data["table"])
     time = data["time"]
-    guests = int(data["guests"])
+    guests = int(data[
+
+
+guests"])
 
     # лимит гостей
     max_guests = TABLE_LIMITS.get(table, 5)
     if guests > max_guests:
-
-
-return {"error": "guests_limit"}
+        return {"error": "guests_limit"}
 
     # проверка занятости
     exists = db.query(Booking).filter(
@@ -220,7 +226,7 @@ return {"error": "guests_limit"}
 
     # лог
     log = Log(
-        text=f"Новая бронь: стол {table} {date} {time}",
+        text=f"Новая бронь: {table} {date} {time}",
         created_at=str(datetime.now())
     )
     db.add(log)
@@ -228,16 +234,8 @@ return {"error": "guests_limit"}
     db.commit()
     db.close()
 
-    # Telegram уведомление
-    send_telegram(
-        f"<b>🔥 Новая бронь</b>\n\n"
-        f"👤 Имя: {data['name']}\n"
-        f"📞 Телефон: {data['phone']}\n"
-        f"👥 Гости: {guests}\n"
-        f"🪑 Стол: {table}\n"
-        f"📅 Дата: {date}\n"
-        f"⏰ Время: {time}"
-    )
+    # Telegram
+    send_telegram(f"Новая бронь: {data['name']} | стол {table} | {date} {time}")
 
     return {"ok": True}
 
@@ -258,9 +256,8 @@ def done(id: int):
 
     booking.status = "done"
 
-    # лог
     log = Log(
-        text=f"Гость ушёл (ID {id})",
+        text=f"Гость ушёл ID {id}",
         created_at=str(datetime.now())
     )
     db.add(log)
@@ -286,4 +283,4 @@ def get_logs():
             "created_at": l.created_at
         }
         for l in data
-    ]
+    ]"
