@@ -199,10 +199,6 @@ def create_booking(data: dict):
     time = data["time"]
     guests = int(data["guests"])
 
-    # ❌
-
-
-ошлое время
     if is_past(date, time):
         return {"error": "past"}
 
