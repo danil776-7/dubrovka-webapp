@@ -175,7 +175,7 @@ def busy_times(date: str, table: str):
 # СОЗДАНИЕ БРОНИ
 # =====================
 
-"/booking"
+@app.post("/booking")
 def create_booking(data: dict):
     db = SessionLocal()
 
@@ -193,10 +193,9 @@ def create_booking(data: dict):
     # ❌ лимит гостей
     max_guests = TABLE_LIMITS.get(table, 5)
     if guests > max_guests:
-        return {"error": "guests_limit"
+        return {"error": "guests_limit"}
 
-
-# ❌ проверка времени (Новокузнецк)
+    # ❌ проверка времени (Новокузнецк)
     now = now_novokuznetsk()
     booking_dt = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
 
@@ -246,7 +245,7 @@ def create_booking(data: dict):
 # ГОСТЬ УШЕЛ
 # =====================
 
-"/done/{id}"
+@app.post("/done/{id}")
 def done(id: int):
     db = SessionLocal()
 
@@ -261,4 +260,4 @@ def done(id: int):
     db.commit()
     db.close()
 
-    return {"ok": True}}
+    return {"ok": True}
