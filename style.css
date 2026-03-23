@@ -1,147 +1,142 @@
-body {
-margin:0;
-font-family: 'Segoe UI', sans-serif;
-background:#000;
-color:#e7d9c0;
-}
-
-/* видео */
-video{
+/* ===== ВИДЕО ===== */
+video.bg{
 position:fixed;
+top:0;
+left:0;
 width:100%;
 height:100%;
 object-fit:cover;
 z-index:-2;
 }
 
-/* затемнение */
 .overlay{
 position:fixed;
+top:0;
+left:0;
 width:100%;
 height:100%;
-background:linear-gradient(180deg,rgba(0,0,0,0.7),rgba(0,0,0,0.9));
+background:rgba(0,0,0,0.6);
 z-index:-1;
+}
+
+/* ===== ОСНОВА ===== */
+body{
+margin:0;
+font-family:Arial;
+color:#fff;
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:100vh;
 }
 
 /* контейнер */
 .container{
-max-width:420px;
-margin:auto;
+width:420px;
+max-width:95%;
+background:rgba(20,20,20,0.9);
 padding:20px;
+border-radius:16px;
+backdrop-filter: blur(10px);
 }
 
 /* логотип */
-.logo img{
-width:130px;
-display:block;
-margin:auto;
+.logo{
+display:flex;
+justify-content:center;
 margin-bottom:10px;
 }
 
-/* часы */
-.hours{
-text-align:center;
-color:#aaa;
-font-size:14px;
-margin-bottom:15px;
-}
-
-/* карточка */
-.card{
-background:rgba(255,255,255,0.05);
-backdrop-filter:blur(12px);
-border:1px solid rgba(255,255,255,0.1);
-padding:20px;
-border-radius:20px;
-box-shadow:0 10px 40px rgba(0,0,0,0.6);
+.logo img{
+width:120px;
 }
 
 /* столы */
 .tables{
 display:grid;
-grid-template-columns:repeat(2,1fr);
+grid-template-columns:1fr 1fr;
 gap:10px;
-margin:15px 0;
+margin-bottom:10px;
 }
 
 .table{
-padding:18px;
-border-radius:14px;
-background:rgba(255,255,255,0.05);
+padding:15px;
+background:#1a1a1a;
+border-radius:10px;
 text-align:center;
 cursor:pointer;
 transition:0.2s;
-border:1px solid rgba(255,255,255,0.1);
 }
 
 .table:hover{
+background:#222;
 transform:scale(1.05);
 }
 
-.table.selected{
-background:linear-gradient(135deg,#d6b36a,#a88c4a);
-color:black;
+.table.active{
+background:#ffcc00;
+color:#000;
 }
 
+/* VIP */
 .vip{
-border:2px solid gold;
+grid-column:1/3;
 }
 
 /* описание */
-.desc{
-background:rgba(0,0,0,0.6);
-padding:12px;
-border-radius:12px;
+.info{
+font-size:13px;
 margin-bottom:10px;
-white-space:pre-line;
+color:#ccc;
 }
 
-/* поля */
-input{
+/* inputs */
+input, select{
 width:100%;
-padding:14px;
-margin:6px 0;
-border-radius:12px;
+padding:12px;
+margin-bottom:10px;
+border-radius:10px;
 border:none;
-background:rgba(255,255,255,0.08);
-color:white;
-outline:none;
+background:#1a1a1a;
+color:#fff;
 }
 
 /* кнопка */
 button{
 width:100%;
-padding:15px;
+padding:14px;
+background:#ffcc00;
 border:none;
-border-radius:12px;
-background:linear-gradient(135deg,#d6b36a,#a88c4a);
-font-size:16px;
+border-radius:10px;
+font-weight:bold;
 cursor:pointer;
 transition:0.2s;
 }
 
 button:hover{
-transform:scale(1.03);
+opacity:0.9;
+transform:scale(1.02);
 }
 
-/* футер */
-.footer{
-margin-top:20px;
-text-align:center;
-color:#aaa;
+/* ===== MOBILE ===== */
+max-width:600px{
+
+.container{
+width:100%;
+height:100vh;
+border-radius:0;
 }
 
-.map-btn{
-display:block;
-margin-top:10px;
-padding:12px;
-background:#222;
-border-radius:10px;
-text-decoration:none;
-color:white;
-transition:0.2s;
+.tables{
+grid-template-columns:1fr;
 }
 
-.map-btn:hover{
-background:#333;
+.vip{
+grid-column:1;
+}
+
+.logo img{
+width:100px;
+}
+
 }
