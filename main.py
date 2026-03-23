@@ -3,17 +3,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
 from datetime import datetime
+import os
 import requests
 
+app = FastAPI()
+
 # =====================
-# DATABASE (Render FIX)
+# DATABASE (Railway)
 # =====================
 
-DATABASE_URL = "sqlite:////tmp/db.sqlite"
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False}
+    pool_pre_ping=True
 )
 
 SessionLocal = sessionmaker(bind=engine)
@@ -26,7 +29,7 @@ Base = declarative_base()
 class Booking(Base):
     __tablename__ = "bookings"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String)
     phone = Column(String)
     guests = Column(Integer)
@@ -38,10 +41,8 @@ class Booking(Base):
 Base.metadata.create_all(bind=engine)
 
 # =====================
-# APP
+# CORS
 # =====================
-
-app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
@@ -55,7 +56,7 @@ app.add_middleware(
 # =====================
 
 TELEGRAM_BOT_TOKEN = "ТВОЙ_ТОКЕН"
-ADMIN_CHAT_ID = "ТВОЙ_CHAT_ID"
+ADMIN_CHAT_ID = "ТВОЙ_ID"
 
 # =====================
 # LIMITS
@@ -72,7 +73,7 @@ TABLE_LIMITS = {
 }
 
 # =====================
-# TELEGRAM
+# HELPERS
 # =====================
 
 def send_telegram(text):
@@ -81,27 +82,16 @@ def send_telegram(text):
             f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
             json={
                 "chat_id": ADMIN_CHAT_ID,
-                "text": text,
-                "parse_mode": "HTML"
+                "text": text
             }
         )
-    except Exception as e:
-        print("TG ERROR:", e)
-
-# =====================
-# HELPERS
-# =====================
-
-def normalize_date(date_str):
-    try:
-        return datetime.strptime(date_str, "%Y-%m-%d").strftime("%Y-%m-%d")
     except:
-        return date_str
+        pass
 
-def is_past(date_str, time_str):
+def is_past(date, time):
     try:
-        booking_dt = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
-        return booking_dt < datetime.now()
+        dt = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
+        return dt < datetime.now()
     except:
         return False
 
@@ -114,7 +104,7 @@ def root():
     return {"status": "ok"}
 
 # =====================
-# ВСЕ БРОНИ (АДМИНКА)
+# GET BOOKINGS
 # =====================
 
 @app.get("/bookings")
@@ -138,13 +128,12 @@ def get_bookings():
     ]
 
 # =====================
-# БРОНИ ПО ДАТЕ
+# BOOKINGS BY DATE
 # =====================
 
 @app.get("/bookings_by_date")
 def bookings_by_date(date: str):
     db = SessionLocal()
-    date = normalize_date(date)
 
     data = db.query(Booking).filter(
         Booking.date == date,
@@ -168,13 +157,12 @@ def bookings_by_date(date: str):
     ]
 
 # =====================
-# ЗАНЯТЫЕ ВРЕМЕНА
+# BUSY TIMES
 # =====================
 
 @app.get("/busy_times")
 def busy_times(date: str, table: str):
     db = SessionLocal()
-    date = normalize_date(date)
 
     data = db.query(Booking).filter(
         Booking.date == date,
@@ -187,14 +175,14 @@ def busy_times(date: str, table: str):
     return [b.time for b in data]
 
 # =====================
-# СОЗДАНИЕ БРОНИ
+# CREATE BOOKING
 # =====================
 
 "/booking"
 def create_booking(data: dict):
     db = SessionLocal()
 
-    date = normalize_date(data["date"])
+    date = data["date"]
     table = str(data["table"])
     time = data["time"]
     guests = int(data["guests"])
@@ -202,12 +190,9 @@ def create_booking(data: dict):
     if is_past(date, time):
         return {"error": "past"}
 
-    # ❌ лимит гостей
-    max_guests = TABLE_LIMITS.get(table, 5)
-    if guests > max_guests:
-        return {"error": "guests_limit"}
+    if guests > TABLE_LIMITS.get(table, 5):
+        return {"error": "limit"}
 
-    # ❌ занято
     exists = db.query(Booking).filter(
         Booking.date == date,
         Booking.time == time,
@@ -220,33 +205,26 @@ def create_booking(data: dict):
 
     booking = Booking(
         name=data["name"],
-        phone=data["phone"],
+        phone=data["phone"
+
+
+,
         guests=guests,
         table=table,
         date=date,
-        time=time,
-        status="pending"
+        time=time
     )
 
     db.add(booking)
     db.commit()
     db.close()
 
-    # 🔥 Telegram уведомление
-    send_telegram(
-        f"<b>🔥 Новая бронь</b>\n\n"
-        f"👤 {data['name']}\n"
-        f"📞 {data['phone']}\n"
-        f"👥 {guests} гостей\n"
-        f"🪑 Стол {table}\n"
-        f"📅 {date}\n"
-        f"⏰ {time}"
-    )
+    send_telegram(f"Новая бронь: {data}")
 
     return {"ok": True}
 
 # =====================
-# ГОСТЬ УШЁЛ
+# DONE
 # =====================
 
 "/done/{id}"
@@ -264,4 +242,4 @@ def done(id: int):
     db.commit()
     db.close()
 
-    return {"ok": True} 
+    return {"ok": True}]
