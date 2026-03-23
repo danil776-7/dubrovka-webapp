@@ -3,18 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Dubrovka Lounge</title>
 
 <style>
 body {
     margin: 0;
-    font-family: 'Segoe UI', sans-serif;
+    font-family: Arial;
     background: black;
     color: white;
 }
 
-/* видео фон */
 video.bg {
     position: fixed;
     width: 100%;
@@ -24,20 +22,17 @@ video.bg {
     z-index: -1;
 }
 
-/* контейнер */
 .container {
-    max-width: 520px;
+    max-width: 500px;
     margin: auto;
     padding: 15px;
 }
 
-/* логотип */
 .logo {
     text-align: center;
-    margin-bottom: 10px;
 }
 .logo img {
-    width: 160px;
+    width: 150px;
 }
 
 /* столы */
@@ -48,17 +43,11 @@ video.bg {
 }
 
 .table {
-    padding: 18px;
-    border-radius: 14px;
-    background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(10px);
+    padding: 15px;
+    background: #1e1e1e;
+    border-radius: 10px;
     text-align: center;
     cursor: pointer;
-    transition: 0.3s;
-}
-
-.table:hover {
-    transform: scale(1.03);
 }
 
 .table.active {
@@ -67,45 +56,25 @@ video.bg {
 }
 
 .table.busy {
-    background: rgba(255,0,0,0.4);
-}
-
-.table.recommended {
-    border: 2px solid gold;
-}
-
-.table small {
-    display: block;
-    font-size: 11px;
-    margin-top: 5px;
+    background: #5a0000;
 }
 
 .vip {
     grid-column: span 2;
 }
 
-/* описание */
 #tableInfo {
     margin-top: 10px;
     font-size: 13px;
-    color: #bbb;
 }
 
-/* инпуты */
+/* форма */
 input, select {
     width: 100%;
     padding: 12px;
     margin-top: 10px;
-    border-radius: 12px;
+    border-radius: 10px;
     border: none;
-    background: rgba(255,255,255,0.08);
-    color: white;
-    font-size: 14px;
-}
-
-/* фикс dropdown */
-select {
-    appearance: none;
 }
 
 /* кнопка */
@@ -113,38 +82,21 @@ button {
     width: 100%;
     padding: 14px;
     margin-top: 15px;
-    border-radius: 14px;
-    border: none;
     background: gold;
-    font-size: 16px;
+    border: none;
+    border-radius: 10px;
 }
 
-/* toast */
+/* уведомление */
 .toast {
     position: fixed;
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
     background: black;
-    padding: 12px 20px;
-    border-radius: 10px;
-    opacity: 0;
-    transition: 0.3s;
-}
-.toast.show {
-    opacity: 1;
-}
-
-/* футер */
-.footer {
-    margin-top: 30px;
-    font-size: 13px;
-    text-align: center;
-    color: #aaa;
-}
-.footer a {
-    color: gold;
-    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    display: none;
 }
 </style>
 </head>
@@ -161,16 +113,16 @@ button {
     <img src="logo.png">
 </div>
 
-<h3>Dubrovka Lounge — выберите стол</h3>
+<h3>Выберите стол</h3>
 
 <div class="tables">
-    <div class="table" data-table="1">1<small></small></div>
-    <div class="table" data-table="2">2<small></small></div>
-    <div class="table" data-table="3">3<small></small></div>
-    <div class="table" data-table="4">4<small></small></div>
-    <div class="table" data-table="5">5<small></small></div>
-    <div class="table" data-table="6">6<small></small></div>
-    <div class="table vip" data-table="VIP">VIP<small></small></div>
+    <div class="table" data-table="1">1</div>
+    <div class="table" data-table="2">2</div>
+    <div class="table" data-table="3">3</div>
+    <div class="table" data-table="4">4</div>
+    <div class="table" data-table="5">5</div>
+    <div class="table" data-table="6">6</div>
+    <div class="table vip" data-table="VIP">VIP</div>
 </div>
 
 <div id="tableInfo"></div>
@@ -184,163 +136,103 @@ button {
 
 <button onclick="book()">Забронировать</button>
 
-<div class="footer">
-📍 Новокузнецк  
-<
-<a href="https://2gis.ru" target="_blank">Открыть в 2GIS</a>
-<
-
-📞 +7 (XXX) XXX-XX-XX
-</div>
-
-<div id="toast" class="toast"></div>
+<div class="toast" id="toast"></div>
 
 </div>
 
 <script>
 const API = "https://dubrovka-webapp-9.onrender.com";
 
+let selectedTable = null;
+
+// уведомление
 function show(msg){
     const t = document.getElementById("toast");
     t.innerText = msg;
-    t.classList.add("show");
-    setTimeout(()=>t.classList.remove("show"),2000);
+    t.style.display = "block";
+    setTimeout(()=>t.style.display="none",2000);
 }
 
-// описания
+// описание столов
 const desc = {
-    "1":"🎮 PS • 🛋 шторки • 6-11 гостей",
-    "2":"🎮 PS • 🛋 шторки • 4-6 гостей",
-    "3":"🎮 PS • 🛋 шторки • 4-6 гостей",
-    "4":"🎮 PS • 🛋 шторки • 4-6 гостей",
-    "5":"🚫 PS • 🚫 шторок • 4-6 гостей",
-    "6":"🚫 PS • 🚫 шторок • 2-3 гостя",
-    "VIP":"🔥 VIP • 🎮 PS • 🛋 шторки"
+    "1":"🎮 PS • шторки • 6-11",
+    "2":"🎮 PS • шторки • 4-6",
+    "3":"🎮 PS • шторки • 4-6",
+    "4":"🎮 PS • шторки • 4-6",
+    "5":"без PS • без шторок",
+    "6":"2-3 человека",
+    "VIP":"VIP комната"
 };
 
-const limits = {"1":11,"2":6,"3":6,"4":6,"5":6,"6":3,"VIP":10};
-
-let selectedTable=null;
-
-// выбор
+// выбор стола (ИСПРАВЛЕНО)
 document.querySelectorAll(".table").forEach(el=>{
-    el.onclick=()=>{
-        document
-Карта городов России: подробные карты с поиском по адресу — 2ГИС
-Карта городов России: подробные карты с поиском по адресу — 2ГИС
-2gis.ru
-
-
-ySelectorAll(".table").forEach(t=>t.classList.remove("active"));
+    el.addEventListener("click", ()=>{
+        document.querySelectorAll(".table").forEach(t=>t.classList.remove("active"));
         el.classList.add("active");
-        selectedTable=el.dataset.table;
-        document.getElementById("tableInfo").innerText=desc[selectedTable];
-    }
+        selectedTable = el.dataset.table;
+        document.getElementById("tableInfo").innerText = desc[selectedTable];
+    });
 });
 
-// дата
-const dateInput=document.getElementById("date");
-dateInput.min=new Date().toISOString().split("T")[0];
-dateInput.value=dateInput.min;
+// дата (ИСПРАВЛЕНО)
+const dateInput = document.getElementById("date");
+const today = new Date().toISOString().split("T")[0];
 
-// время с учетом текущего времени
-const timeSelect=document.getElementById("time");
+dateInput.min = today;
+dateInput.value = today;
+
+// время (ИСПРАВЛЕНО)
+const timeSelect = document.getElementById("time");
 
 function generateTimes(){
-    timeSelect.innerHTML="";
-    const now=new Date();
+    timeSelect.innerHTML = "";
 
-    for(let h=13;h<=23;h++){
+    for(let h=13; h<=23; h++){
         ["00","30"].forEach(m=>{
-            const option=document.createElement("option");
-            const t=`${String(h).padStart(2,"0")}:${m}`;
+            const t = `${String(h).padStart(2,"0")}:${m}`;
 
-            option.value=t;
-            option.textContent=t;
-
-            const test=new Date();
-            test.setHours(h,m);
-
-            if(dateInput.value===dateInput.min && test<now){
-                option.disabled=true;
-            }
+            const option = document.createElement("option");
+            option.value = t;
+            option.textContent = t;
 
             timeSelect.appendChild(option);
         });
     }
 }
+
 generateTimes();
-dateInput.onchange=generateTimes;
 
 // телефон
-document.getElementById("phone").addEventListener("input",e=>{
-    e.target.value=e.target.value.replace(/[^0-9+]/g,"").slice(0,12);
+document.getElementById("phone").addEventListener("input", e=>{
+    e.target.value = e.target.value.replace(/[^0-9+]/g,"").slice(0,12);
 });
-
-// гости
-document.getElementById("guests").addEventListener("input",e=>{
-    if(e.target.value>11)e.target.value=11;
-});
-
-// загрузка занятости
-async function loadBusy(){
-    const res=await fetch(`${API}/bookings`);
-    const data=await res.json();
-
-    document.querySelectorAll(".table").forEach(el=>{
-        el.classList.remove("busy");
-        el.querySelector("small").textContent="";
-    });
-
-    const g={};
-    data.forEach(b=>{
-        if(!g[b.table])g[b.table]=[];
-        g[b.table].push(b.time);
-    });
-
-    for(let t in g){
-        const el=document.querySelector(`[data-table="${t}"]`);
-        if(!el)continue;
-
-        el.classList.add("busy");
-        el.querySelector("small").textContent="занято: "+g[t].join(", ");
-    }
-}
-setInterval(loadBusy,5000);
-loadBusy();
 
 // бронь
 async function book(){
-    const data={
-        name:document.getElementById("name").value.trim(),
-        phone:document.getElementById("phone").value.trim(),
-        guests:document.getElementById("guests").value,
-        table:selectedTable,
-        date:dateInput.value,
-        time:timeSelect.value
+
+    const data =
+
+
+{
+        name: document.getElementById("name").value.trim(),
+        phone: document.getElementById("phone").value.trim(),
+        guests: document.getElementById("guests").value,
+        table: selectedTable,
+        date: dateInput.value,
+        time: timeSelect.value
     };
 
-    if(!data.name)return show("Введите имя");
-    if(!data.phone)return show("Введите телефон");
-    if(!data.table)return show("Выберите стол");
+    if(!data.name) return show("Введите имя");
+    if(!data.phone) return show("Введите телефон");
+    if(!data.table) return show("Выберите стол");
 
-    if(data.guests>limits[data.table]){
-        show("Слишком много гостей");
-        return;
-    }
-
-    const res=await fetch(`${API}/booking`,{
+    const res = await fetch(`${API}/booking`, {
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify(data)
+        body: JSON.stringify(data)
     });
 
-    const r=await res.json();
-
-    if(r.error==="busy") return show("Стол занят");
-
     show("Бронь создана");
-    loadBusy();
 }
 </script>
 
