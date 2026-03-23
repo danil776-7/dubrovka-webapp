@@ -1,163 +1,149 @@
-document.addEventListener("DOMContentLoaded", () => {
-
 const API = "https://dubrovka-webapp-9.onrender.com";
 
+// ======================
+// ТАЙМЗОНА (Новокузнецк UTC+7)
+// ======================
+function getNowKuzbass() {
+    const now = new Date();
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    return new Date(utc + (7 * 60 * 60 * 1000));
+}
+
+// ======================
+// ОГРАНИЧЕНИЕ ДАТЫ
+// ======================
 const dateInput = document.getElementById("date");
+
+function setMinDate() {
+    const now = getNowKuzbass();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+
+    dateInput.min = `${yyyy}-${mm}-${dd}`;
+}
+setMinDate();
+
+// ======================
+// ВРЕМЯ
+// ======================
 const timeSelect = document.getElementById("time");
 
-let selectedTable = null;
+function generateTimes() {
+    timeSelect.innerHTML = "";
 
-// ======================
-// ВЫБОР СТОЛА
-// ======================
+    const now = getNowKuzbass();
+    const selectedDate = dateInput.value;
 
-document.querySelectorAll(".table").forEach(el=>{
-el.onclick=()=>{
-document.querySelectorAll(".table").forEach(t=>t.classList.remove("selected"));
-el.classList.add("selected");
+    for (let h = 13; h <= 23; h++) {
+        ["00", "30"].forEach(m => {
+            const timeStr = `${String(h).padStart(2, '0')}:${m}`;
 
-selectedTable = el.dataset.table;
+            const option = document.createElement("option");
+            option.value = timeStr;
+            option.textContent = timeStr;
 
-console.log("СТОЛ:", selectedTable);
+            // 🚫 запрет прошлого времени
+            if (selectedDate) {
+                const selected = new Date(selectedDate + "T" + timeStr);
+                if (selected < now) {
+                    option.disabled = true;
+                }
+            }
 
-loadTimes();
-};
-});
-
-// ======================
-// ГЕНЕРАЦИЯ ВРЕМЕНИ
-// ======================
-
-function generateTimes(date){
-
-let times = [];
-let day = new Date(date).getDay();
-
-// Пт-Сб до 00:00
-let end = (day === 5 || day === 6) ? 24 : 23;
-
-for(let h=13;h<end;h++){
-times.push(`${String(h).padStart(2,'0')}:00`);
-times.push(`${String(h).padStart(2,'0')}:30`);
+            timeSelect.appendChild(option);
+        });
+    }
 }
 
-return times;
-}
+dateInput.addEventListener("change", generateTimes);
+generateTimes();
 
 // ======================
-// ЗАГРУЗКА ВРЕМЕНИ
+// ВАЛИДАЦИЯ
 // ======================
 
-async function loadTimes(){
+function validateForm(data) {
+    if (!data.name || data.name.trim().length < 2) {
+        alert("Введите корректное имя");
+        return false;
+    }
 
-if(!dateInput.value || !selectedTable){
-console.log("Нет даты или стола");
-return;
-}
+    if (!data.phone || data.phone.length < 10) {
+        alert("Введите корректный номер");
+        return false;
+    }
 
-console.log("ЗАГРУЗКА СЛОТОВ...");
+    if (!data.table) {
+        alert("Выберите стол");
+        return false;
+    }
 
-try{
+    if (!data.date) {
+        alert("Выберите дату");
+        return false;
+    }
 
-let res = await fetch(`${API}/busy_times?date=${dateInput.value}&table=${selectedTable}`);
-let busy = await res.json();
+    if (!data.time) {
+        alert("Выберите время");
+        return false;
+    }
 
-console.log("BUSY:", busy);
-
-// если backend вернул не массив
-if(!Array.isArray(busy)) busy = [];
-
-let allTimes = generateTimes(dateInput.value);
-
-// очищаем select
-timeSelect.innerHTML = "";
-
-// добавляем placeholder
-let first = document.createElement("option");
-first.value = "";
-first.innerText = "Выберите время";
-timeSelect.appendChild(first);
-
-let now = new Date();
-let today = new Date().toISOString().split("T")[0];
-
-allTimes.forEach(t=>{
-
-let [h,m] = t.split(":");
-
-let slot = new Date(dateInput.value);
-slot.setHours(h,m);
-
-// фильтр только для сегодняшнего дня
-if(dateInput.value === today && slot < now) return;
-
-// если не занято
-if(!busy.includes(t)){
-let option = document.createElement("option");
-option.value = t;
-option.innerText = t;
-timeSelect.appendChild(option);
-}
-});
-
-if(timeSelect.options.length === 1){
-console.log("НЕТ СВОБОДНЫХ СЛОТОВ");
-}
-
-}catch(e){
-console.error("ОШИБКА:", e);
-}
+    return true;
 }
 
 // ======================
-// СОБЫТИЕ ДАТЫ
+// ОГРАНИЧЕНИЕ ТЕЛЕФОНА
 // ======================
 
-dateInput.addEventListener("change", ()=>{
-console.log("ДАТА:", dateInput.value);
-loadTimes();
+const phoneInput = document.getElementById("phone");
+
+phoneInput.addEventListener("input", () => {
+    phoneInput.value = phoneInput.value.replace(/[^0-9+]/g, "").slice(0, 12);
 });
 
 // ======================
 // БРОНИРОВАНИЕ
 // ======================
 
-document.getElementById("bookBtn").onclick = async ()=>{
+async function book() {
+    const data = {
+        name: document.getElementById("name").value.trim(),
+        phone: document.getElementById("phone").value.trim(),
+        guests: document.getElementById("guests").value,
+        table: window.selectedTable,
+        date: document.getElementById("date").value,
+        time: document.getElementById("time").value
+    };
 
-if(!selectedTable) return alert("Выберите стол");
-if(!dateInput.value) return alert("Выберите дату");
-if(!timeSelect.value) return alert("Выберите время");
+    if (!validateForm(data)) return;
 
-let data = {
-name: document.getElementById("name").value,
-phone: document.getElementById("phone").value,
-guests: document.getElementById("guests").value,
-table: selectedTable,
-date: dateInput.value,
-time: timeSelect.value
-};
+    // 🚫 проверка прошлого времени
+    const now = getNowKuzbass();
+    const selected = new Date(data.date + "T" + data.time);
 
-let res = await fetch(API + "/booking",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body: JSON.stringify(data)
-});
+    if (selected < now) {
+        alert("Нельзя выбрать прошедшее время");
+        return;
+    }
 
-let result = await res.json();
+    const res = await fetch(`${API}/booking`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data)
+    });
 
-if(result.error){
+    const result = await res.json();
 
-if(result.error === "time_conflict"){
-alert("⛔ Стол занят в это время");
-return;
+    if (result.error === "busy") {
+        alert("❌ Стол уже занят, выберите другое время");
+        return;
+    }
+
+    if (result.error === "guests_limit") {
+        alert("❌ Превышено количество гостей");
+        return;
+    }
+
+    alert("✅ Бронь успешно создана");
 }
-
-alert("Ошибка брони");
-return;
-}
-
-alert("✅ Бронь создана");
-
-};
-
-});
