@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-const API = "https://dubrovka-webapp-8.onrender.com";
+const API = "https://dubrovka-webapp-production-a00c.up.railway.app/";
 
 const tg = window.Telegram.WebApp;
 tg.expand();
