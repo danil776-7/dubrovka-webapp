@@ -1,39 +1,39 @@
 <!DOCTYPE html>
 <html lang="ru">
-<голова>
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Зал «Дубровка»</title>
+<title>Dubrovka Lounge</title>
 
-<стиль>
-тело{
+<style>
+body{
 margin:0;
 font-family:Arial;
 background:#0b0b0b;
-цвет:#fff;
+color:#fff;
 display:flex;
 justify-content:center;
 align-items:center;
-минимальная высота: 100vh;
+min-height:100vh;
 }
 
-/* РєРѕРЅС‚РµР№РЅРµСЂ */
-.контейнер{
-ширина: 420 пикселей;
+/* контейнер */
+.container{
+width:420px;
 max-width:95%;
-фон:#121212;
+background:#121212;
 padding:20px;
 border-radius:16px;
 }
 
-/* Р·Р°РіРѕР»РѕРІРѕРє */
+/* заголовок */
 h1{
 text-align:center;
 margin-bottom:20px;
 }
 
-/* СЃС‚РѕР»С‹ */
+/* столы */
 .tables{
 display:grid;
 grid-template-columns:1fr 1fr;
@@ -41,22 +41,22 @@ gap:10px;
 margin-bottom:10px;
 }
 
-.стол{
+.table{
 padding:15px;
 background:#1a1a1a;
 border-radius:10px;
 text-align:center;
-курсор:указатель;
-Переход: 0,2 с;
+cursor:pointer;
+transition:0.2s;
 }
 
 .table:hover{
-фон:#222;
+background:#222;
 }
 
 .table.active{
 background:#ffcc00;
-цвет:#000;
+color:#000;
 }
 
 /* VIP */
@@ -64,46 +64,46 @@ background:#ffcc00;
 grid-column:1/3;
 }
 
-/* Вход */
-.информация{
+/* описание */
+.info{
 font-size:13px;
 margin-bottom:10px;
-цвет:#aaa;
+color:#aaa;
 }
 
-/* РїРѕР»СЏ */
-ввод, выбрать{
-ширина:100%;
+/* поля */
+input, select{
+width:100%;
 padding:12px;
 margin-bottom:10px;
 border-radius:10px;
-граница:нет;
+border:none;
 background:#1a1a1a;
-цвет:#fff;
+color:#fff;
 }
 
-/* РєРЅРїРєР° */
-кнопка{
-ширина:100%;
+/* кнопка */
+button{
+width:100%;
 padding:14px;
 background:#ffcc00;
-граница:нет;
+border:none;
 border-radius:10px;
 font-weight:bold;
-курсор:указатель;
-Переход: 0,2 с;
+cursor:pointer;
+transition:0.2s;
 }
 
 button:hover{
-непрозрачность: 0,9;
+opacity:0.9;
 }
 
-/* МОБИЛЬНАЯ ВЕРСИЯ */
-@media(max-width:600px){
+/* MOBILE */
+max-width:600px{
 
-.контейнер{
-ширина:100%;
-высота: 100vh;
+.container{
+width:100%;
+height:100vh;
 border-radius:0;
 }
 
@@ -119,13 +119,13 @@ grid-column:1;
 </style>
 </head>
 
-<тело>
+<body>
 
 <div class="container">
 
-<h1>Зал ожидания Дубровка</h1>
+<h1>Dubrovka Lounge</h1>
 
-<!-- СЛОН -->
+<!-- СТОЛЫ -->
 <div class="tables">
 
 <div class="table" data-table="1">1</div>
@@ -138,20 +138,20 @@ grid-column:1;
 
 </div>
 
-<div id="tableInfo" class="info">Добавка</div>
+<div id="tableInfo" class="info">Выберите стол</div>
 
-<!-- Р¤РћР РњРђ -->
+<!-- ФОРМА -->
 <input type="date" id="date">
 
 <select id="time"></select>
 
-<input type="number" id="guests" Placeholder="Номера" min="1" max="20">
+<input type="number" id="guests" placeholder="Количество гостей" min="1" max="20">
 
-<input type="text" id="name" placeholder="Р˜РјСЏ">
+<input type="text" id="name" placeholder="Имя">
 
-<input type="tel" id="phone" Placeholder="РўРµР»РµС„РѕРЅ">
+<input type="tel" id="phone" placeholder="Телефон">
 
-<button id="bookBtn">Добавить</button>
+<button id="bookBtn">Забронировать</button>
 
 </div>
 
@@ -164,23 +164,23 @@ API
 const API = "https://dubrovka-webapp-production-a00c.up.railway.app";
 
 /* =====================
-РЎРўРћР›Р«
+СТОЛЫ
 ===================== */
 
 let selectedTable = null;
 
 const tableInfoData = {
-"1": "рџЋ® PS + рџЄџ С€С‚РѕСЂРєРё •Н11 РіРѕСЃС‚РµР№",
-"2": "рџЋ® ПС + рџЄџ СЪС‚РѕСЂРєРё •4-6 карточек",
-"3": "рџЋ® ПС + рџЄџ СЪС‚РѕСЂРєРё •4-6 карточек",
-"4": "рџЋ® ПС + рџЄџ С€С‚РѕСЂРєРё •4-6 РіРѕСЃС‚РµР№",
-"5": "ќЊН PS •Нет с€С‚РѕСЂРѕРє •Н6 РіРѕСЃС‚РµР№",
-"6": "љЎ 2-3 РіРѕСЃС‚СЏ • Р±РµР· PS • Р±РµР· С€С‚РѕСЂРѕРє",
-"VIP": "рџ”Ґ VIP-к •Н 20 минут"
+"1": "🎮 PS + 🪟 шторки • до 11 гостей",
+"2": "🎮 PS + 🪟 шторки • 4-6 гостей",
+"3": "🎮 PS + 🪟 шторки • 4-6 гостей",
+"4": "🎮 PS + 🪟 шторки • 4-6 гостей",
+"5": "❌ без PS • без шторок • до 6 гостей",
+"6": "⚡ 2-3 гостя • без PS • без шторок",
+"VIP": "🔥 VIP зона • до 20 гостей"
 };
 
 /* =====================
-ААААААААААААААААААААААААААААААА
+КЛИК ПО СТОЛАМ
 ===================== */
 
 document.querySelectorAll(".table").forEach(el=>{
@@ -203,7 +203,7 @@ loadBusy();
 });
 
 /* =====================
-Р”РђРўРђ
+ДАТА
 ===================== */
 
 const dateInput = document.getElementById("date");
@@ -212,7 +212,7 @@ const today = new Date();
 dateInput.min = today.toISOString().split("T")[0];
 
 /* =====================
-Р'Р Р•РњРЇ
+ВРЕМЯ
 ===================== */
 
 const timeSelect = document.getElementById("time");
@@ -225,7 +225,7 @@ for(let i=12;i<=23;i++){
 
 let t = String(i).padStart(2,'0') + ":00";
 
-let opt ​​= document.createElement("option");
+let opt = document.createElement("option");
 opt.value=t;
 opt.textContent=t;
 
@@ -236,14 +236,14 @@ timeSelect.appendChild(opt);
 generateTime();
 
 /* =====================
-Р—АРќРўАСР¬
+ЗАНЯТОСТЬ
 ===================== */
 
-асинхронная функция loadBusy(){
+async function loadBusy(){
 
 if(!selectedTable || !dateInput.value) return;
 
-пытаться{
+try{
 
 let res = await fetch(`${API}/busy_times?date=${dateInput.value}&table=${selectedTable}`);
 let busy = await res.json();
@@ -259,9 +259,10 @@ console.log(e);
 
 dateInput.onchange = loadBusy;
 
-/* =====================
-ААААААААААААААААААААААААААААААААААААААААААААААААААААах
-===================== */
+/*
+
+
+================== */
 
 function validate(){
 
@@ -270,40 +271,40 @@ let name = document.getElementById("name").value.trim();
 let phone = document.getElementById("phone").value.trim();
 
 if(!selectedTable){
-alert("Нет");
-вернуть false;
+alert("Выберите стол");
+return false;
 }
 
 if(!dateInput.value){
-alert("Нет");
-вернуть false;
+alert("Выберите дату");
+return false;
 }
 
 if(!timeSelect.value){
-alert("Нет информации");
-вернуть false;
+alert("Выберите время");
+return false;
 }
 
 if(!name){
-alert("Нет");
-вернуть false;
+alert("Введите имя");
+return false;
 }
 
 if(!phone){
-alert("Нет места");
-вернуть false;
+alert("Введите телефон");
+return false;
 }
 
 if(guests < 1 || guests > 20){
-alert("РќРμРѕСЂСЂРμРєС‚РЅРѕРµ РєРѕР»РёС‡РμСЃС‚РІРѕ РіРѕСЃС‚РμР№");
-вернуть false;
+alert("Некорректное количество гостей");
+return false;
 }
 
-вернуть true;
+return true;
 }
 
 /* =====================
-Р'Р РћРќР¬
+БРОНЬ
 ===================== */
 
 document.getElementById("bookBtn").onclick = async () => {
@@ -311,18 +312,18 @@ document.getElementById("bookBtn").onclick = async () => {
 if(!validate()) return;
 
 let data = {
-имя: document.getElementById("name").value.trim(),
-телефон: document.getElementById("phone").value.trim(),
-гости: Number(document.getElementById("guests").value),
-таблица: выбранная таблица,
-дата: dateInput.value,
-время: timeSelect.value
+name: document.getElementById("name").value.trim(),
+phone: document.getElementById("phone").value.trim(),
+guests: Number(document.getElementById("guests").value),
+table: selectedTable,
+date: dateInput.value,
+time: timeSelect.value
 };
 
-пытаться{
+try{
 
 let res = await fetch(API+"/booking",{
-метод: "POST",
+method:"POST",
 headers:{"Content-Type":"application/json"},
 body:JSON.stringify(data)
 });
@@ -330,24 +331,24 @@ body:JSON.stringify(data)
 let result = await res.json();
 
 if(result.ok){
-alert("Нет места њ…");
+alert("Бронь создана ✅");
 location.reload();
 }
 else if(result.error==="busy"){
-alert("Старт");
+alert("Стол занят ❌");
 }
 else if(result.error==="guests_limit"){
-alert("РЎРёС€РєРѕРј РјРЅРѕРіРѕ РіРѕСЃС‚РµР№ ќЊ");
+alert("Слишком много гостей ❌");
 }
 else if(result.error==="past_time"){
-alert("РќРµР»СЊР·СЏ РІС‹Р±СЂР°С‚СЊ РїСЂРѕС€РѕРµ РІСЂРµРјСЏ вќЊ");
+alert("Нельзя выбрать прошлое время ❌");
 }
-еще{
-alert("Нет ќЊ");
+else{
+alert("Ошибка ❌");
 }
 
 }catch(e){
-alert("Добавлено значение ќЊ");
+alert("Ошибка сервера ❌");
 }
 
 };
