@@ -6,9 +6,8 @@ from datetime import datetime
 import requests
 
 # =====================
-# DATABASE (Render fix)
+# DATABASE
 # =====================
-
 DATABASE_URL = "sqlite:////tmp/db.sqlite"
 
 engine = create_engine(
@@ -20,9 +19,8 @@ SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
 # =====================
-# MODEL
+# MODELS
 # =====================
-
 class Booking(Base):
     __tablename__ = "bookings"
 
@@ -35,12 +33,18 @@ class Booking(Base):
     time = Column(String)
     status = Column(String, default="pending")
 
+class Log(Base):
+    __tablename__ = "logs"
+
+    id = Column(Integer, primary_key=True)
+    text = Column(String)
+    created_at = Column(String)
+
 Base.metadata.create_all(bind=engine)
 
 # =====================
 # APP
 # =====================
-
 app = FastAPI()
 
 app.add_middleware(
@@ -53,14 +57,12 @@ app.add_middleware(
 # =====================
 # CONFIG
 # =====================
-
 TELEGRAM_BOT_TOKEN = "8769949339:AAFwvdkPFgj7l4BQwGfmcljauMWXRx7qves"
 ADMIN_CHAT_ID = "7545540622"
 
 # =====================
 # LIMITS
 # =====================
-
 TABLE_LIMITS = {
     "1": 11,
     "2": 6,
@@ -74,7 +76,6 @@ TABLE_LIMITS = {
 # =====================
 # TELEGRAM
 # =====================
-
 def send_telegram(text):
     try:
         requests.post(
@@ -91,7 +92,6 @@ def send_telegram(text):
 # =====================
 # HELPERS
 # =====================
-
 def normalize_date(date_str):
     try:
         return datetime.strptime(date_str, "%Y-%m-%d").strftime("%Y-%m-%d")
@@ -101,15 +101,13 @@ def normalize_date(date_str):
 # =====================
 # ROOT
 # =====================
-
 @app.get("/")
 def root():
     return {"status": "ok"}
 
 # =====================
-# ВСЕ БРОНИ (админка)
+# ВСЕ БРОНИ (АДМИНКА)
 # =====================
-
 @app.get("/bookings")
 def get_bookings():
     db = SessionLocal()
@@ -133,7 +131,6 @@ def get_bookings():
 # =====================
 # БРОНИ ПО ДАТЕ
 # =====================
-
 @app.get("/bookings_by_date")
 def bookings_by_date(date: str):
     db = SessionLocal()
@@ -163,7 +160,6 @@ def bookings_by_date(date: str):
 # =====================
 # ЗАНЯТЫЕ ВРЕМЕНА
 # =====================
-
 @app.get("/busy_times")
 def busy_times(date: str, table: str):
     db = SessionLocal()
@@ -182,7 +178,6 @@ def busy_times(date: str, table: str):
 # =====================
 # СОЗДАНИЕ БРОНИ
 # =====================
-
 "/booking"
 def create_booking(data: dict):
     db = SessionLocal()
@@ -192,22 +187,23 @@ def create_booking(data: dict):
     time = data["time"]
     guests = int(data["guests"])
 
-    # 🔒 лимит гостей
+    # лимит гостей
     max_guests = TABLE_LIMITS.get(table, 5)
     if guests > max_guests:
-        return {"error": "guests_limit"}
 
-    # 🔒 проверка занятости
+
+return {"error": "guests_limit"}
+
+    # проверка занятости
     exists = db.query(Booking).filter(
-
-
-ooking.date == date,
+        Booking.date == date,
         Booking.time == time,
         Booking.table == table,
         Booking.status != "done"
     ).first()
 
     if exists:
+        db.close()
         return {"error": "busy"}
 
     booking = Booking(
@@ -221,10 +217,18 @@ ooking.date == date,
     )
 
     db.add(booking)
+
+    # лог
+    log = Log(
+        text=f"Новая бронь: стол {table} {date} {time}",
+        created_at=str(datetime.now())
+    )
+    db.add(log)
+
     db.commit()
     db.close()
 
-    # 🔥 TELEGRAM
+    # Telegram уведомление
     send_telegram(
         f"<b>🔥 Новая бронь</b>\n\n"
         f"👤 Имя: {data['name']}\n"
@@ -238,9 +242,8 @@ ooking.date == date,
     return {"ok": True}
 
 # =====================
-# ГОСТЬ УШЕЛ
+# ГОСТЬ УШЁЛ
 # =====================
-
 "/done/{id}"
 def done(id: int):
     db = SessionLocal()
@@ -250,10 +253,37 @@ def done(id: int):
     ).first()
 
     if not booking:
+        db.close()
         return {"error": "not_found"}
 
     booking.status = "done"
+
+    # лог
+    log = Log(
+        text=f"Гость ушёл (ID {id})",
+        created_at=str(datetime.now())
+    )
+    db.add(log)
+
     db.commit()
     db.close()
 
-    return {"ok": True} 
+    return {"ok": True}
+
+# =====================
+# ЛОГИ
+# =====================
+@app.get("/logs")
+def get_logs():
+    db = SessionLocal()
+    data = db.query(Log).all()
+    db.close()
+
+    return [
+        {
+            "id": l.id,
+            "text": l.text,
+            "created_at": l.created_at
+        }
+        for l in data
+    ]
