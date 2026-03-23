@@ -1,149 +1,179 @@
 const API = "https://dubrovka-webapp-9.onrender.com";
 
-// ======================
-// ТАЙМЗОНА (Новокузнецк UTC+7)
-// ======================
-function getNowKuzbass() {
-    const now = new Date();
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-    return new Date(utc + (7 * 60 * 60 * 1000));
+let currentMode = "today";
+let currentData = [];
+let lastIds = [];
+
+// 🔔 звук
+function notify(text){
+    const audio = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+    audio.play();
 }
 
-// ======================
-// ОГРАНИЧЕНИЕ ДАТЫ
-// ======================
-const dateInput = document.getElementById("date");
+// =====================
+// ЗАГРУЗКА
+// =====================
 
-function setMinDate() {
-    const now = getNowKuzbass();
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-
-    dateInput.min = `${yyyy}-${mm}-${dd}`;
-}
-setMinDate();
-
-// ======================
-// ВРЕМЯ
-// ======================
-const timeSelect = document.getElementById("time");
-
-function generateTimes() {
-    timeSelect.innerHTML = "";
-
-    const now = getNowKuzbass();
-    const selectedDate = dateInput.value;
-
-    for (let h = 13; h <= 23; h++) {
-        ["00", "30"].forEach(m => {
-            const timeStr = `${String(h).padStart(2, '0')}:${m}`;
-
-            const option = document.createElement("option");
-            option.value = timeStr;
-            option.textContent = timeStr;
-
-            // 🚫 запрет прошлого времени
-            if (selectedDate) {
-                const selected = new Date(selectedDate + "T" + timeStr);
-                if (selected < now) {
-                    option.disabled = true;
-                }
-            }
-
-            timeSelect.appendChild(option);
-        });
-    }
+async function loadToday(){
+    let today = new Date().toISOString().split("T")[0];
+    currentMode = "today";
+    await loadByDate(today);
 }
 
-dateInput.addEventListener("change", generateTimes);
-generateTimes();
+async function loadByDate(date){
+    currentMode = "calendar";
 
-// ======================
-// ВАЛИДАЦИЯ
-// ======================
+    let res = await fetch(`${API}/bookings_by_date?date=${date}`);
+    let data = await res.json();
 
-function validateForm(data) {
-    if (!data.name || data.name.trim().length < 2) {
-        alert("Введите корректное имя");
-        return false;
-    }
+    detectNew(data);
 
-    if (!data.phone || data.phone.length < 10) {
-        alert("Введите корректный номер");
-        return false;
-    }
-
-    if (!data.table) {
-        alert("Выберите стол");
-        return false;
-    }
-
-    if (!data.date) {
-        alert("Выберите дату");
-        return false;
-    }
-
-    if (!data.time) {
-        alert("Выберите время");
-        return false;
-    }
-
-    return true;
+    currentData = data;
+    render();
 }
 
-// ======================
-// ОГРАНИЧЕНИЕ ТЕЛЕФОНА
-// ======================
+// =====================
+// НОВЫЕ БРОНИ
+// =====================
 
-const phoneInput = document.getElementById("phone");
+function detectNew(data){
+    const ids = data.map(b=>b.id);
 
-phoneInput.addEventListener("input", () => {
-    phoneInput.value = phoneInput.value.replace(/[^0-9+]/g, "").slice(0, 12);
-});
-
-// ======================
-// БРОНИРОВАНИЕ
-// ======================
-
-async function book() {
-    const data = {
-        name: document.getElementById("name").value.trim(),
-        phone: document.getElementById("phone").value.trim(),
-        guests: document.getElementById("guests").value,
-        table: window.selectedTable,
-        date: document.getElementById("date").value,
-        time: document.getElementById("time").value
-    };
-
-    if (!validateForm(data)) return;
-
-    // 🚫 проверка прошлого времени
-    const now = getNowKuzbass();
-    const selected = new Date(data.date + "T" + data.time);
-
-    if (selected < now) {
-        alert("Нельзя выбрать прошедшее время");
-        return;
-    }
-
-    const res = await fetch(`${API}/booking`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(data)
+    ids.forEach(id=>{
+        if(!lastIds.includes(id)){
+            notify("Новая бронь");
+        }
     });
 
-    const result = await res.json();
-
-    if (result.error === "busy") {
-        alert("❌ Стол уже занят, выберите другое время");
-        return;
-    }
-
-    if (result.error === "guests_limit") {
-        alert("❌ Превышено количество гостей");
-        return;
-    }
-
-    alert("✅ Бронь успешно создана");
+    lastIds = ids;
 }
+
+// =====================
+// РЕНДЕР
+// =====================
+
+function render(){
+
+    let html="";
+
+    let activeBookings = currentData.filter(b => b.status !== "done");
+
+    if(activeBookings.length === 0){
+        html="<div>Нет броней</div>";
+    }else{
+
+        activeBookings
+        .sort((a,b)=>a.time.localeCompare(b.time))
+        .forEach(b=>{
+
+            let statusColor = "#333";
+
+            if(b.status === "pending") statusColor = "#ffaa00";
+            if(b.status === "active") statusColor = "#00cc66";
+
+            html+=`
+            <div class="card">
+
+            <div class="status" style="background:${statusColor}">
+                ${b.status}
+            </div>
+
+            <h3>${b.name}</h3>
+
+            <div class="small">
+            📞 ${b.phone}<b
+           👥 ${b.guests} гостей<br
+          🪑 Стол: ${b.table}
+
+         📅 ${b.date}
+
+        ⏰ ${b.time}
+            </div>
+
+            <button onclick="done(${b.id})">
+            Гость ушёл
+            </button>
+
+            </div>
+            `;
+        });
+    }
+
+    document.getElementById("list").innerHTML = html;
+}
+
+// =====================
+// DONE
+// =====================
+
+async function done(id){
+
+    await fetch(API+"/done/"+id,{method:"POST"});
+
+    currentData = currentData.map(b => {
+        if(b.id === id){
+            b.status = "done";
+        }
+        return b;
+    });
+
+    render();
+}
+
+// =====================
+// ТАБЫ
+// =====================
+
+function setActive(el){
+    document.querySelectorAll(".menu div").forEach(e=>e.classList.remove("active"));
+    el.classList.add("active");
+}
+
+function showToday(el){
+    setActive(el);
+    document.getElementById("dateInput").style.display="none";
+    loadToday();
+}
+
+function showCalendar(el){
+    setActive(el);
+    document.getElementById("dateInput").style.display="block";
+}
+
+// =====================
+// СОБЫТИЯ
+// =====================
+
+document.getElementById("dateInput").onchange = () => {
+    loadByDate(document.getElementById("dateInput").value);
+};
+
+// =====================
+// АВТООБНОВЛЕНИЕ
+// =====================
+
+async function refresh(){
+
+    let date;
+
+    if(currentMode === "today"){
+        date = new Date().toISOString().split("T")[0];
+    }else{
+        if(!document.getElementById("dateInput").value) return;
+        date = document.getElementById("dateInput").value;
+    }
+
+    let res = await fetch(`${API}/bookings_by_date?date=${date}`);
+    let data = await res.json();
+
+    detectNew(data);
+
+    currentData = data;
+
+    render();
+}
+
+setInterval(refresh, 3000);
+
+// старт
+loadToday();
