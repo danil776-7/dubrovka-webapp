@@ -1,4 +1,4 @@
-const API = "https://dubrovka-webapp-9.onrender.com";
+const API = "dubrovka-webapp-production.up.railway.app";
 
 let currentMode = "today";
 let currentData = [];
