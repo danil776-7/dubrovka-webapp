@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Dubrovka Lounge</title>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+body{margin:0;font-family:Arial;background:#000;color:#e7d9c0;}
+video{position:fixed;width:100%;height:100%;object-fit:cover;z-index:-2;}
+.overlay{position:fixed;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:-1;}
+
+.container{max-width:420px;margin:auto;padding:20px;}
+
+.card{
+background:rgba(255,255,255,0.05);
+backdrop-filter:blur(12px);
+padding:20px;
+border-radius:20px;
+}
+
+.tables{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:10px;
+}
+
+.table{
+padding:15px;
+background:#222;
+border-radius:10px;
+text-align:center;
+cursor:pointer;
+}
+
+.table.selected{background:#d6b36a;color:black;}
+
+.desc{
+background:#111;
+padding:10px;
+border-radius:10px;
+margin:10px 0;
+white-space:pre-line;
+}
+
+input, select{
+width:100%;
+padding:12px;
+margin:6px 0;
+border-radius:10px;
+border:none;
+}
+
+button{
+width:100%;
+padding:14px;
+background:#d6b36a;
+border:none;
+border-radius:10px;
+cursor:pointer;
+}
+
+.footer{
+margin-top:20px;
+text-align:center;
+font-size:14px;
+color:#ccc;
+}
+
+.map-btn{
+display:block;
+margin-top:10px;
+padding:10px;
+background:#222;
+border-radius:8px;
+text-decoration:none;
+color:white;
+}
+</style>
+</head>
+
+<body>
+
+<video autoplay muted loop playsinline>
+<source src="bg.mp4" type="video/mp4">
+</video>
+
+<div class="overlay"></div>
+
+<div class="container">
+<div class="card">
+
+<h2>🍽 Dubrovka Lounge</h2>
+
+<div class="tables">
+<div class="table" data-table="1">1</div>
+<div class="table" data-table="2">2</div>
+<div class="table" data-table="3">3</div>
+<div class="table" data-table="4">4</div>
+<div class="table" data-table="5">5</div>
+<div class="table" data-table="6">6</div>
+<div class="table" data-table="VIP">VIP</div>
+</div>
+
+<div id="tableInfo" class="desc">Выберите стол</div>
+
+<input id="date" type="date">
+
+<select id="time">
+<option value="">Выберите время</option>
+</select>
+
+<input id="guests" placeholder="Количество гостей">
+<input id="name" placeholder="Имя">
+<input id="phone" placeholder="+7999" maxlength="12">
+
+<button id="bookBtn">Забронировать</button>
+
+<div class="footer">
+📍 Ермакова 11<br>
+📞 +7‒913‒432‒01‒01
+
+<a class="map-btn" href="https://2gis.ru/novokuznetsk/geo/70000001067987554" target="_blank">
+Открыть в 2ГИС
+</a>
+</div>
+
+</div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+const API = "https://dubrovka-webapp-9.onrender.com";
+
+const tg = window.Telegram.WebApp;
+tg.expand();
+
+/* элементы */
+const phoneInput = document.getElementById("phone");
+const nameInput = document.getElementById("name");
+const guestsInput = document.getElementById("guests");
+const dateInput = document.getElementById("date");
+const timeSelect = document.getElementById("time");
+const tableInfo = document.getElementById("tableInfo");
+const bookBtn = document.getElementById("bookBtn");
+
+let selectedTable = null;
+
+/* описание столов */
+const tables = {
+"1": "Приватная зона со шторками и PlayStation\nДо 7 гостей",
+"2": "Приватная зона со шторками и PlayStation\nДо 5 гостей",
+"3": "Приватная зона со шторками и PlayStation\nДо 5 гостей",
+"4": "Приватная зона со шторками и PlayStation\nДо 5 гостей",
+"5": "Открытая зона без шторок\nДо 5 гостей",
+"6": "Компактный стол для 2–3 гостей",
+"VIP": "VIP комната (депозитная)\nЧерез администратора"
+};
+
+/* дата */
+dateInput.min = new Date().toISOString().split("T")[0];
+
+/* выбор стола */
+document.querySelectorAll(".table").forEach(el=>{
+el.onclick=()=>{
+document.querySelectorAll(".table").forEach(t=>t.classList.remove("selected"));
+el.classList.add("selected");
+
+selectedTable=el.dataset.table;
+tableInfo.innerText=tables[selectedTable];
+
+loadTimes();
+};
+});
+
+/* генерация времени */
+function generateTimes(date){
+let times=[];
+let day=new Date(date).getDay();
+
+let end=23;
+if(day===5||day===6) end=24;
+
+for(let h=13;h<end;h++){
+times.push(`${String(h).padStart(2,'0')}:00`);
+times.push(`${String(h).padStart(2,'0')}:30`);
+}
+
+return times;
+}
+
+/* загрузка времени */
+async function loadTimes(){
+
+if(!dateInput.value||!selectedTable) return;
+
+try{
+
+let res=await fetch(`${API}/busy_times?date=${dateInput.value}&table=${selectedTable}`);
+let busy=await res.json();
+
+if(!Array.isArray(busy)) busy=[];
+
+let allTimes=generateTimes(dateInput.value);
+
+timeSelect.innerHTML='<option value="">Выберите время</option>';
+
+let now=new Date();
+
+allTimes.forEach(t=>{
+let [h,m]=t.split(":");
+
+let slot=new Date(dateInput.value);
+slot.setHours(h,m);
+
+if(slot<now) return;
+
+if(!busy.includes(t)){
+let option=document.createElement("option");
+option.value=t;
+option.innerText=t;
+timeSelect.appendChild(option);
+}
+});
+
+}catch(e){
+console.error(e);
+}
+}
+
+dateInput.addEventListener("change", loadTimes);
+
+/* телефон */
+phoneInput.addEventListener("input",()=>{
+let v=phoneInput.value.replace(/\D/g,"");
+if(!v.startsWith("7")) v="7"+v;
+v=v.slice(0,11);
+phoneInput.value="+"+v;
+});
+
+/* кнопка */
+bookBtn.onclick = async ()=>{
+
+console.log("КНОПКА НАЖАТА");
+
+if(!selectedTable){
+alert("Выберите стол");
+return;
+}
+
+if(selectedTable==="VIP"){
+alert("VIP бронируется через администратора");
+return;
+}
+
+if(!dateInput.value){
+alert("Выберите дату");
+return;
+}
+
+if(!timeSelect.value){
+alert("Выберите время");
+return;
+}
+
+let nameVal=nameInput.value.trim();
+let phoneVal=phoneInput.value;
+let guestsVal=parseInt(guestsInput.value||0);
+
+if(!nameVal){
+alert("Введите имя");
+return;
+}
+
+if(phoneVal.length!==12){
+alert("Введите корректный номер");
+return;
+}
+
+let data={
+name:nameVal,
+phone:phoneVal,
+guests:guestsVal,
+table:selectedTable,
+date:dateInput.value,
+time:timeSelect.value,
+user_id: tg.initDataUnsafe?.user?.id||0
+};
+
+try{
+
+let res=await fetch(API+"/booking",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify(data)
+});
+
+let result=await res.json();
+
+if(result.error){
+alert("❌ Стол уже занят");
+return;
+}
+
+tg.sendData(JSON.stringify(data));
+
+alert("✅ Бронь отправлена");
+
+}catch(e){
+console.error(e);
+alert("Ошибка соединения с сервером");
+}
+
+};
+
+});
+</script>
+
+</body>
+</html>
