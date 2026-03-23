@@ -2,21 +2,27 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import requests
 
-app = FastAPI()
-
 # =====================
-# DATABASE (Railway)
+# DATABASE (Railway + fallback)
 # =====================
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+# если нет Postgres → fallback на SQLite
+if not DATABASE_URL:
+    DATABASE_URL = "sqlite:///./db.sqlite"
+
+# фикс для postgres
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://")
+
 engine = create_engine(
     DATABASE_URL,
-    pool_pre_ping=True
+    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
 )
 
 SessionLocal = sessionmaker(bind=engine)
@@ -29,7 +35,7 @@ Base = declarative_base()
 class Booking(Base):
     __tablename__ = "bookings"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
     phone = Column(String)
     guests = Column(Integer)
@@ -41,8 +47,10 @@ class Booking(Base):
 Base.metadata.create_all(bind=engine)
 
 # =====================
-# CORS
+# APP
 # =====================
+
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
@@ -55,8 +63,8 @@ app.add_middleware(
 # CONFIG
 # =====================
 
-TELEGRAM_BOT_TOKEN = "ТВОЙ_ТОКЕН"
-ADMIN_CHAT_ID = "ТВОЙ_ID"
+TELEGRAM_BOT_TOKEN = "8769949339:AAFwvdkPFgj7l4BQwGfmcljauMWXRx7qves"
+ADMIN_CHAT_ID = "7545540622"
 
 # =====================
 # LIMITS
@@ -73,7 +81,14 @@ TABLE_LIMITS = {
 }
 
 # =====================
-# HELPERS
+# TIMEZONE (Новокузнецк)
+# =====================
+
+def now_novokuznetsk():
+    return datetime.utcnow() + timedelta(hours=7)
+
+# =====================
+# TELEGRAM
 # =====================
 
 def send_telegram(text):
@@ -82,18 +97,12 @@ def send_telegram(text):
             f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
             json={
                 "chat_id": ADMIN_CHAT_ID,
-                "text": text
+                "text": text,
+                "parse_mode": "HTML"
             }
         )
-    except:
-        pass
-
-def is_past(date, time):
-    try:
-        dt = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
-        return dt < datetime.now()
-    except:
-        return False
+    except Exception as e:
+        print("TG ERROR:", e)
 
 # =====================
 # ROOT
@@ -104,7 +113,7 @@ def root():
     return {"status": "ok"}
 
 # =====================
-# GET BOOKINGS
+# ВСЕ БРОНИ (админка)
 # =====================
 
 @app.get("/bookings")
@@ -113,22 +122,10 @@ def get_bookings():
     data = db.query(Booking).all()
     db.close()
 
-    return [
-        {
-            "id": b.id,
-            "name": b.name,
-            "phone": b.phone,
-            "guests": b.guests,
-            "table": b.table,
-            "date": b.date,
-            "time": b.time,
-            "status": b.status
-        }
-        for b in data
-    ]
+    return [b.__dict__ for b in data]
 
 # =====================
-# BOOKINGS BY DATE
+# ПО ДАТЕ
 # =====================
 
 @app.get("/bookings_by_date")
@@ -157,7 +154,7 @@ def bookings_by_date(date: str):
     ]
 
 # =====================
-# BUSY TIMES
+# ЗАНЯТОЕ ВРЕМЯ
 # =====================
 
 @app.get("/busy_times")
@@ -175,24 +172,38 @@ def busy_times(date: str, table: str):
     return [b.time for b in data]
 
 # =====================
-# CREATE BOOKING
+# СОЗДАНИЕ БРОНИ
 # =====================
 
 "/booking"
 def create_booking(data: dict):
     db = SessionLocal()
 
-    date = data["date"]
-    table = str(data["table"])
-    time = data["time"]
-    guests = int(data["guests"])
+    name = data.get("name")
+    phone = data.get("phone")
+    guests = int(data.get("guests", 0))
+    table = str(data.get("table"))
+    date = data.get("date")
+    time = data.get("time")
 
-    if is_past(date, time):
-        return {"error": "past"}
+    # ❌ валидация
+    if not name or not phone or guests <= 0:
+        return {"error": "invalid"}
 
-    if guests > TABLE_LIMITS.get(table, 5):
-        return {"error": "limit"}
+    # ❌ лимит гостей
+    max_guests = TABLE_LIMITS.get(table, 5)
+    if guests > max_guests:
+        return {"error": "guests_limit"
 
+
+# ❌ проверка времени (Новокузнецк)
+    now = now_novokuznetsk()
+    booking_dt = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
+
+    if booking_dt < now:
+        return {"error": "past_time"}
+
+    # ❌ проверка занятости
     exists = db.query(Booking).filter(
         Booking.date == date,
         Booking.time == time,
@@ -203,28 +214,36 @@ def create_booking(data: dict):
     if exists:
         return {"error": "busy"}
 
+    # ✅ создаём
     booking = Booking(
-        name=data["name"],
-        phone=data["phone"
-
-
-,
+        name=name,
+        phone=phone,
         guests=guests,
         table=table,
         date=date,
-        time=time
+        time=time,
+        status="pending"
     )
 
     db.add(booking)
     db.commit()
     db.close()
 
-    send_telegram(f"Новая бронь: {data}")
+    # 🔔 TELEGRAM
+    send_telegram(
+        f"<b>🔥 Новая бронь</b>\n\n"
+        f"👤 {name}\n"
+        f"📞 {phone}\n"
+        f"👥 {guests}\n"
+        f"🪑 {table}\n"
+        f"📅 {date}\n"
+        f"⏰ {time}"
+    )
 
     return {"ok": True}
 
 # =====================
-# DONE
+# ГОСТЬ УШЕЛ
 # =====================
 
 "/done/{id}"
@@ -242,4 +261,4 @@ def done(id: int):
     db.commit()
     db.close()
 
-    return {"ok": True}]
+    return {"ok": True}}
