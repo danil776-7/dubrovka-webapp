@@ -7,10 +7,33 @@
 <title>Dubrovka Lounge</title>
 
 <style>
+
+/* ===== ВИДЕО ФОН ===== */
+video.bg{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+object-fit:cover;
+z-index:-1;
+}
+
+/* затемнение */
+.overlay{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.6);
+z-index:-1;
+}
+
+/* ===== ОСНОВА ===== */
 body{
 margin:0;
 font-family:Arial;
-background:#0b0b0b;
 color:#fff;
 display:flex;
 justify-content:center;
@@ -22,15 +45,27 @@ min-height:100vh;
 .container{
 width:420px;
 max-width:95%;
-background:#121212;
+background:rgba(20,20,20,0.9);
 padding:20px;
 border-radius:16px;
+backdrop-filter: blur(10px);
+}
+
+/* логотип */
+.logo{
+display:flex;
+justify-content:center;
+margin-bottom:10px;
+}
+
+.logo img{
+width:120px;
 }
 
 /* заголовок */
 h1{
 text-align:center;
-margin-bottom:20px;
+margin-bottom:15px;
 }
 
 /* столы */
@@ -68,7 +103,7 @@ grid-column:1/3;
 .info{
 font-size:13px;
 margin-bottom:10px;
-color:#aaa;
+color:#ccc;
 }
 
 /* поля */
@@ -91,14 +126,9 @@ border:none;
 border-radius:10px;
 font-weight:bold;
 cursor:pointer;
-transition:0.2s;
 }
 
-button:hover{
-opacity:0.9;
-}
-
-/* MOBILE */
+/* ===== АДАПТАЦИЯ ===== */
 max-width:600px{
 
 .container{
@@ -115,19 +145,35 @@ grid-template-columns:1fr;
 grid-column:1;
 }
 
+.logo img{
+width:100px;
 }
+
+}
+
 </style>
 </head>
 
 <body>
 
+<!-- 🎥 ВИДЕО -->
+<video autoplay muted loop class="bg">
+<source src="bg.mp4" type="video/mp4">
+</video>
+
+<div class="overlay"></div>
+
 <div class="container">
+
+<!-- 🔥 ЛОГО -->
+<div class="logo">
+<img src="logo.png">
+</div>
 
 <h1>Dubrovka Lounge</h1>
 
 <!-- СТОЛЫ -->
 <div class="tables">
-
 <div class="table" data-table="1">1</div>
 <div class="table" data-table="2">2</div>
 <div class="table" data-table="3">3</div>
@@ -135,225 +181,22 @@ grid-column:1;
 <div class="table" data-table="5">5</div>
 <div class="table" data-table="6">6</div>
 <div class="table vip" data-table="VIP">VIP</div>
-
 </div>
 
 <div id="tableInfo" class="info">Выберите стол</div>
 
 <!-- ФОРМА -->
 <input type="date" id="date">
-
 <select id="time"></select>
-
 <input type="number" id="guests" placeholder="Количество гостей" min="1" max="20">
-
 <input type="text" id="name" placeholder="Имя">
-
 <input type="tel" id="phone" placeholder="Телефон">
 
 <button id="bookBtn">Забронировать</button>
 
 </div>
 
-<script>
-
-/* =====================
-API
-===================== */
-
-const API = "https://dubrovka-webapp-production-a00c.up.railway.app";
-
-/* =====================
-СТОЛЫ
-===================== */
-
-let selectedTable = null;
-
-const tableInfoData = {
-"1": "🎮 PS + 🪟 шторки • до 11 гостей",
-"2": "🎮 PS + 🪟 шторки • 4-6 гостей",
-"3": "🎮 PS + 🪟 шторки • 4-6 гостей",
-"4": "🎮 PS + 🪟 шторки • 4-6 гостей",
-"5": "❌ без PS • без шторок • до 6 гостей",
-"6": "⚡ 2-3 гостя • без PS • без шторок",
-"VIP": "🔥 VIP зона • до 20 гостей"
-};
-
-/* =====================
-КЛИК ПО СТОЛАМ
-===================== */
-
-document.querySelectorAll(".table").forEach(el=>{
-
-el.onclick = () => {
-
-selectedTable = el.dataset.table;
-
-document.querySelectorAll(".table")
-.forEach(e=>e.classList.remove("active"));
-
-el.classList.add("active");
-
-document.getElementById("tableInfo").innerText =
-tableInfoData[selectedTable];
-
-loadBusy();
-};
-
-});
-
-/* =====================
-ДАТА
-===================== */
-
-const dateInput = document.getElementById("date");
-
-const today = new Date();
-dateInput.min = today.toISOString().split("T")[0];
-
-/* =====================
-ВРЕМЯ
-===================== */
-
-const timeSelect = document.getElementById("time");
-
-function generateTime(){
-
-timeSelect.innerHTML="";
-
-for(let i=12;i<=23;i++){
-
-let t = String(i).padStart(2,'0') + ":00";
-
-let opt = document.createElement("option");
-opt.value=t;
-opt.textContent=t;
-
-timeSelect.appendChild(opt);
-}
-}
-
-generateTime();
-
-/* =====================
-ЗАНЯТОСТЬ
-===================== */
-
-async function loadBusy(){
-
-if(!selectedTable || !dateInput.value) return;
-
-try{
-
-let res = await fetch(`${API}/busy_times?date=${dateInput.value}&table=${selectedTable}`);
-let busy = await res.json();
-
-document.querySelectorAll("#time option").forEach(o=>{
-o.disabled = busy.includes(o.value);
-});
-
-}catch(e){
-console.log(e);
-}
-}
-
-dateInput.onchange = loadBusy;
-
-/*
-
-
-================== */
-
-function validate(){
-
-let guests = Number(document.getElementById("guests").value);
-let name = document.getElementById("name").value.trim();
-let phone = document.getElementById("phone").value.trim();
-
-if(!selectedTable){
-alert("Выберите стол");
-return false;
-}
-
-if(!dateInput.value){
-alert("Выберите дату");
-return false;
-}
-
-if(!timeSelect.value){
-alert("Выберите время");
-return false;
-}
-
-if(!name){
-alert("Введите имя");
-return false;
-}
-
-if(!phone){
-alert("Введите телефон");
-return false;
-}
-
-if(guests < 1 || guests > 20){
-alert("Некорректное количество гостей");
-return false;
-}
-
-return true;
-}
-
-/* =====================
-БРОНЬ
-===================== */
-
-document.getElementById("bookBtn").onclick = async () => {
-
-if(!validate()) return;
-
-let data = {
-name: document.getElementById("name").value.trim(),
-phone: document.getElementById("phone").value.trim(),
-guests: Number(document.getElementById("guests").value),
-table: selectedTable,
-date: dateInput.value,
-time: timeSelect.value
-};
-
-try{
-
-let res = await fetch(API+"/booking",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify(data)
-});
-
-let result = await res.json();
-
-if(result.ok){
-alert("Бронь создана ✅");
-location.reload();
-}
-else if(result.error==="busy"){
-alert("Стол занят ❌");
-}
-else if(result.error==="guests_limit"){
-alert("Слишком много гостей ❌");
-}
-else if(result.error==="past_time"){
-alert("Нельзя выбрать прошлое время ❌");
-}
-else{
-alert("Ошибка ❌");
-}
-
-}catch(e){
-alert("Ошибка сервера ❌");
-}
-
-};
-
-</script>
+<script src="script.js"></script>
 
 </body>
 </html>
