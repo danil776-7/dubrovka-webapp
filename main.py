@@ -1,25 +1,12 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from sqlalchemy import create_engine, Column, Integer, String, text
+from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
 from datetime import datetime, timedelta
 import requests
 import os
 import threading
 import time
-import re
-import logging
-
-# =====================
-# ЛОГИРОВАНИЕ
-# =====================
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 # =====================
 # APP
@@ -27,14 +14,13 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-# 🔥 ПРОСТАЯ НАСТРОЙКА CORS - РАЗРЕШАЕМ ВСЕ ДЛЯ ТЕСТА
+# CORS - разрешаем все для теста
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Разрешаем все источники
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"],
 )
 
 # =====================
@@ -49,8 +35,7 @@ engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
     pool_size=5,
-    max_overflow=10,
-    pool_recycle=3600
+    max_overflow=10
 )
 
 SessionLocal = sessionmaker(bind=engine)
@@ -72,20 +57,9 @@ class Booking(Base):
     time = Column(String)
     status = Column(String, default="active")
     chat_id = Column(String, nullable=True)
-    created_at = Column(String, nullable=True)
 
 # Создаем таблицы
 try:
-    with engine.connect() as conn:
-        # Добавляем колонки если их нет
-        try:
-            conn.execute(text("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS chat_id VARCHAR"))
-            conn.execute(text("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS created_at VARCHAR"))
-            conn.commit()
-            print("✅ Колонки добавлены")
-        except Exception as e:
-            print(f"⚠️ {e}")
-    
     Base.metadata.create_all(bind=engine)
     print("✅ Database tables created successfully!")
 except Exception as e:
@@ -260,7 +234,7 @@ def root():
 def health():
     try:
         db = SessionLocal()
-        db.execute(text("SELECT 1"))
+        db.execute("SELECT 1")
         db.close()
         return {"status": "healthy"}
     except Exception as e:
@@ -357,8 +331,7 @@ def create_booking(data: dict):
             date=date,
             time=time,
             status="active",
-            chat_id=chat_id if chat_id and chat_id != "0" and chat_id != "None" else None,
-            created_at=datetime.now().isoformat()
+            chat_id=chat_id if chat_id and chat_id != "0" and chat_id != "None" else None
         )
 
         db.add(booking)
@@ -369,17 +342,17 @@ def create_booking(data: dict):
         schedule_reminder(booking)
         schedule_auto_complete(booking)
 
-        print(f"✅ Новая бронь: ID={booking.id}, Стол={table}, Время={time}")
+        print(f"✅ Новая бронь: ID={booking.id}")
 
         send_telegram_to_admin(
             f"🔥 <b>НОВАЯ БРОНЬ!</b>\n\n"
-            f"🆔 <b>ID:</b> {booking.id}\n"
-            f"👤 <b>Имя:</b> {data['name']}\n"
-            f"📞 <b>Телефон:</b> {data['phone']}\n"
-            f"👥 <b>Гостей:</b> {guests}\n"
-            f"🪑 <b>Стол:</b> {table}\n"
-            f"📅 <b>Дата:</b> {date}\n"
-            f"⏰ <b>Время:</b> {time}"
+            f"🆔 ID: {booking.id}\n"
+            f"👤 {data['name']}\n"
+            f"📞 {data['phone']}\n"
+            f"👥 {guests}\n"
+            f"🪑 Стол {table}\n"
+            f"📅 {date}\n"
+            f"⏰ {time}"
         )
 
         return {"ok": True, "id": booking.id}
@@ -419,13 +392,13 @@ def done(id: int):
 
         send_telegram_to_admin(
             f"✅ <b>ГОСТЬ УШЕЛ</b>\n\n"
-            f"🆔 <b>ID:</b> {id}\n"
-            f"👤 <b>Имя:</b> {booking.name}\n"
-            f"📞 <b>Телефон:</b> {booking.phone}\n"
-            f"🪑 <b>Стол:</b> {booking.table}\n"
-            f"👥 <b>Гостей:</b> {booking.guests}\n"
-            f"📅 <b>Дата:</b> {booking.date}\n"
-            f"⏰ <b>Время:</b> {booking.time}"
+            f"🆔 ID: {id}\n"
+            f"👤 {booking.name}\n"
+            f"📞 {booking.phone}\n"
+            f"🪑 Стол {booking.table}\n"
+            f"👥 {booking.guests}\n"
+            f"📅 {booking.date}\n"
+            f"⏰ {booking.time}"
         )
         
         send_thank_you_to_guest(booking)
