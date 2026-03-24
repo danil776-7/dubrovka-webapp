@@ -2,27 +2,18 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
-from datetime import datetime, timedelta
-import os
+from datetime import datetime
 import requests
 
 # =====================
-# DATABASE (Railway + fallback)
+# DATABASE
 # =====================
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-# если нет Postgres → fallback на SQLite
-if not DATABASE_URL:
-    DATABASE_URL = "sqlite:///./db.sqlite"
-
-# фикс для postgres
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://")
+DATABASE_URL = "sqlite:////tmp/db.sqlite"
 
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
+    connect_args={"check_same_thread": False}
 )
 
 SessionLocal = sessionmaker(bind=engine)
@@ -81,13 +72,6 @@ TABLE_LIMITS = {
 }
 
 # =====================
-# TIMEZONE (Новокузнецк)
-# =====================
-
-def now_novokuznetsk():
-    return datetime.utcnow() + timedelta(hours=7)
-
-# =====================
 # TELEGRAM
 # =====================
 
@@ -105,6 +89,16 @@ def send_telegram(text):
         print("TG ERROR:", e)
 
 # =====================
+# HELPERS
+# =====================
+
+def normalize_date(date_str):
+    try:
+        return datetime.strptime(date_str, "%Y-%m-%d").strftime("%Y-%m-%d")
+    except:
+        return date_str
+
+# =====================
 # ROOT
 # =====================
 
@@ -113,28 +107,17 @@ def root():
     return {"status": "ok"}
 
 # =====================
-# ВСЕ БРОНИ (админка)
-# =====================
-
-@app.get("/bookings")
-def get_bookings():
-    db = SessionLocal()
-    data = db.query(Booking).all()
-    db.close()
-
-    return [b.__dict__ for b in data]
-
-# =====================
-# ПО ДАТЕ
+# БРОНИ ПО ДАТЕ (АДМИНКА)
 # =====================
 
 @app.get("/bookings_by_date")
 def bookings_by_date(date: str):
     db = SessionLocal()
 
+    date = normalize_date(date)
+
     data = db.query(Booking).filter(
-        Booking.date == date,
-        Booking.status != "done"
+        Booking.date == date
     ).all()
 
     db.close()
@@ -154,17 +137,19 @@ def bookings_by_date(date: str):
     ]
 
 # =====================
-# ЗАНЯТОЕ ВРЕМЯ
+# ЗАНЯТЫЕ ВРЕМЕНА
 # =====================
 
 @app.get("/busy_times")
 def busy_times(date: str, table: str):
     db = SessionLocal()
 
+    date = normalize_date(date)
+
     data = db.query(Booking).filter(
         Booking.date == date,
         Booking.table == table,
-        Booking.status != "done"
+        Booking.status != "done"  # 🔥 КЛЮЧЕВОЕ
     ).all()
 
     db.close()
@@ -175,34 +160,21 @@ def busy_times(date: str, table: str):
 # СОЗДАНИЕ БРОНИ
 # =====================
 
-@app.post("/booking")
+"/booking"
 def create_booking(data: dict):
+
     db = SessionLocal()
 
-    name = data.get("name")
-    phone = data.get("phone")
-    guests = int(data.get("guests", 0))
-    table = str(data.get("table"))
-    date = data.get("date")
-    time = data.get("time")
+    date = normalize_date(data["date"])
+    table = str(data["table"])
+    time = data["time"]
+    guests = int(data["guests"])
 
-    # ❌ валидация
-    if not name or not phone or guests <= 0:
-        return {"error": "invalid"}
+    # лимит гостей
+    if guests > TABLE_LIMITS.get(table, 5):
+        return {"error": "limit"}
 
-    # ❌ лимит гостей
-    max_guests = TABLE_LIMITS.get(table, 5)
-    if guests > max_guests:
-        return {"error": "guests_limit"}
-
-    # ❌ проверка времени (Новокузнецк)
-    now = now_novokuznetsk()
-    booking_dt = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
-
-    if booking_dt < now:
-        return {"error": "past_time"}
-
-    # ❌ проверка занятости
+    # проверка занятости
     exists = db.query(Booking).filter(
         Booking.date == date,
         Booking.time == time,
@@ -213,10 +185,9 @@ def create_booking(data: dict):
     if exists:
         return {"error": "busy"}
 
-    # ✅ создаём
     booking = Booking(
-        name=name,
-        phone=phone,
+        name=data["name"],
+        phone=data["phone"],
         guests=guests,
         table=table,
         date=date,
@@ -226,15 +197,19 @@ def create_booking(data: dict):
 
     db.add(booking)
     db.commit()
+    db.refresh(booking)
     db.close()
 
-    # 🔔 TELEGRAM
+    # 🔥 Telegram админу
     send_telegram(
-        f"<b>🔥 Новая бронь</b>\n\n"
-        f"👤 {name}\n"
-        f"📞 {phone}\n"
+        f"🔥 <b>Новая бронь</b>\n\n"
+        f"👤 {data[
+
+
+name']}\n"
+        f"📞 {data['phone']}\n"
         f"👥 {guests}\n"
-        f"🪑 {table}\n"
+        f"🪑 Стол: {table}\n"
         f"📅 {date}\n"
         f"⏰ {time}"
     )
@@ -245,8 +220,9 @@ def create_booking(data: dict):
 # ГОСТЬ УШЕЛ
 # =====================
 
-@app.post("/done/{id}")
+"/done/{id}"
 def done(id: int):
+
     db = SessionLocal()
 
     booking = db.query(Booking).filter(
@@ -256,8 +232,9 @@ def done(id: int):
     if not booking:
         return {"error": "not_found"}
 
-    booking.status = "done"
+    # 🔥 УДАЛЯЕМ, а не просто статус
+    db.delete(booking)
     db.commit()
     db.close()
 
-    return {"ok": True}
+    return {"ok": True}'
