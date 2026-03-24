@@ -1,8 +1,9 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
-from datetime import datetime, timedelta
+from datetime import datetime
 import requests
 import os
 import threading
@@ -57,22 +58,36 @@ except Exception as e:
 
 app = FastAPI()
 
-# 🔥 ПРАВИЛЬНЫЕ CORS НАСТРОЙКИ - ДОБАВЛЯЕМ ВАШ GitHub PAGES
+# 🔥 ПРАВИЛЬНАЯ НАСТРОЙКА CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "*",  # Разрешаем все для теста
-        "https://danil776-7.github.io",
-        "https://danil776-7.github.io/*",
-        "http://localhost:3000",
+        "https://dani1776-7.github.io",
         "http://localhost:5500",
-        "https://dubrovka-webapp-production-a00c.up.railway.app"
+        "http://127.0.0.1:5500",
+        "*"  # временно для теста
     ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
-    expose_headers=["*"]
+    expose_headers=["*"],
 )
+
+# =====================
+# OPTIONS обработчик
+# =====================
+
+@app.options("/{path:path}")
+async def options_handler(path: str):
+    return JSONResponse(
+        status_code=200,
+        content={"message": "OK"},
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
 
 # =====================
 # CONFIG
@@ -110,7 +125,6 @@ reminder_timers = {}
 # =====================
 
 def send_to_guest(user_id, text):
-    """Отправка сообщения гостю по user_id"""
     try:
         response = requests.post(
             f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
@@ -121,131 +135,10 @@ def send_to_guest(user_id, text):
             },
             timeout=5
         )
-        if response.status_code == 200:
-            print(f"✅ Message sent to guest {user_id}")
-            return True
-        return False
+        return response.status_code == 200
     except Exception as e:
         print(f"❌ Error sending to guest: {e}")
         return False
-
-def send_booking_confirmation(booking):
-    """Отправка подтверждения брони гостю"""
-    try:
-        message = (
-            f"✅ <b>БРОНЬ ПОДТВЕРЖДЕНА!</b>\n\n"
-            f"🆔 <b>ID брони:</b> {booking.id}\n"
-            f"👤 <b>Имя:</b> {booking.name}\n"
-            f"🪑 <b>Стол:</b> {booking.table}\n"
-            f"👥 <b>Гостей:</b> {booking.guests}\n"
-            f"📅 <b>Дата:</b> {booking.date}\n"
-            f"⏰ <b>Время:</b> {booking.time}\n\n"
-            f"🔔 <b>Напоминание:</b> Мы пришлем вам уведомление за 30 минут до брони.\n\n"
-            f"📍 <b>Адрес:</b> Ермакова 11, Новокузнецк\n"
-            f"📞 <b>Телефон:</b> +7‒913‒432‒01‒01\n\n"
-            f"❤️ Ждем вас в Dubrovka!"
-        )
-        if booking.user_id:
-            send_to_guest(booking.user_id, message)
-            print(f"📱 Booking confirmation sent to {booking.name}")
-    except Exception as e:
-        print(f"❌ Error sending confirmation: {e}")
-
-def send_reminder_to_guest(booking):
-    """Отправка напоминания за 30 минут до брони"""
-    try:
-        message = (
-            f"🔔 <b>НАПОМИНАНИЕ О БРОНИ!</b>\n\n"
-            f"🪑 <b>Стол:</b> {booking.table}\n"
-            f"📅 <b>Сегодня:</b> {booking.date}\n"
-            f"⏰ <b>Через 30 минут:</b> {booking.time}\n\n"
-            f"👤 <b>На имя:</b> {booking.name}\n"
-            f"👥 <b>Гостей:</b> {booking.guests}\n\n"
-            f"📍 <b>Ждем вас по адресу:</b> Ермакова 11\n"
-            f"📞 <b>По вопросам:</b> +7‒913‒432‒01‒01\n\n"
-            f"🌟 Пожалуйста, не опаздывайте!"
-        )
-        if booking.user_id:
-            send_to_guest(booking.user_id, message)
-            print(f"⏰ Reminder sent to {booking.name}")
-    except Exception as e:
-        print(f"❌ Error sending reminder: {e}")
-
-def send_thank_you_message(booking):
-    """Отправка благодарности после посещения"""
-    try:
-        message = (
-            f"🌟 <b>Спасибо, что посетили Dubrovka Lounge & Bar!</b> 🌟\n\n"
-            f"👤 <b>{booking.name}</b>, мы благодарим вас за визит!\n\n"
-            f"🍷 Надеемся, вам понравилась атмосфера, обслуживание и кухня.\n\n"
-            f"📝 <b>Пожалуйста, оставьте отзыв о нашем заведении в 2ГИС</b>\n"
-            f"Ваше мнение очень важно для нас!\n\n"
-            f"🔗 <a href='{TWO_GIS_REVIEW_URL}'>Написать отзыв в 2ГИС</a>\n\n"
-            f"❤️ Ждем вас снова в Dubrovka!"
-        )
-        if booking.user_id:
-            send_to_guest(booking.user_id, message)
-            print(f"📱 Thank you message sent to {booking.name}")
-    except Exception as e:
-        print(f"❌ Error sending thank you: {e}")
-
-def schedule_reminder(booking):
-    """Запланировать напоминание за 30 минут до брони"""
-    try:
-        booking_datetime = datetime.strptime(f"{booking.date} {booking.time}", "%Y-%m-%d %H:%M")
-        reminder_time = booking_datetime - timedelta(minutes=30)
-        now = datetime.now()
-        
-        if reminder_time > now:
-            delay = (reminder_time - now).total_seconds()
-            timer = threading.Timer(delay, send_reminder_to_guest, args=[booking])
-            timer.daemon = True
-            timer.start()
-            reminder_timers[booking.id] = timer
-            print(f"⏰ Reminder scheduled for {reminder_time}")
-    except Exception as e:
-        print(f"❌ Error scheduling reminder: {e}")
-
-def auto_complete_booking(booking_id):
-    """Автоматическое завершение брони через 4 часа"""
-    try:
-        time.sleep(4 * 3600)
-        db = SessionLocal()
-        booking = db.query(Booking).filter(
-            Booking.id == booking_id,
-            Booking.status == "active"
-        ).first()
-        
-        if booking:
-            booking.status = "completed"
-            db.commit()
-            print(f"🤖 Auto-completed booking {booking_id}")
-            
-            send_telegram(
-                f"🤖 <b>АВТОМАТИЧЕСКОЕ ЗАВЕРШЕНИЕ</b>\n\n"
-                f"🆔 ID: {booking_id}\n"
-                f"👤 {booking.name}\n"
-                f"🪑 Стол {booking.table}\n"
-                f"📅 {booking.date} {booking.time}\n\n"
-                f"🔓 Стол {booking.table} теперь доступен!"
-            )
-            send_thank_you_message(booking)
-        db.close()
-    except Exception as e:
-        print(f"Error in auto_complete: {e}")
-    finally:
-        if booking_id in booking_timers:
-            del booking_timers[booking_id]
-
-def start_auto_complete_timer(booking_id):
-    timer_thread = threading.Thread(target=auto_complete_booking, args=(booking_id,))
-    timer_thread.daemon = True
-    timer_thread.start()
-    booking_timers[booking_id] = timer_thread
-
-# =====================
-# TELEGRAM ДЛЯ АДМИНА
-# =====================
 
 def send_telegram(text):
     try:
@@ -271,15 +164,23 @@ def normalize_date(date_str):
     try:
         return datetime.strptime(date_str, "%Y-%m-%d").strftime("%Y-%m-%d")
     except:
-        raise HTTPException(status_code=400, detail="Invalid date")
+        raise HTTPException(status_code=400, detail="Invalid date. Use YYYY-MM-DD")
 
 # =====================
-# ENDPOINTS
+# ROOT
 # =====================
 
 @app.get("/")
 def root():
-    return {"status": "ok", "database": "connected", "telegram": "configured"}
+    return {
+        "status": "ok", 
+        "database": "connected",
+        "telegram": "configured"
+    }
+
+# =====================
+# HEALTH CHECK
+# =====================
 
 @app.get("/health")
 def health():
@@ -291,16 +192,25 @@ def health():
     except Exception as e:
         return {"status": "unhealthy", "database": "disconnected", "error": str(e)}
 
+# =====================
+# БРОНИ ПО ДАТЕ
+# =====================
+
 @app.get("/bookings_by_date")
 def bookings_by_date(date: str):
     db = SessionLocal()
     try:
+        print(f"📅 Запрос броней на дату: {date}")
         date = normalize_date(date)
+        
         data = db.query(Booking).filter(
             Booking.date == date,
             Booking.status == "active"
         ).all()
-        return [
+        
+        print(f"✅ Найдено броней: {len(data)}")
+        
+        result = [
             {
                 "id": b.id,
                 "name": b.name,
@@ -313,27 +223,53 @@ def bookings_by_date(date: str):
             }
             for b in data
         ]
+        
+        return result
+        
+    except Exception as e:
+        print(f"❌ Ошибка в bookings_by_date: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
+
+# =====================
+# ЗАНЯТЫЕ ВРЕМЕНА
+# =====================
 
 @app.get("/busy_times")
 def busy_times(date: str, table: str):
     db = SessionLocal()
     try:
+        print(f"🔍 Запрос занятых времен: date={date}, table={table}")
         date = normalize_date(date)
+        
         data = db.query(Booking).filter(
             Booking.date == date,
             Booking.table == table,
             Booking.status == "active"
         ).all()
-        return [b.time for b in data]
+        
+        result = [b.time for b in data]
+        print(f"✅ Занятые времена: {result}")
+        
+        return result
+        
+    except Exception as e:
+        print(f"❌ Ошибка в busy_times: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
+
+# =====================
+# СОЗДАНИЕ БРОНИ
+# =====================
 
 @app.post("/booking")
 def create_booking(data: dict):
     db = SessionLocal()
     try:
+        print(f"📝 Создание брони: {data}")
+        
         required = ["name", "phone", "guests", "table", "date", "time"]
         for field in required:
             if field not in data:
@@ -349,7 +285,10 @@ def create_booking(data: dict):
             raise HTTPException(status_code=400, detail=f"Table {table} does not exist")
 
         if guests > TABLE_LIMITS[table]:
-            raise HTTPException(status_code=400, detail=f"Too many guests. Max is {TABLE_LIMITS[table]}")
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Too many guests. Max for table {table} is {TABLE_LIMITS[table]}"
+            )
 
         exists = db.query(Booking).filter(
             Booking.date == date,
@@ -376,19 +315,17 @@ def create_booking(data: dict):
         db.commit()
         db.refresh(booking)
 
-        start_auto_complete_timer(booking.id)
-        schedule_reminder(booking)
-        send_booking_confirmation(booking)
+        print(f"✅ Новая бронь: ID={booking.id}, Table={table}, Time={time}")
 
         send_telegram(
             f"🔥 <b>НОВАЯ БРОНЬ!</b>\n\n"
-            f"🆔 ID: {booking.id}\n"
-            f"👤 {data['name']}\n"
-            f"📞 {data['phone']}\n"
-            f"👥 {guests} чел.\n"
-            f"🪑 Стол {table}\n"
-            f"📅 {date}\n"
-            f"⏰ {time}"
+            f"🆔 <b>ID:</b> {booking.id}\n"
+            f"👤 <b>Имя:</b> {data['name']}\n"
+            f"📞 <b>Телефон:</b> {data['phone']}\n"
+            f"👥 <b>Гостей:</b> {guests}\n"
+            f"🪑 <b>Стол:</b> {table}\n"
+            f"📅 <b>Дата:</b> {date}\n"
+            f"⏰ <b>Время:</b> {time}"
         )
 
         return {"ok": True, "id": booking.id}
@@ -397,10 +334,14 @@ def create_booking(data: dict):
         raise
     except Exception as e:
         db.rollback()
-        print(f"❌ Error: {e}")
+        print(f"❌ Ошибка создания брони: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
+
+# =====================
+# ГОСТЬ УШЕЛ
+# =====================
 
 @app.post("/done/{id}")
 def done(id: int):
@@ -412,26 +353,30 @@ def done(id: int):
         ).first()
 
         if not booking:
-            raise HTTPException(status_code=404, detail="Booking not found")
+            raise HTTPException(status_code=404, detail="Active booking not found")
 
         booking.status = "completed"
         db.commit()
 
-        if id in booking_timers:
-            del booking_timers[id]
-        if id in reminder_timers:
-            del reminder_timers[id]
+        print(f"✅ Бронь {id} завершена")
 
         send_telegram(
             f"✅ <b>ГОСТЬ УШЕЛ</b>\n\n"
-            f"🆔 ID: {id}\n"
-            f"👤 {booking.name}\n"
-            f"🪑 Стол {booking.table}\n"
-            f"📅 {booking.date} {booking.time}\n\n"
-            f"🔓 Стол {booking.table} теперь доступен!"
+            f"🆔 <b>ID:</b> {id}\n"
+            f"👤 <b>Имя:</b> {booking.name}\n"
+            f"🪑 <b>Стол:</b> {booking.table}\n"
+            f"📅 <b>Дата:</b> {booking.date}\n"
+            f"⏰ <b>Время:</b> {booking.time}"
         )
         
-        send_thank_you_message(booking)
+        # Отправляем благодарность гостю
+        if booking.user_id:
+            thank_message = (
+                f"🌟 <b>Спасибо, что посетили Dubrovka!</b>\n\n"
+                f"{booking.name}, мы благодарим вас за визит!\n\n"
+                f"📝 Оставьте отзыв: {TWO_GIS_REVIEW_URL}"
+            )
+            send_to_guest(booking.user_id, thank_message)
 
         return {"ok": True, "message": "Booking completed"}
 
@@ -440,40 +385,9 @@ def done(id: int):
     finally:
         db.close()
 
-@app.post("/cancel/{id}")
-def cancel(id: int):
-    db = SessionLocal()
-    try:
-        booking = db.query(Booking).filter(
-            Booking.id == id,
-            Booking.status == "active"
-        ).first()
-
-        if not booking:
-            raise HTTPException(status_code=404, detail="Booking not found")
-
-        booking.status = "cancelled"
-        db.commit()
-
-        if id in booking_timers:
-            del booking_timers[id]
-        if id in reminder_timers:
-            del reminder_timers[id]
-
-        send_telegram(
-            f"❌ <b>БРОНЬ ОТМЕНЕНА</b>\n\n"
-            f"🆔 ID: {id}\n"
-            f"👤 {booking.name}\n"
-            f"🪑 Стол {booking.table}\n"
-            f"📅 {booking.date} {booking.time}"
-        )
-
-        return {"ok": True, "message": "Booking cancelled"}
-
-    except HTTPException:
-        raise
-    finally:
-        db.close()
+# =====================
+# ВСЕ БРОНИ
+# =====================
 
 @app.get("/all_bookings")
 def all_bookings():
@@ -495,11 +409,3 @@ def all_bookings():
         ]
     finally:
         db.close()
-
-# =====================
-# OPTIONS - для CORS preflight
-# =====================
-
-@app.options("/{path:path}")
-async def options_handler(path: str):
-    return {}
