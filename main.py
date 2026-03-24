@@ -1,907 +1,439 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dubrovka Lounge | Красный & Черный</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-<style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Arial', sans-serif;
-  background: #000;
-  color: #e7d9c0;
-  min-height: 100vh;
-}
-
-/* Видео фон */
-.video-background {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: -2;
-}
-
-.overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, rgba(0,0,0,0.85) 0%, rgba(139,0,0,0.4) 100%);
-  z-index: -1;
-}
-
-.container {
-  max-width: 500px;
-  margin: 0 auto;
-  padding: 20px;
-  position: relative;
-  z-index: 1;
-}
-
-/* Логотип */
-.logo-container {
-  text-align: center;
-  margin-bottom: 20px;
-  animation: fadeInDown 0.8s ease-out;
-}
-
-.logo {
-  width: 120px;
-  height: 120px;
-  background: linear-gradient(135deg, #8B0000 0%, #4a0000 100%);
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 15px;
-  box-shadow: 0 0 30px rgba(139, 0, 0, 0.5);
-  transition: transform 0.3s ease;
-  border: 2px solid #8B0000;
-}
-
-.logo:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 40px rgba(139, 0, 0, 0.8);
-}
-
-.logo span {
-  font-size: 48px;
-  font-weight: bold;
-  color: #fff;
-  text-shadow: 0 0 10px rgba(139, 0, 0, 0.5);
-}
-
-.logo-text {
-  font-size: 28px;
-  font-weight: bold;
-  letter-spacing: 2px;
-  background: linear-gradient(135deg, #8B0000 0%, #cc0000 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 5px;
-  text-shadow: 0 0 10px rgba(139, 0, 0, 0.3);
-}
-
-.logo-subtitle {
-  font-size: 12px;
-  color: #8B0000;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-}
-
-/* Карточка */
-.card {
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(15px);
-  padding: 25px;
-  border-radius: 20px;
-  border: 1px solid rgba(139, 0, 0, 0.5);
-  box-shadow: 0 8px 32px rgba(139, 0, 0, 0.2);
-  animation: fadeInUp 0.8s ease-out;
-}
-
-h2 {
-  text-align: center;
-  margin-bottom: 20px;
-  font-size: 24px;
-  color: #8B0000;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  font-weight: bold;
-  text-shadow: 0 0 5px rgba(139, 0, 0, 0.5);
-}
-
-/* Столы */
-.tables {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.table {
-  padding: 15px;
-  background: rgba(20, 20, 20, 0.9);
-  border-radius: 12px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(139, 0, 0, 0.3);
-  font-weight: bold;
-  font-size: 18px;
-  color: #fff;
-  position: relative;
-  overflow: hidden;
-}
-
-.table::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(139, 0, 0, 0.3), transparent);
-  transition: left 0.5s;
-}
-
-.table:hover::before {
-  left: 100%;
-}
-
-.table:hover {
-  background: rgba(139, 0, 0, 0.2);
-  transform: translateY(-2px);
-  border-color: #8B0000;
-  box-shadow: 0 0 15px rgba(139, 0, 0, 0.3);
-}
-
-.table.selected {
-  background: #8B0000;
-  color: #fff;
-  box-shadow: 0 0 20px rgba(139, 0, 0, 0.8);
-  border-color: #cc0000;
-}
-
-.table.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background: rgba(51, 51, 51, 0.8);
-}
-
-.table.disabled:hover {
-  transform: none;
-  background: rgba(51, 51, 51, 0.8);
-}
-
-/* VIP особый стиль */
-.table[data-table="VIP"] {
-  background: linear-gradient(135deg, rgba(139, 0, 0, 0.2), rgba(74, 0, 0, 0.2));
-  border-color: #8B0000;
-  position: relative;
-}
-
-.table[data-table="VIP"]::after {
-  content: "⭐";
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  font-size: 14px;
-  animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.2); opacity: 0.8; }
-}
-
-.desc {
-  background: rgba(20, 20, 20, 0.9);
-  padding: 12px;
-  border-radius: 12px;
-  margin: 15px 0;
-  white-space: pre-line;
-  font-size: 14px;
-  line-height: 1.5;
-  border-left: 3px solid #8B0000;
-  color: #ccc;
-}
-
-/* Форма */
-input, select {
-  width: 100%;
-  padding: 12px 15px;
-  margin: 8px 0;
-  border-radius: 10px;
-  border: 1px solid rgba(139, 0, 0, 0.3);
-  background: rgba(20, 20, 20, 0.9);
-  color: #fff;
-  font-size: 14px;
-  transition: all 0.3s ease;
-}
-
-input:focus, select:focus {
-  outline: none;
-  border-color: #8B0000;
-  background: rgba(20, 20, 20, 1);
-  box-shadow: 0 0 10px rgba(139, 0, 0, 0.3);
-}
-
-input::placeholder {
-  color: #666;
-}
-
-button {
-  width: 100%;
-  padding: 14px;
-  background: linear-gradient(135deg, #8B0000 0%, #4a0000 100%);
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 16px;
-  margin-top: 15px;
-  color: #fff;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  position: relative;
-  overflow: hidden;
-}
-
-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-  transition: left 0.5s;
-}
-
-button:hover::before {
-  left: 100%;
-}
-
-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 20px rgba(139, 0, 0, 0.5);
-  background: linear-gradient(135deg, #a00000 0%, #5a0000 100%);
-}
-
-button:active {
-  transform: translateY(0);
-}
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Блок предложений */
-.suggestion-box {
-  background: rgba(20, 20, 20, 0.95);
-  padding: 15px;
-  border-radius: 12px;
-  margin-top: 15px;
-  display: none;
-  border: 1px solid rgba(139, 0, 0, 0.5);
-  animation: slideDown 0.3s ease-out;
-}
-
-.suggestion-box h4 {
-  margin: 0 0 10px 0;
-  color: #8B0000;
-  font-size: 16px;
-  text-transform: uppercase;
-}
-
-.suggestion-item {
-  padding: 12px;
-  margin: 8px 0;
-  background: rgba(30, 30, 30, 0.9);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-left: 2px solid #8B0000;
-}
-
-.suggestion-item:hover {
-  background: rgba(139, 0, 0, 0.2);
-  transform: translateX(5px);
-  border-left: 3px solid #8B0000;
-}
-
-.suggestion-item.selected {
-  background: #8B0000;
-  color: #fff;
-}
-
-.suggestion-time {
-  font-weight: bold;
-  color: #8B0000;
-}
-
-.suggestion-item.selected .suggestion-time {
-  color: #fff;
-}
-
-.blocked-warning {
-  background: linear-gradient(135deg, rgba(139, 0, 0, 0.9), rgba(74, 0, 0, 0.9));
-  padding: 12px;
-  border-radius: 10px;
-  margin-top: 10px;
-  display: none;
-  color: #fff;
-  text-align: center;
-  font-size: 14px;
-  animation: shake 0.5s ease;
-  border: 1px solid #ff0000;
-}
-
-/* Футер */
-.footer {
-  margin-top: 25px;
-  text-align: center;
-  font-size: 13px;
-  color: #888;
-  border-top: 1px solid rgba(139, 0, 0, 0.3);
-  padding-top: 20px;
-}
-
-.footer p {
-  margin: 5px 0;
-}
-
-.map-btn {
-  display: inline-block;
-  margin-top: 10px;
-  padding: 8px 20px;
-  background: rgba(20, 20, 20, 0.9);
-  border-radius: 20px;
-  text-decoration: none;
-  color: #8B0000;
-  font-size: 12px;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(139, 0, 0, 0.5);
-}
-
-.map-btn:hover {
-  background: #8B0000;
-  color: #fff;
-  transform: translateY(-2px);
-  box-shadow: 0 0 10px rgba(139, 0, 0, 0.5);
-}
-
-/* Анимации */
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Эффект встряски */
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-  20%, 40%, 60%, 80% { transform: translateX(5px); }
-}
-
-/* Класс для встряски */
-.shake-animation {
-  animation: shake 0.5s ease-in-out;
-}
-
-/* Загрузка */
-.loading {
-  text-align: center;
-  padding: 20px;
-  color: #8B0000;
-}
-
-/* Адаптивность */
-@media (max-width: 480px) {
-  .container {
-    padding: 15px;
-  }
-  
-  .card {
-    padding: 20px;
-  }
-  
-  .logo {
-    width: 100px;
-    height: 100px;
-  }
-  
-  .logo span {
-    font-size: 40px;
-  }
-  
-  .logo-text {
-    font-size: 24px;
-  }
-  
-  .tables {
-    gap: 8px;
-  }
-  
-  .table {
-    padding: 12px;
-    font-size: 16px;
-  }
-}
-
-/* Стиль для скролла */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #1a1a1a;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #8B0000;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #cc0000;
-}
-</style>
-</head>
-
-<body>
-<video class="video-background" autoplay muted loop playsinline>
-  <source src="bg.mp4" type="video/mp4">
-  Ваш браузер не поддерживает видео
-</video>
-<div class="overlay"></div>
-
-<div class="container">
-  <div class="logo-container">
-    <div class="logo">
-      <span>🍷</span>
-    </div>
-    <div class="logo-text">DUBROVKA</div>
-    <div class="logo-subtitle">LOUNGE & RESTAURANT</div>
-  </div>
-
-  <div class="card">
-    <h2>🍷 БРОНИРОВАНИЕ СТОЛОВ</h2>
-
-    <div class="tables">
-      <div class="table" data-table="1">СТОЛ 1</div>
-      <div class="table" data-table="2">СТОЛ 2</div>
-      <div class="table" data-table="3">СТОЛ 3</div>
-      <div class="table" data-table="4">СТОЛ 4</div>
-      <div class="table" data-table="5">СТОЛ 5</div>
-      <div class="table" data-table="6">СТОЛ 6</div>
-      <div class="table" data-table="VIP">VIP ЗАЛ</div>
-    </div>
-
-    <div id="tableInfo" class="desc">✨ ВЫБЕРИТЕ СТОЛ ДЛЯ БРОНИРОВАНИЯ</div>
-
-    <input id="date" type="date" placeholder="📅 ДАТА">
-    <select id="time">
-      <option value="">⏰ ВЫБЕРИТЕ ВРЕМЯ</option>
-    </select>
-    <input id="guests" type="number" placeholder="👥 КОЛИЧЕСТВО ГОСТЕЙ" min="1" max="20">
-    <input id="name" placeholder="👤 ВАШЕ ИМЯ">
-    <input id="phone" placeholder="📞 ТЕЛЕФОН (+7XXXXXXXXXX)" maxlength="12">
-
-    <button id="bookBtn">ЗАБРОНИРОВАТЬ</button>
-
-    <div id="blockedWarning" class="blocked-warning">
-      ⚠️ ЭТО ВРЕМЯ ВРЕМЕННО НЕДОСТУПНО ДЛЯ БРОНИРОВАНИЯ<br>
-      <small>СТОЛ ЗАБРОНИРОВАН И ОЖИДАЕТ ГОСТЕЙ</small>
-    </div>
-
-    <div id="suggestionBox" class="suggestion-box">
-      <h4>💡 АЛЬТЕРНАТИВНЫЕ ВАРИАНТЫ</h4>
-      <div id="suggestions"></div>
-    </div>
-
-    <div class="footer">
-      <p>📍 Ермакова 11, Новокузнецк</p>
-      <p>📞 +7‒913‒432‒01‒01</p>
-      <a class="map-btn" href="https://2gis.ru/novokuznetsk/geo/70000001067987554" target="_blank">
-        🗺 ОТКРЫТЬ В 2ГИС
-      </a>
-    </div>
-  </div>
-</div>
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-const API = "https://dubrovka-webapp-production-a00c.up.railway.app";
-const tg = window.Telegram.WebApp;
-tg.expand();
-
-const phoneInput = document.getElementById("phone");
-const nameInput = document.getElementById("name");
-const guestsInput = document.getElementById("guests");
-const dateInput = document.getElementById("date");
-const timeSelect = document.getElementById("time");
-const tableInfo = document.getElementById("tableInfo");
-const bookBtn = document.getElementById("bookBtn");
-const suggestionBox = document.getElementById("suggestionBox");
-const suggestionsDiv = document.getElementById("suggestions");
-const blockedWarning = document.getElementById("blockedWarning");
-
-let selectedTable = null;
-let currentBusyTimes = {};
-let suggestedOption = null;
-let blockedTimes = new Set();
-
-// Функция для добавления эффекта встряски
-function shakeElement(element) {
-  element.classList.add('shake-animation');
-  setTimeout(() => {
-    element.classList.remove('shake-animation');
-  }, 500);
-}
-
-// Функция для показа ошибки с встряской
-function showError(message, element = null) {
-  if (element) {
-    shakeElement(element);
-  } else {
-    // Если нет конкретного элемента, встряхиваем кнопку
-    shakeElement(bookBtn);
-  }
-  
-  // Создаем всплывающее уведомление
-  const errorDiv = document.createElement('div');
-  errorDiv.style.cssText = `
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: linear-gradient(135deg, #8B0000, #4a0000);
-    color: white;
-    padding: 12px 20px;
-    border-radius: 10px;
-    z-index: 10000;
-    font-size: 14px;
-    font-weight: bold;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-    animation: slideDown 0.3s ease-out;
-    border-left: 3px solid #ff0000;
-  `;
-  errorDiv.innerHTML = `❌ ${message}`;
-  document.body.appendChild(errorDiv);
-  
-  setTimeout(() => {
-    errorDiv.style.animation = 'shake 0.3s ease-out reverse';
-    setTimeout(() => errorDiv.remove(), 500);
-  }, 3000);
-}
-
-const tables = {
-"1": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 7 ГОСТЕЙ",
-"2": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ",
-"3": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ",
-"4": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ",
-"5": "✨ ОТКРЫТАЯ ЗОНА БЕЗ ШТОРОК\n👥 ДО 5 ГОСТЕЙ",
-"6": "🪑 КОМПАКТНЫЙ СТОЛ\n👥 ДО 3 ГОСТЕЙ",
-"VIP": "⭐ VIP КОМНАТА (ДЕПОЗИТНАЯ)\n👑 ОБСЛУЖИВАНИЕ ЧЕРЕЗ АДМИНИСТРАТОРА"
-};
-
-const TABLE_CAPACITY = {
-"1": 7, "2": 5, "3": 5, "4": 5, "5": 5, "6": 3, "VIP": 20
-};
-
-dateInput.min = new Date().toISOString().split("T")[0];
-dateInput.value = new Date().toISOString().split("T")[0];
-
-document.querySelectorAll(".table").forEach(el => {
-el.onclick = () => {
-if(el.classList.contains("disabled")) return;
-document.querySelectorAll(".table").forEach(t => t.classList.remove("selected"));
-el.classList.add("selected");
-selectedTable = el.dataset.table;
-tableInfo.innerText = tables[selectedTable];
-loadTimes();
-suggestionBox.style.display = "none";
-blockedWarning.style.display = "none";
-};
-});
-
-function generateTimes(date) {
-let times = [];
-let day = new Date(date).getDay();
-let end = (day === 5 || day === 6) ? 24 : 23;
-for(let h = 13; h < end; h++) {
-times.push(`${String(h).padStart(2,'0')}:00`);
-times.push(`${String(h).padStart(2,'0')}:30`);
-}
-return times;
-}
-
-async function loadTimes() {
-if(!dateInput.value || !selectedTable) return;
-try {
-let res = await fetch(`${API}/busy_times?date=${dateInput.value}&table=${selectedTable}`);
-let busy = await res.json();
-if(!Array.isArray(busy)) busy = [];
-currentBusyTimes[selectedTable] = busy;
-let allTimes = generateTimes(dateInput.value);
-let now = new Date();
-timeSelect.innerHTML = '<option value="">⏰ ВЫБЕРИТЕ ВРЕМЯ</option>';
-blockedTimes.clear();
-allTimes.forEach(t => {
-let [h,m] = t.split(":");
-let slot = new Date(dateInput.value);
-slot.setHours(h, m);
-if(slot < now) return;
-let isAvailable = !busy.includes(t);
-if(!isAvailable) {
-blockedTimes.add(t);
-}
-if(isAvailable) {
-let option = document.createElement("option");
-option.value = t;
-option.innerText = t;
-timeSelect.appendChild(option);
-}
-});
-} catch(e) { console.error(e); }
-}
-
-async function checkAvailability(table, date, time) {
-try {
-let res = await fetch(`${API}/busy_times?date=${date}&table=${table}`);
-let busy = await res.json();
-return !busy.includes(time);
-} catch(e) { return false; }
-}
-
-async function findAlternatives() {
-if(!dateInput.value || !selectedTable || !timeSelect.value) return null;
-let guests = parseInt(guestsInput.value) || 1;
-let alternatives = [];
-let allTables = Object.keys(TABLE_CAPACITY).filter(t => t !== "VIP");
-let selectedTime = timeSelect.value;
-let currentTimeBlocked = blockedTimes.has(selectedTime);
-
-if(currentTimeBlocked) {
-for(let table of allTables) {
-if(table === selectedTable) continue;
-if(TABLE_CAPACITY[table] < guests) continue;
-let isAvailable = await checkAvailability(table, dateInput.value, selectedTime);
-if(isAvailable) {
-alternatives.push({ table: table, time: selectedTime, type: "same_time" });
-}
-}
-}
-
-if(alternatives.length === 0) {
-let allTimes = generateTimes(dateInput.value);
-let now = new Date();
-for(let table of allTables) {
-if(TABLE_CAPACITY[table] < guests) continue;
-for(let time of allTimes) {
-let [h,m] = time.split(":");
-let slot = new Date(dateInput.value);
-slot.setHours(h, m);
-if(slot < now) continue;
-let isAvailable = await checkAvailability(table, dateInput.value, time);
-if(isAvailable) {
-alternatives.push({ table: table, time: time, type: "different_time" });
-if(alternatives.length >= 5) break;
-}
-}
-if(alternatives.length >= 5) break;
-}
-}
-return alternatives;
-}
-
-async function showSuggestions() {
-if(!selectedTable || !dateInput.value || !timeSelect.value) return;
-suggestionsDiv.innerHTML = '<div class="loading">🔄 ПОИСК АЛЬТЕРНАТИВ...</div>';
-suggestionBox.style.display = "block";
-let alternatives = await findAlternatives();
-if(!alternatives || alternatives.length === 0) {
-suggestionsDiv.innerHTML = '<div style="text-align:center;color:#888;">😔 НЕТ СВОБОДНЫХ АЛЬТЕРНАТИВ</div>';
-return;
-}
-let html = '';
-alternatives.forEach((alt, index) => {
-let typeText = alt.type === "same_time" ? "🕐 ТО ЖЕ ВРЕМЯ" : "🕐 ДРУГОЕ ВРЕМЯ";
-html += `
-<div class="suggestion-item" onclick="selectAlternative(${index})">
-<div>
-<strong>СТОЛ ${alt.table}</strong><br>
-<small>${typeText}</small>
-</div>
-<div class="suggestion-time">${alt.time}</div>
-</div>
-`;
-});
-suggestionsDiv.innerHTML = html;
-window.selectAlternative = (index) => {
-let alt = alternatives[index];
-document.querySelectorAll(".suggestion-item").forEach(item => item.classList.remove("selected"));
-event.target.closest('.suggestion-item').classList.add("selected");
-suggestedOption = alt;
-};
-}
-
-function applyAlternative() {
-if(!suggestedOption) return false;
-document.querySelector(`.table[data-table="${suggestedOption.table}"]`).click();
-timeSelect.value = suggestedOption.time;
-suggestionBox.style.display = "none";
-blockedWarning.style.display = "none";
-suggestedOption = null;
-return true;
-}
-
-phoneInput.addEventListener("input", () => {
-let v = phoneInput.value.replace(/\D/g,"");
-if(!v.startsWith("7")) v = "7" + v;
-v = v.slice(0,11);
-phoneInput.value = "+" + v;
-});
-
-dateInput.addEventListener("change", () => {
-loadTimes();
-suggestionBox.style.display = "none";
-blockedWarning.style.display = "none";
-});
-
-timeSelect.addEventListener("change", () => {
-if(timeSelect.value) {
-if(blockedTimes.has(timeSelect.value)) {
-blockedWarning.style.display = "block";
-showSuggestions();
-} else {
-blockedWarning.style.display = "none";
-suggestionBox.style.display = "none";
-}
-} else {
-blockedWarning.style.display = "none";
-suggestionBox.style.display = "none";
-}
-});
-
-guestsInput.addEventListener("change", () => {
-if(selectedTable) {
-let guests = parseInt(guestsInput.value) || 1;
-if(guests > TABLE_CAPACITY[selectedTable]) {
-showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ МАКСИМУМ ${TABLE_CAPACITY[selectedTable]} ГОСТЕЙ`, guestsInput);
-}
-}
-});
-
-bookBtn.onclick = async () => {
-if(!selectedTable) { showError("ВЫБЕРИТЕ СТОЛ", document.querySelector('.tables')); return; }
-if(selectedTable === "VIP") { showError("VIP БРОНИРУЕТСЯ ЧЕРЕЗ АДМИНИСТРАТОРА\n📞 ПОЗВОНИТЕ: +7‒913‒432‒01‒01", bookBtn); return; }
-if(!dateInput.value) { showError("ВЫБЕРИТЕ ДАТУ", dateInput); return; }
-if(!timeSelect.value) { showError("ВЫБЕРИТЕ ВРЕМЯ", timeSelect); return; }
-let nameVal = nameInput.value.trim();
-let phoneVal = phoneInput.value;
-let guestsVal = parseInt(guestsInput.value || 0);
-if(!nameVal) { showError("ВВЕДИТЕ ВАШЕ ИМЯ", nameInput); return; }
-if(phoneVal.length !== 12) { showError("ВВЕДИТЕ КОРРЕКТНЫЙ НОМЕР (+7XXXXXXXXXX)", phoneInput); return; }
-if(guestsVal < 1) { showError("УКАЖИТЕ КОЛИЧЕСТВО ГОСТЕЙ", guestsInput); return; }
-if(guestsVal > TABLE_CAPACITY[selectedTable]) {
-showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ МАКСИМУМ ${TABLE_CAPACITY[selectedTable]} ГОСТЕЙ`, guestsInput);
-return;
-}
-if(blockedTimes.has(timeSelect.value)) {
-showError("ЭТО ВРЕМЯ УЖЕ ЗАБРОНИРОВАНО И ОЖИДАЕТ ГОСТЕЙ!\n💡 ВЫБЕРИТЕ ДРУГОЕ ВРЕМЯ ИЛИ СТОЛ", bookBtn);
-showSuggestions();
-return;
-}
-let data = {
-name: nameVal,
-phone: phoneVal,
-guests: guestsVal,
-table: selectedTable,
-date: dateInput.value,
-time: timeSelect.value,
-user_id: tg.initDataUnsafe?.user?.id || 0
-};
-try {
-let res = await fetch(API + "/booking", {
-method: "POST",
-headers: {"Content-Type": "application/json"},
-body: JSON.stringify(data)
-});
-let result = await res.json();
-if(result.error === "busy" || result.detail === "Time slot already booked") {
-showError("СТОЛ УЖЕ ЗАНЯТ В ЭТО ВРЕМЯ", bookBtn);
-blockedWarning.style.display = "block";
-await showSuggestions();
-return;
-}
-if(result.ok || result.id) {
-tg.sendData(JSON.stringify(data));
-const successDiv = document.createElement('div');
-successDiv.style.cssText = `
-position: fixed;
-top: 20px;
-left: 50%;
-transform: translateX(-50%);
-background: linear-gradient(135deg, #00aa00, #006600);
-color: white;
-padding: 12px 20px;
-border-radius: 10px;
-z-index: 10000;
-font-size: 14px;
-font-weight: bold;
-box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-animation: slideDown 0.3s ease-out;
-`;
-successDiv.innerHTML = `✅ БРОНЬ УСПЕШНО СОЗДАНА!\n📱 ВЫ ПОЛУЧИТЕ УВЕДОМЛЕНИЕ В TELEGRAM`;
-document.body.appendChild(successDiv);
-setTimeout(() => successDiv.remove(), 3000);
-nameInput.value = "";
-guestsInput.value = "";
-timeSelect.value = "";
-suggestionBox.style.display = "none";
-blockedWarning.style.display = "none";
-document.querySelectorAll(".table").forEach(t => t.classList.remove("selected"));
-selectedTable = null;
-tableInfo.innerText = "✨ ВЫБЕРИТЕ СТОЛ ДЛЯ БРОНИРОВАНИЯ";
-await loadTimes();
-} else {
-showError("ОШИБКА: " + (result.detail || "НЕИЗВЕСТНАЯ ОШИБКА"), bookBtn);
-}
-} catch(e) {
-console.error(e);
-showError("ОШИБКА СОЕДИНЕНИЯ С СЕРВЕРОМ", bookBtn);
-}
-};
-});
-</script>
-</body>
-</html>
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.orm import sessionmaker, declarative_base
+from datetime import datetime
+import requests
+import os
+import threading
+import time
+
+# =====================
+# DATABASE - НОВАЯ ССЫЛКА
+# =====================
+
+# 🔥 НОВАЯ ССЫЛКА НА POSTGRESQL
+DATABASE_URL = "postgresql://postgres:YOhOreaGeQiTXNqnHsUACbozGqnVlQcb@postgres.railway.internal:5432/railway"
+
+print(f"✅ Connecting to database...")
+
+# Создаем engine
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True,
+    pool_size=5,
+    max_overflow=10
+)
+
+SessionLocal = sessionmaker(bind=engine)
+Base = declarative_base()
+
+# =====================
+# MODEL
+# =====================
+
+class Booking(Base):
+    __tablename__ = "bookings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    phone = Column(String)
+    guests = Column(Integer)
+    table = Column(String)
+    date = Column(String)
+    time = Column(String)
+    status = Column(String, default="active")
+
+# Создаем таблицы
+try:
+    Base.metadata.create_all(bind=engine)
+    print("✅ Database tables created successfully!")
+except Exception as e:
+    print(f"❌ Error creating tables: {e}")
+    raise
+
+# =====================
+# APP
+# =====================
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# =====================
+# CONFIG - ВАШИ ДАННЫЕ ТЕЛЕГРАМ
+# =====================
+
+# 🔥 ВАШ ТОКЕН ТЕЛЕГРАМ БОТА
+TELEGRAM_BOT_TOKEN = "8769949339:AAFwvdkPFgj7l4BQwGfmcljauMWXRx7qves"
+
+# 🔥 ВАШ ID АДМИНА
+ADMIN_CHAT_ID = "7545540622"
+
+print(f"✅ Telegram configured for admin: {ADMIN_CHAT_ID}")
+
+# =====================
+# LIMITS
+# =====================
+
+TABLE_LIMITS = {
+    "1": 11,
+    "2": 6,
+    "3": 6,
+    "4": 6,
+    "5": 6,
+    "6": 3,
+    "VIP": 20
+}
+
+# =====================
+# ХРАНИЛИЩЕ ДЛЯ ТАЙМЕРОВ
+# =====================
+
+booking_timers = {}
+
+def auto_complete_booking(booking_id):
+    """Автоматическое завершение брони через 4 часа"""
+    try:
+        time.sleep(4 * 3600)  # 4 часа
+        db = SessionLocal()
+        booking = db.query(Booking).filter(
+            Booking.id == booking_id,
+            Booking.status == "active"
+        ).first()
+        
+        if booking:
+            booking.status = "completed"
+            db.commit()
+            print(f"🤖 Auto-completed booking {booking_id}")
+            
+            send_telegram(
+                f"🤖 <b>АВТОМАТИЧЕСКОЕ ЗАВЕРШЕНИЕ</b>\n\n"
+                f"🆔 <b>ID брони:</b> {booking_id}\n"
+                f"👤 <b>Имя:</b> {booking.name}\n"
+                f"🪑 <b>Стол:</b> {booking.table}\n"
+                f"📅 <b>Дата:</b> {booking.date}\n"
+                f"⏰ <b>Время:</b> {booking.time}\n\n"
+                f"🔓 Стол {booking.table} на {booking.time} теперь доступен для бронирования!"
+            )
+        db.close()
+    except Exception as e:
+        print(f"Error in auto_complete: {e}")
+    finally:
+        if booking_id in booking_timers:
+            del booking_timers[booking_id]
+
+def start_auto_complete_timer(booking_id):
+    """Запуск таймера в отдельном потоке"""
+    timer_thread = threading.Thread(target=auto_complete_booking, args=(booking_id,))
+    timer_thread.daemon = True
+    timer_thread.start()
+    booking_timers[booking_id] = timer_thread
+
+# =====================
+# TELEGRAM
+# =====================
+
+def send_telegram(text):
+    try:
+        response = requests.post(
+            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
+            json={
+                "chat_id": ADMIN_CHAT_ID,
+                "text": text,
+                "parse_mode": "HTML"
+            },
+            timeout=5
+        )
+        if response.status_code == 200:
+            print("✅ Telegram notification sent")
+        else:
+            print(f"❌ Telegram error: {response.status_code}")
+    except Exception as e:
+        print("❌ TG ERROR:", e)
+
+# =====================
+# HELPERS
+# =====================
+
+def normalize_date(date_str):
+    try:
+        return datetime.strptime(date_str, "%Y-%m-%d").strftime("%Y-%m-%d")
+    except:
+        raise HTTPException(status_code=400, detail="Invalid date. Use YYYY-MM-DD")
+
+# =====================
+# ROOT
+# =====================
+
+@app.get("/")
+def root():
+    return {
+        "status": "ok", 
+        "database": "connected",
+        "telegram": "configured"
+    }
+
+# =====================
+# HEALTH CHECK
+# =====================
+
+@app.get("/health")
+def health():
+    try:
+        db = SessionLocal()
+        db.execute("SELECT 1")
+        db.close()
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        return {"status": "unhealthy", "database": "disconnected", "error": str(e)}
+
+# =====================
+# БРОНИ ПО ДАТЕ
+# =====================
+
+@app.get("/bookings_by_date")
+def bookings_by_date(date: str):
+    db = SessionLocal()
+    try:
+        date = normalize_date(date)
+        data = db.query(Booking).filter(
+            Booking.date == date,
+            Booking.status == "active"
+        ).all()
+        return [
+            {
+                "id": b.id,
+                "name": b.name,
+                "phone": b.phone,
+                "guests": b.guests,
+                "table": b.table,
+                "date": b.date,
+                "time": b.time,
+                "status": b.status
+            }
+            for b in data
+        ]
+    finally:
+        db.close()
+
+# =====================
+# ЗАНЯТЫЕ ВРЕМЕНА
+# =====================
+
+@app.get("/busy_times")
+def busy_times(date: str, table: str):
+    db = SessionLocal()
+    try:
+        date = normalize_date(date)
+        data = db.query(Booking).filter(
+            Booking.date == date,
+            Booking.table == table,
+            Booking.status == "active"
+        ).all()
+        return [b.time for b in data]
+    finally:
+        db.close()
+
+# =====================
+# СОЗДАНИЕ БРОНИ
+# =====================
+
+@app.post("/booking")
+def create_booking(data: dict):
+    db = SessionLocal()
+    try:
+        # Проверка обязательных полей
+        required = ["name", "phone", "guests", "table", "date", "time"]
+        for field in required:
+            if field not in data:
+                raise HTTPException(status_code=400, detail=f"Missing field: {field}")
+
+        date = normalize_date(data["date"])
+        table = str(data["table"])
+        time = data["time"]
+        guests = int(data["guests"])
+
+        # Проверка стола
+        if table not in TABLE_LIMITS:
+            raise HTTPException(status_code=400, detail=f"Table {table} does not exist")
+
+        # Лимит гостей
+        if guests > TABLE_LIMITS[table]:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Too many guests. Max for table {table} is {TABLE_LIMITS[table]}"
+            )
+
+        # Проверка занятости
+        exists = db.query(Booking).filter(
+            Booking.date == date,
+            Booking.time == time,
+            Booking.table == table,
+            Booking.status == "active"
+        ).first()
+
+        if exists:
+            raise HTTPException(status_code=409, detail="Time slot already booked")
+
+        # Создание брони
+        booking = Booking(
+            name=data["name"],
+            phone=data["phone"],
+            guests=guests,
+            table=table,
+            date=date,
+            time=time,
+            status="active"
+        )
+
+        db.add(booking)
+        db.commit()
+        db.refresh(booking)
+
+        # Запускаем таймер автоматического завершения через 4 часа
+        start_auto_complete_timer(booking.id)
+
+        print(f"✅ New booking created: ID={booking.id}, Table={table}, Time={time}, Guest={data['name']}")
+
+        # Telegram уведомление
+        send_telegram(
+            f"🔥 <b>НОВАЯ БРОНЬ!</b>\n\n"
+            f"👤 <b>Имя:</b> {data['name']}\n"
+            f"📞 <b>Телефон:</b> {data['phone']}\n"
+            f"👥 <b>Гостей:</b> {guests}\n"
+            f"🪑 <b>Стол:</b> {table}\n"
+            f"📅 <b>Дата:</b> {date}\n"
+            f"⏰ <b>Время:</b> {time}\n"
+            f"🆔 <b>ID брони:</b> {booking.id}\n\n"
+            f"⏰ Бронь автоматически завершится через 4 часа"
+        )
+
+        return {"ok": True, "id": booking.id}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"❌ Error creating booking: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db.close()
+
+# =====================
+# ГОСТЬ УШЕЛ
+# =====================
+
+@app.post("/done/{id}")
+def done(id: int):
+    db = SessionLocal()
+    try:
+        booking = db.query(Booking).filter(
+            Booking.id == id,
+            Booking.status == "active"
+        ).first()
+
+        if not booking:
+            raise HTTPException(status_code=404, detail="Active booking not found")
+
+        booking.status = "completed"
+        db.commit()
+
+        # Останавливаем таймер если он есть
+        if id in booking_timers:
+            # Таймер уже запущен в отдельном потоке, мы его не можем остановить
+            # Просто удаляем из словаря, чтобы не дублировать
+            del booking_timers[id]
+
+        print(f"✅ Booking {id} marked as completed")
+
+        send_telegram(
+            f"✅ <b>ГОСТЬ УШЕЛ</b>\n\n"
+            f"🆔 <b>ID брони:</b> {id}\n"
+            f"👤 <b>Имя:</b> {booking.name}\n"
+            f"🪑 <b>Стол:</b> {booking.table}\n"
+            f"📅 <b>Дата:</b> {booking.date}\n"
+            f"⏰ <b>Время:</b> {booking.time}\n"
+            f"👥 <b>Было гостей:</b> {booking.guests}\n\n"
+            f"🔓 Стол {booking.table} на {booking.time} теперь доступен для бронирования!"
+        )
+
+        return {"ok": True, "message": "Booking completed"}
+
+    except HTTPException:
+        raise
+    finally:
+        db.close()
+
+# =====================
+# ОТМЕНА БРОНИ
+# =====================
+
+@app.post("/cancel/{id}")
+def cancel(id: int):
+    db = SessionLocal()
+    try:
+        booking = db.query(Booking).filter(
+            Booking.id == id,
+            Booking.status == "active"
+        ).first()
+
+        if not booking:
+            raise HTTPException(status_code=404, detail="Active booking not found")
+
+        booking.status = "cancelled"
+        db.commit()
+
+        # Останавливаем таймер если он есть
+        if id in booking_timers:
+            del booking_timers[id]
+
+        print(f"❌ Booking {id} cancelled")
+
+        send_telegram(
+            f"❌ <b>БРОНЬ ОТМЕНЕНА</b>\n\n"
+            f"🆔 <b>ID брони:</b> {id}\n"
+            f"👤 <b>Имя:</b> {booking.name}\n"
+            f"📞 <b>Телефон:</b> {booking.phone}\n"
+            f"🪑 <b>Стол:</b> {booking.table}\n"
+            f"📅 <b>Дата:</b> {booking.date}\n"
+            f"⏰ <b>Время:</b> {booking.time}\n\n"
+            f"🔓 Стол {booking.table} на {booking.time} теперь доступен для бронирования!"
+        )
+
+        return {"ok": True, "message": "Booking cancelled"}
+
+    except HTTPException:
+        raise
+    finally:
+        db.close()
+
+# =====================
+# ВСЕ БРОНИ (ДЛЯ ОТЛАДКИ)
+# =====================
+
+@app.get("/all_bookings")
+def all_bookings():
+    db = SessionLocal()
+    try:
+        data = db.query(Booking).all()
+        return [
+            {
+                "id": b.id,
+                "name": b.name,
+                "phone": b.phone,
+                "guests": b.guests,
+                "table": b.table,
+                "date": b.date,
+                "time": b.time,
+                "status": b.status
+            }
+            for b in data
+        ]
+    finally:
+        db.close()
