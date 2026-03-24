@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
@@ -54,7 +54,10 @@ app.add_middleware(
 # CONFIG
 # =====================
 
+# 🔥 СЮДА ВСТАВЬ СВОЙ ТОКЕН БОТА
 TELEGRAM_BOT_TOKEN = "8769949339:AAFwvdkPFgj7l4BQwGfmcljauMWXRx7qves"
+
+# 🔥 СЮДА ВСТАВЬ СВОЙ ID АДМИНА (можно получить через @userinfobot)
 ADMIN_CHAT_ID = "7545540622"
 
 # =====================
@@ -77,14 +80,16 @@ TABLE_LIMITS = {
 
 def send_telegram(text):
     try:
-        requests.post(
+        response = requests.post(
             f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
             json={
                 "chat_id": ADMIN_CHAT_ID,
                 "text": text,
                 "parse_mode": "HTML"
-            }
+            },
+            timeout=5
         )
+        response.raise_for_status()
     except Exception as e:
         print("TG ERROR:", e)
 
@@ -96,7 +101,8 @@ def normalize_date(date_str):
     try:
         return datetime.strptime(date_str, "%Y-%m-%d").strftime("%Y-%m-%d")
     except:
-        return date_str
+        # 🔥 ИСПРАВЛЕНО: выбрасываем ошибку вместо возврата неправильной даты
+        raise HTTPException(status_code=400, detail=f"Invalid date format: {date_str}")
 
 # =====================
 # ROOT
@@ -113,28 +119,30 @@ def root():
 @app.get("/bookings_by_date")
 def bookings_by_date(date: str):
     db = SessionLocal()
-
-    date = normalize_date(date)
-
-    data = db.query(Booking).filter(
-        Booking.date == date
-    ).all()
-
-    db.close()
-
-    return [
-        {
-            "id": b.id,
-            "name": b.name,
-            "phone": b.phone,
-            "guests": b.guests,
-            "table": b.table,
-            "date": b.date,
-            "time": b.time,
-            "status": b.status
-        }
-        for b in data
-    ]
+    
+    try:
+        date = normalize_date(date)
+        
+        data = db.query(Booking).filter(
+            Booking.date == date
+        ).all()
+        
+        return [
+            {
+                "id": b.id,
+                "name": b.name,
+                "phone": b.phone,
+                "guests": b.guests,
+                "table": b.table,
+                "date": b.date,
+                "time": b.time,
+                "status": b.status
+            }
+            for b in data
+        ]
+    finally:
+        # 🔥 ИСПРАВЛЕНО: закрываем сессию в любом случае
+        db.close()
 
 # =====================
 # ЗАНЯТЫЕ ВРЕМЕНА
@@ -143,95 +151,117 @@ def bookings_by_date(date: str):
 @app.get("/busy_times")
 def busy_times(date: str, table: str):
     db = SessionLocal()
-
-    date = normalize_date(date)
-
-    data = db.query(Booking).filter(
-        Booking.date == date,
-        Booking.table == table,
-        Booking.status != "done"  # 🔥 КЛЮЧЕВОЕ
-    ).all()
-
-    db.close()
-
-    return [b.time for b in data]
+    
+    try:
+        date = normalize_date(date)
+        
+        data = db.query(Booking).filter(
+            Booking.date == date,
+            Booking.table == table,
+            Booking.status != "done"
+        ).all()
+        
+        return [b.time for b in data]
+    finally:
+        db.close()
 
 # =====================
 # СОЗДАНИЕ БРОНИ
 # =====================
 
-"/booking"
+@app.post("/booking")
 def create_booking(data: dict):
-
     db = SessionLocal()
-
-    date = normalize_date(data["date"])
-    table = str(data["table"])
-    time = data["time"]
-    guests = int(data["guests"])
-
-    # лимит гостей
-    if guests > TABLE_LIMITS.get(table, 5):
-        return {"error": "limit"}
-
-    # проверка занятости
-    exists = db.query(Booking).filter(
-        Booking.date == date,
-        Booking.time == time,
-        Booking.table == table,
-        Booking.status != "done"
-    ).first()
-
-    if exists:
-        return {"error": "busy"}
-
-    booking = Booking(
-        name=data["name"],
-        phone=data["phone"],
-        guests=guests,
-        table=table,
-        date=date,
-        time=time,
-        status="pending"
-    )
-
-    db.add(booking)
-    db.commit()
-    db.refresh(booking)
-    db.close()
-
-    # 🔥 Telegram админу
-    send_telegram(
-        f"🔥 <b>Новая бронь</b>\n\n"
-        f"👤 {data['name']}\n"
-        f"📞 {data['phone']}\n"
-        f"👥 {guests}\n"
-        f"🪑 Стол: {table}\n"
-        f"📅 {date}\n"
-        f"⏰ {time}"
-    )
-
-    return {"ok": True}
+    
+    try:
+        # 🔥 ИСПРАВЛЕНО: проверяем наличие всех полей
+        required_fields = ["name", "phone", "guests", "table", "date", "time"]
+        for field in required_fields:
+            if field not in data:
+                raise HTTPException(status_code=400, detail=f"Missing field: {field}")
+        
+        date = normalize_date(data["date"])
+        table = str(data["table"])
+        time = data["time"]
+        guests = int(data["guests"])
+        
+        # проверка что стол существует
+        if table not in TABLE_LIMITS:
+            raise HTTPException(status_code=400, detail=f"Invalid table: {table}")
+        
+        # лимит гостей
+        if guests > TABLE_LIMITS[table]:
+            raise HTTPException(status_code=400, detail="Too many guests for this table")
+        
+        # проверка занятости
+        exists = db.query(Booking).filter(
+            Booking.date == date,
+            Booking.time == time,
+            Booking.table == table,
+            Booking.status != "done"
+        ).first()
+        
+        if exists:
+            raise HTTPException(status_code=409, detail="Time slot already booked")
+        
+        booking = Booking(
+            name=data["name"],
+            phone=data["phone"],
+            guests=guests,
+            table=table,
+            date=date,
+            time=time,
+            status="pending"
+        )
+        
+        db.add(booking)
+        db.commit()
+        db.refresh(booking)
+        
+        # Telegram админу
+        send_telegram(
+            f"🔥 <b>Новая бронь</b>\n\n"
+            f"👤 {data['name']}\n"
+            f"📞 {data['phone']}\n"
+            f"👥 {guests}\n"
+            f"🪑 Стол: {table}\n"
+            f"📅 {date}\n"
+            f"⏰ {time}"
+        )
+        
+        return {"ok": True, "id": booking.id}
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db.close()
 
 # =====================
 # ГОСТЬ УШЕЛ
 # =====================
 
-"/done/{id}"
+@app.post("/done/{id}")
 def done(id: int):
-
     db = SessionLocal()
-
-    booking = db.query(Booking).filter(
-        Booking.id == id
-    ).first()
-
-    if not booking:
-        return {"error": "not_found"}
-
-    # 🔥 УДАЛЯЕМ, а не просто статус
-    db.delete(booking)
-    db.commit()
-    db.close()
-
-    return {"ok": True}
+    
+    try:
+        booking = db.query(Booking).filter(
+            Booking.id == id
+        ).first()
+        
+        if not booking:
+            raise HTTPException(status_code=404, detail="Booking not found")
+        
+        # 🔥 ИСПРАВЛЕНО: меняем статус вместо удаления
+        booking.status = "done"
+        db.commit()
+        
+        return {"ok": True, "message": "Booking marked as completed"}
+    
+    except HTTPException:
+        raise
+    finally:
+        db.close()
