@@ -392,8 +392,8 @@ button:hover {
   </div>
 
   <div class="card">
-    <div class="working-hours" id="workingHours">
-      🕐 Загрузка режима работы...
+    <div class="working-hours">
+      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 23:00 | ПТ-СБ: 12:00 - 00:00</span>
     </div>
     
     <h2>🍷 БРОНИРОВАНИЕ СТОЛОВ</h2>
@@ -450,7 +450,6 @@ const bookBtn = document.getElementById("bookBtn");
 const suggestionBox = document.getElementById("suggestionBox");
 const suggestionsDiv = document.getElementById("suggestions");
 const blockedWarning = document.getElementById("blockedWarning");
-const workingHoursDiv = document.getElementById("workingHours");
 
 let selectedTable = null;
 let allBusyTimes = {};
@@ -468,18 +467,6 @@ function getWorkingHours(date) {
     // Воскресенье - четверг: 12:00 до 23:00
     return { start: 12, end: 23, text: "ВС-ЧТ: 12:00 - 23:00" };
   }
-}
-
-// Обновить отображение режима работы
-function updateWorkingHoursDisplay(date) {
-  const hours = getWorkingHours(date);
-  const dayNames = ['ВС', 'ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ'];
-  const day = new Date(date).getDay();
-  
-  workingHoursDiv.innerHTML = `
-    🕐 РЕЖИМ РАБОТЫ: <span>${hours.text}</span><br>
-    📅 ${dayNames[day]}, ${date}
-  `;
 }
 
 // Функция для конвертации времени в минуты
@@ -584,9 +571,6 @@ const TABLE_CAPACITY = {"1": 7, "2": 5, "3": 5, "4": 5, "5": 5, "6": 3, "VIP": 2
 dateInput.min = new Date().toISOString().split("T")[0];
 dateInput.value = new Date().toISOString().split("T")[0];
 
-// Обновляем режим работы при загрузке
-updateWorkingHoursDisplay(dateInput.value);
-
 // Загрузка всех занятых времен для всех столов
 async function loadAllBusyTimes(date) {
   try {
@@ -650,7 +634,8 @@ async function loadTimes() {
     
     if(availableTimes.length === 0) {
       timeSelect.innerHTML = '<option value="">❌ НЕТ СВОБОДНЫХ ВРЕМЕН</option>';
-      showError(`На ${dateInput.value} нет свободных времен с учетом режима работы (${workingHours.text}) и 3-часового интервала между бронями`);
+      let hours = getWorkingHours(dateInput.value);
+      showError(`На ${dateInput.value} нет свободных времен с учетом режима работы (${hours.text}) и 3-часового интервала между бронями`);
     }
     
   } catch(e) {
@@ -659,7 +644,6 @@ async function loadTimes() {
 }
 
 dateInput.addEventListener("change", () => {
-  updateWorkingHoursDisplay(dateInput.value);
   if(selectedTable && selectedTable !== "VIP") loadTimes();
   suggestionBox.style.display = "none";
   blockedWarning.style.display = "none";
@@ -737,7 +721,7 @@ bookBtn.onclick = async () => {
     
     if(result.ok || result.id) {
       tg.sendData(JSON.stringify(data));
-      showSuccess(`БРОНЬ СОЗДАНА!\n🪑 Стол ${selectedTable}\n⏰ ${selectedTime}\n👤 ${nameVal}\n\n⏱ Минимальное время посещения: 2-3 часа\n🏠 Ресторан работает: ${workingHours.text}`);
+      showSuccess(`БРОНЬ СОЗДАНА!\n🪑 Стол ${selectedTable}\n⏰ ${selectedTime}\n👤 ${nameVal}\n\n⏱ Минимальное время посещения: 2-3 часа\n🏠 Режим работы: ${workingHours.text}`);
       
       nameInput.value = "";
       guestsInput.value = "";
