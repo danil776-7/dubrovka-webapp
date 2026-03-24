@@ -12,9 +12,18 @@ import os
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+# 🔥 ПРОВЕРКА: если переменная не установлена
+if not DATABASE_URL:
+    raise ValueError(
+        "DATABASE_URL environment variable is not set. "
+        "Please add it in Railway Variables."
+    )
+
 # 🔥 фикс Railway postgres://
-if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://")
+
+print(f"✅ Connecting to database: {DATABASE_URL.replace('postgresql://postgres:', 'postgresql://***:***@')}")  # Лог без пароля
 
 engine = create_engine(
     DATABASE_URL,
@@ -38,9 +47,15 @@ class Booking(Base):
     table = Column(String)
     date = Column(String)
     time = Column(String)
-    status = Column(String, default="active")  # 🔥 ДОБАВЛЕНО поле status
+    status = Column(String, default="active")
 
-Base.metadata.create_all(bind=engine)
+# Создаем таблицы
+try:
+    Base.metadata.create_all(bind=engine)
+    print("✅ Database tables created/verified")
+except Exception as e:
+    print(f"❌ Error creating tables: {e}")
+    raise
 
 # =====================
 # APP
@@ -62,6 +77,10 @@ app.add_middleware(
 TELEGRAM_BOT_TOKEN = os.getenv("8769949339:AAFwvdkPFgj7l4BQwGfmcljauMWXRx7qves")
 ADMIN_CHAT_ID = os.getenv("7545540622")
 
+# Проверка Telegram переменных
+if not TELEGRAM_BOT_TOKEN or not ADMIN_CHAT_ID:
+    print("⚠️ WARNING: TELEGRAM_BOT_TOKEN or ADMIN_CHAT_ID not set. Telegram notifications disabled.")
+
 # =====================
 # LIMITS
 # =====================
@@ -81,6 +100,10 @@ TABLE_LIMITS = {
 # =====================
 
 def send_telegram(text):
+    if not TELEGRAM_BOT_TOKEN or not ADMIN_CHAT_ID:
+        print("⚠️ Telegram not configured, skipping notification")
+        return
+    
     try:
         requests.post(
             f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
@@ -91,8 +114,9 @@ def send_telegram(text):
             },
             timeout=5
         )
+        print("✅ Telegram notification sent")
     except Exception as e:
-        print("TG ERROR:", e)
+        print("❌ TG ERROR:", e)
 
 # =====================
 # HELPERS
@@ -110,7 +134,10 @@ def normalize_date(date_str):
 
 @app.get("/")
 def root():
-    return {"status": "ok"}
+    return {
+        "status": "ok",
+        "database": "connected" if DATABASE_URL else "not configured"
+    }
 
 # =====================
 # БРОНИ ПО ДАТЕ (АДМИНКА)
@@ -125,7 +152,7 @@ def bookings_by_date(date: str):
 
         data = db.query(Booking).filter(
             Booking.date == date,
-            Booking.status == "active"  # 🔥 ТОЛЬКО АКТИВНЫЕ
+            Booking.status == "active"
         ).all()
 
         return [
@@ -137,7 +164,7 @@ def bookings_by_date(date: str):
                 "table": b.table,
                 "date": b.date,
                 "time": b.time,
-                "status": b.status  # 🔥 ДОБАВЛЕНО
+                "status": b.status
             }
             for b in data
         ]
@@ -159,7 +186,7 @@ def busy_times(date: str, table: str):
         data = db.query(Booking).filter(
             Booking.date == date,
             Booking.table == table,
-            Booking.status == "active"  # 🔥 ТОЛЬКО АКТИВНЫЕ
+            Booking.status == "active"
         ).all()
 
         return [b.time for b in data]
@@ -176,7 +203,7 @@ def create_booking(data: dict):
     db = SessionLocal()
 
     try:
-        # 🔥 ПРОВЕРКА ОБЯЗАТЕЛЬНЫХ ПОЛЕЙ
+        # Проверка обязательных полей
         required = ["name", "phone", "guests", "table", "date", "time"]
         for field in required:
             if field not in data:
@@ -187,7 +214,7 @@ def create_booking(data: dict):
         time = data["time"]
         guests = int(data["guests"])
 
-        # 🔥 ПРОВЕРКА СУЩЕСТВОВАНИЯ СТОЛА
+        # Проверка существования стола
         if table not in TABLE_LIMITS:
             raise HTTPException(status_code=400, detail=f"Table {table} does not exist")
 
@@ -200,7 +227,7 @@ def create_booking(data: dict):
             Booking.date == date,
             Booking.time == time,
             Booking.table == table,
-            Booking.status == "active"  # 🔥 ТОЛЬКО АКТИВНЫЕ
+            Booking.status == "active"
         ).first()
 
         if exists:
@@ -213,14 +240,14 @@ def create_booking(data: dict):
             table=table,
             date=date,
             time=time,
-            status="active"  # 🔥 ЯВНО УКАЗЫВАЕМ СТАТУС
+            status="active"
         )
 
         db.add(booking)
         db.commit()
-        db.refresh(booking)  # 🔥 ПОЛУЧАЕМ ID
+        db.refresh(booking)
 
-        # 🔥 TELEGRAM ТОЛЬКО ПОСЛЕ УСПЕШНОГО СОЗДАНИЯ
+        # Telegram только после успешного создания
         send_telegram(
             f"🔥 <b>Новая бронь</b>\n\n"
             f"👤 {data['name']}\n"
@@ -237,8 +264,8 @@ def create_booking(data: dict):
     except HTTPException:
         raise
     except Exception as e:
-        db.rollback()  # 🔥 ОТКАТ ПРИ ОШИБКЕ
-        print(f"Error: {e}")
+        db.rollback()
+        print(f"❌ Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
@@ -259,11 +286,9 @@ def done(id: int):
         if not booking:
             raise HTTPException(status_code=404, detail="Booking not found")
 
-        # 🔥 МЕНЯЕМ СТАТУС ВМЕСТО УДАЛЕНИЯ
         booking.status = "completed"
         db.commit()
 
-        # 🔥 ОПЦИОНАЛЬНО: УВЕДОМЛЕНИЕ В TELEGRAM
         send_telegram(
             f"✅ <b>Гость ушел</b>\n\n"
             f"🆔 ID: {id}\n"
@@ -280,7 +305,7 @@ def done(id: int):
         db.close()
 
 # =====================
-# ОТМЕНА БРОНИ (ОПЦИОНАЛЬНО)
+# ОТМЕНА БРОНИ
 # =====================
 
 @app.post("/cancel/{id}")
