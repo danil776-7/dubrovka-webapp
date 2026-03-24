@@ -15,8 +15,8 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
-  color: #2c3e50;
+  background: #faf9f7;
+  color: #4a4a4a;
   min-height: 100vh;
 }
 
@@ -28,19 +28,10 @@ body {
   height: 100%;
   object-fit: cover;
   z-index: -2;
-  opacity: 0.3;
+  opacity: 0.15;
 }
 
-.overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.85);
-  z-index: -1;
-}
-
+/* Убрали затемнение */
 .container {
   max-width: 500px;
   margin: 0 auto;
@@ -56,68 +47,69 @@ body {
 }
 
 .logo-img {
-  width: 100px;
-  height: 100px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
   object-fit: cover;
-  margin-bottom: 15px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   transition: transform 0.3s ease;
-  border: 3px solid #d4af37;
+  border: 2px solid #e8dbbc;
 }
 
 .logo-img:hover {
-  transform: scale(1.05);
+  transform: scale(1.02);
 }
 
 .logo-text {
-  font-size: 28px;
-  font-weight: bold;
+  font-size: 26px;
+  font-weight: 500;
   letter-spacing: 1px;
-  color: #2c3e50;
-  margin-bottom: 5px;
+  color: #b89a4b;
+  margin-bottom: 4px;
 }
 
 .logo-subtitle {
-  font-size: 12px;
-  color: #d4af37;
+  font-size: 11px;
+  color: #b89a4b;
   letter-spacing: 2px;
   text-transform: uppercase;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  padding: 25px;
-  border-radius: 20px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 24px;
+  border: 1px solid #f0ede8;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
   animation: fadeInUp 0.8s ease-out;
 }
 
 .working-hours {
-  background: linear-gradient(135deg, #d4af37 0%, #b8942e 100%);
+  background: #faf7f0;
   padding: 10px;
-  border-radius: 12px;
+  border-radius: 16px;
   text-align: center;
   margin-bottom: 20px;
-  font-size: 13px;
-  color: #fff;
+  font-size: 12px;
+  color: #b89a4b;
   font-weight: 500;
+  border: 1px solid #f0e8dc;
 }
 
 .working-hours span {
-  font-weight: bold;
+  font-weight: 600;
+  color: #9b7b3a;
 }
 
 h2 {
   text-align: center;
   margin-bottom: 20px;
-  font-size: 22px;
-  color: #2c3e50;
+  font-size: 20px;
+  color: #5a5a5a;
   letter-spacing: 0.5px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .tables {
@@ -129,46 +121,28 @@ h2 {
 
 .table {
   padding: 14px;
-  background: #f8f9fa;
-  border-radius: 12px;
+  background: #faf9f7;
+  border-radius: 16px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid #e9ecef;
-  font-weight: 600;
-  font-size: 16px;
-  color: #2c3e50;
-  position: relative;
-  overflow: hidden;
-}
-
-.table::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
-  transition: left 0.5s;
-}
-
-.table:hover::before {
-  left: 100%;
+  transition: all 0.2s ease;
+  border: 1px solid #efe8df;
+  font-weight: 500;
+  font-size: 15px;
+  color: #6b6b6b;
 }
 
 .table:hover {
-  background: #fff;
-  transform: translateY(-2px);
-  border-color: #d4af37;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: #f5f2ed;
+  transform: translateY(-1px);
+  border-color: #e0d5c5;
 }
 
 .table.selected {
-  background: #d4af37;
-  color: #fff;
-  border-color: #b8942e;
-  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+  background: #e8dbbc;
+  color: #6b5a3a;
+  border-color: #d4c4a0;
+  box-shadow: 0 2px 8px rgba(184, 154, 75, 0.1);
 }
 
 .table.disabled {
@@ -177,101 +151,71 @@ h2 {
 }
 
 .table[data-table="VIP"] {
-  background: linear-gradient(135deg, #f8f9fa, #fff);
-  border-color: #d4af37;
   position: relative;
 }
 
 .table[data-table="VIP"]::after {
   content: "⭐";
   position: absolute;
-  top: -8px;
-  right: -8px;
-  font-size: 14px;
-  animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.2); }
+  top: -6px;
+  right: -6px;
+  font-size: 12px;
 }
 
 .desc {
-  background: #f8f9fa;
+  background: #faf9f7;
   padding: 12px;
-  border-radius: 12px;
+  border-radius: 16px;
   margin: 15px 0;
   white-space: pre-line;
-  font-size: 14px;
-  border-left: 3px solid #d4af37;
-  color: #2c3e50;
+  font-size: 13px;
+  border-left: 3px solid #e8dbbc;
+  color: #6b6b6b;
+  line-height: 1.4;
 }
 
 input, select {
   width: 100%;
   padding: 14px 15px;
   margin: 8px 0;
-  border-radius: 12px;
-  border: 1px solid #e9ecef;
-  background: #fff;
-  color: #2c3e50;
-  font-size: 16px;
-  transition: all 0.3s ease;
+  border-radius: 16px;
+  border: 1px solid #efe8df;
+  background: #ffffff;
+  color: #4a4a4a;
+  font-size: 15px;
+  transition: all 0.2s ease;
   font-family: inherit;
 }
 
 input:focus, select:focus {
   outline: none;
-  border-color: #d4af37;
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+  border-color: #e8dbbc;
+  box-shadow: 0 0 0 2px rgba(232, 219, 188, 0.2);
 }
 
 input::placeholder {
-  color: #adb5bd;
-}
-
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-  opacity: 1;
+  color: #cbc3b7;
 }
 
 button {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #d4af37 0%, #b8942e 100%);
+  background: #e8dbbc;
   border: none;
-  border-radius: 12px;
+  border-radius: 16px;
   cursor: pointer;
-  font-weight: 600;
-  font-size: 16px;
+  font-weight: 500;
+  font-size: 15px;
   margin-top: 15px;
-  color: #fff;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
+  color: #6b5a3a;
+  transition: all 0.2s ease;
   letter-spacing: 0.5px;
-  position: relative;
-  overflow: hidden;
   font-family: inherit;
 }
 
-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-  transition: left 0.5s;
-}
-
-button:hover::before {
-  left: 100%;
-}
-
 button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
+  background: #e2d4b0;
+  transform: translateY(-1px);
 }
 
 button:active {
@@ -279,134 +223,133 @@ button:active {
 }
 
 .suggestion-box {
-  background: #f8f9fa;
+  background: #faf9f7;
   padding: 15px;
-  border-radius: 12px;
+  border-radius: 16px;
   margin-top: 15px;
   display: none;
-  border: 1px solid #e9ecef;
+  border: 1px solid #efe8df;
 }
 
 .suggestion-box h4 {
   margin: 0 0 10px 0;
-  color: #d4af37;
-  font-size: 16px;
+  color: #b89a4b;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .suggestion-item {
   padding: 12px;
   margin: 8px 0;
-  background: #fff;
-  border-radius: 10px;
+  background: #ffffff;
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-left: 2px solid #d4af37;
+  border-left: 2px solid #e8dbbc;
 }
 
 .suggestion-item:hover {
-  background: #f8f9fa;
-  transform: translateX(5px);
+  background: #f5f2ed;
+  transform: translateX(3px);
 }
 
 .suggestion-item.selected {
-  background: #d4af37;
-  color: #fff;
+  background: #e8dbbc;
+  color: #6b5a3a;
 }
 
 .blocked-warning {
-  background: #fee2e2;
+  background: #fef5f0;
   padding: 12px;
-  border-radius: 10px;
+  border-radius: 12px;
   margin-top: 10px;
   display: none;
-  color: #dc2626;
+  color: #c97e5a;
   text-align: center;
-  font-size: 14px;
+  font-size: 13px;
   animation: shake 0.5s ease;
-  border: 1px solid #fecaca;
+  border: 1px solid #fae5d6;
 }
 
 .hookah-warning {
-  background: #fef3c7;
+  background: #fef8ec;
   padding: 12px;
-  border-radius: 10px;
+  border-radius: 12px;
   margin-top: 10px;
   display: none;
-  color: #d97706;
+  color: #b89a4b;
   text-align: center;
-  font-size: 13px;
-  border-left: 3px solid #f59e0b;
+  font-size: 12px;
+  border-left: 3px solid #e8dbbc;
 }
 
 .footer {
   margin-top: 25px;
   text-align: center;
-  font-size: 12px;
-  color: #6c757d;
-  border-top: 1px solid #e9ecef;
-  padding-top: 20px;
+  font-size: 11px;
+  color: #bcb2a4;
+  border-top: 1px solid #f0ede8;
+  padding-top: 18px;
 }
 
 .footer p {
-  margin: 5px 0;
+  margin: 4px 0;
 }
 
 .map-btn {
   display: inline-block;
-  margin-top: 10px;
-  padding: 8px 20px;
-  background: #f8f9fa;
+  margin-top: 8px;
+  padding: 6px 18px;
+  background: #faf9f7;
   border-radius: 20px;
   text-decoration: none;
-  color: #d4af37;
-  font-size: 12px;
-  transition: all 0.3s ease;
-  border: 1px solid #e9ecef;
-  font-weight: 500;
+  color: #b89a4b;
+  font-size: 11px;
+  transition: all 0.2s ease;
+  border: 1px solid #efe8df;
 }
 
 .map-btn:hover {
-  background: #d4af37;
-  color: #fff;
-  transform: translateY(-2px);
+  background: #e8dbbc;
+  color: #6b5a3a;
 }
 
 @keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-30px); }
+  from { opacity: 0; transform: translateY(-15px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(30px); }
+  from { opacity: 0; transform: translateY(15px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
 }
 
 .shake-animation {
-  animation: shake 0.5s ease-in-out;
+  animation: shake 0.4s ease-in-out;
 }
 
 .loading {
   text-align: center;
   padding: 20px;
-  color: #d4af37;
+  color: #b89a4b;
 }
 
 @media (max-width: 480px) {
   .container { padding: 15px; }
-  .card { padding: 20px; }
-  .logo-img { width: 80px; height: 80px; }
-  .logo-text { font-size: 24px; }
-  .table { padding: 12px; font-size: 14px; }
-  input, select, button { font-size: 14px; }
+  .card { padding: 18px; }
+  .logo-img { width: 70px; height: 70px; }
+  .logo-text { font-size: 22px; }
+  .table { padding: 12px; font-size: 13px; }
+  input, select, button { font-size: 14px; padding: 12px; }
 }
 </style>
 </head>
@@ -415,7 +358,6 @@ button:active {
 <video class="video-background" autoplay muted loop playsinline>
   <source src="bg.mp4" type="video/mp4">
 </video>
-<div class="overlay"></div>
 
 <div class="container">
   <div class="logo-container">
@@ -452,9 +394,7 @@ button:active {
     <input id="phone" placeholder="📞 ТЕЛЕФОН (+7XXXXXXXXXX)" maxlength="12" autocomplete="tel">
 
     <div id="hookahWarning" class="hookah-warning">
-      💨 ВНИМАНИЕ!<br>
-      Для компаний от 5 человек обязательно бронирование 2 кальянов<br>
-      Пожалуйста, согласуйте выбор с администратором
+      💨 Для компаний от 5 человек обязательно бронирование 2 кальянов
     </div>
 
     <button id="bookBtn">ЗАБРОНИРОВАТЬ</button>
@@ -520,7 +460,6 @@ if(tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
   }
 }
 
-// Получить режим работы
 function getWorkingHours(date) {
   const day = new Date(date).getDay();
   if (day === 5 || day === 6) {
@@ -584,22 +523,21 @@ function showSuccess(message) {
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: #fff;
-    padding: 14px 20px;
-    border-radius: 12px;
+    background: #e8dbbc;
+    color: #6b5a3a;
+    padding: 12px 20px;
+    border-radius: 20px;
     z-index: 10000;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     animation: fadeInDown 0.3s ease-out;
-    border-left: 3px solid #fff;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
     max-width: 90%;
     text-align: center;
   `;
   successDiv.innerHTML = `✅ ${message}`;
   document.body.appendChild(successDiv);
-  setTimeout(() => successDiv.remove(), 4000);
+  setTimeout(() => successDiv.remove(), 3500);
 }
 
 async function loadAllBusyTimes(date) {
@@ -634,7 +572,7 @@ async function loadTimes() {
       if(slot >= now) {
         let option = document.createElement("option");
         option.value = time;
-        option.innerText = time + " (свободно)";
+        option.innerText = time;
         timeSelect.appendChild(option);
       }
     });
@@ -649,7 +587,7 @@ guestsInput.addEventListener("input", () => {
     let guests = parseInt(guestsInput.value) || 0;
     let maxGuests = TABLE_CAPACITY[selectedTable];
     if(guests > maxGuests) {
-      showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ МАКСИМУМ ${maxGuests} ГОСТЕЙ!`, guestsInput);
+      showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ ${maxGuests} ГОСТЕЙ`, guestsInput);
       guestsInput.value = maxGuests;
       guests = maxGuests;
     }
@@ -668,11 +606,11 @@ document.querySelectorAll(".table").forEach(el => {
     tableInfo.innerText = tableDescriptions[selectedTable];
     let maxGuests = TABLE_CAPACITY[selectedTable];
     guestsInput.max = maxGuests;
-    guestsInput.placeholder = `👥 КОЛИЧЕСТВО ГОСТЕЙ (МАКС. ${maxGuests})`;
+    guestsInput.placeholder = `👥 ГОСТЕЙ (МАКС. ${maxGuests})`;
     let currentGuests = parseInt(guestsInput.value) || 0;
     if(currentGuests > maxGuests) {
       guestsInput.value = maxGuests;
-      showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ МАКСИМУМ ${maxGuests} ГОСТЕЙ`, guestsInput);
+      showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ ${maxGuests} ГОСТЕЙ`, guestsInput);
     }
     if(currentGuests >= 5) { hookahWarning.style.display = "block"; }
     else { hookahWarning.style.display = "none"; }
@@ -719,7 +657,7 @@ bookBtn.onclick = async () => {
   if(phoneVal.length !== 12) { showError("НЕВЕРНЫЙ НОМЕР (+7XXXXXXXXXX)", phoneInput); return; }
   if(guestsVal < 1) { showError("УКАЖИТЕ КОЛИЧЕСТВО ГОСТЕЙ", guestsInput); return; }
   if(guestsVal > maxGuests) {
-    showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ ${maxGuests} ГОСТЕЙ!`, guestsInput);
+    showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ ${maxGuests} ГОСТЕЙ`, guestsInput);
     guestsInput.value = maxGuests;
     return;
   }
