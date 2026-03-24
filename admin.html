@@ -24,7 +24,7 @@ border-right:1px solid #2a2a2a;
 }
 
 .logo{
-color:#b89a4b;
+color:#d4b87a;
 font-size:20px;
 margin-bottom:20px;
 font-weight:500;
@@ -39,7 +39,7 @@ transition:all 0.2s;
 }
 
 .menu div:hover{background:#1a1a1a;}
-.active{background:#b89a4b;color:#0a0a0a;}
+.active{background:#d4b87a;color:#0a0a0a;}
 
 /* content */
 .content{
@@ -66,14 +66,14 @@ font-size:14px;
 
 input:focus, select:focus{
 outline:none;
-border-color:#b89a4b;
+border-color:#d4b87a;
 }
 
 button{
 padding:10px 16px;
 border-radius:12px;
 border:none;
-background:#b89a4b;
+background:#d4b87a;
 color:#0a0a0a;
 cursor:pointer;
 font-weight:500;
@@ -81,7 +81,7 @@ transition:all 0.2s;
 }
 
 button:hover{
-background:#c9aa5c;
+background:#e6c88a;
 }
 
 /* grid */
@@ -101,13 +101,13 @@ transition:0.2s;
 }
 
 .card.new{
-border:1px solid #b89a4b;
-box-shadow:0 0 10px rgba(184,154,75,0.2);
+border:1px solid #d4b87a;
+box-shadow:0 0 10px rgba(212,184,122,0.2);
 }
 
 .time{
 font-size:22px;
-color:#b89a4b;
+color:#d4b87a;
 font-weight:500;
 }
 
@@ -132,7 +132,7 @@ button.done-btn{
 padding:8px 12px;
 border:none;
 border-radius:12px;
-background:#b89a4b;
+background:#d4b87a;
 color:#0a0a0a;
 cursor:pointer;
 margin-top:10px;
@@ -142,13 +142,13 @@ font-weight:500;
 }
 
 button.done-btn:hover{
-background:#c9aa5c;
+background:#e6c88a;
 }
 
 .date-title{
 margin:20px 0 10px;
 font-size:16px;
-color:#b89a4b;
+color:#d4b87a;
 font-weight:500;
 }
 
@@ -208,7 +208,8 @@ color:#8a8a8a;
 </div>
 
 <script>
-const API = "https://dubrovka-webapp-production-a00c.up.railway.app/all_bookings";
+// ПРАВИЛЬНЫЙ API URL - без /all_bookings
+const API = "https://dubrovka-webapp-production-a00c.up.railway.app";
 const list = document.getElementById("list");
 
 let currentData = [];
@@ -225,9 +226,14 @@ async function load(date){
 if(!date) return;
 try {
 console.log(`🔄 Загрузка броней на ${date}...`);
-let res = await fetch(`${API}/bookings_by_date?date=${date}`);
+// ПРАВИЛЬНЫЙ URL - используем /bookings_by_date
+let url = `${API}/bookings_by_date?date=${date}`;
+console.log(`📡 Запрос: ${url}`);
+let res = await fetch(url);
+console.log(`📡 Статус: ${res.status}`);
 if(!res.ok) throw new Error(`HTTP ${res.status}`);
 let data = await res.json();
+console.log(`✅ Загружено броней: ${data.length}`);
 handleNew(data);
 currentData = data;
 render();
@@ -304,14 +310,17 @@ list.innerHTML = html;
 async function done(id){
 if(!confirm("Отметить что гость ушел?")) return;
 try {
+console.log(`📤 Завершение брони ${id}...`);
 let res = await fetch(`${API}/done/${id}`, {method:"POST"});
 if(res.ok){
 currentData = currentData.map(b=> b.id===id ? {...b,status:"completed"} : b);
 render();
+console.log(`✅ Бронь ${id} завершена`);
 } else {
 throw new Error(`HTTP ${res.status}`);
 }
 } catch(e) {
+console.error("❌ Ошибка:", e);
 alert("Ошибка: " + e.message);
 }
 }
