@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>Dubrovka Lounge & Bar</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
@@ -14,11 +14,10 @@
 }
 
 body {
-  font-family: 'Arial', sans-serif;
-  background: #000;
-  color: #e7d9c0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+  color: #2c3e50;
   min-height: 100vh;
-  overflow-x: hidden;
 }
 
 .video-background {
@@ -29,6 +28,7 @@ body {
   height: 100%;
   object-fit: cover;
   z-index: -2;
+  opacity: 0.3;
 }
 
 .overlay {
@@ -37,7 +37,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, rgba(0,0,0,0.85) 0%, rgba(60,0,0,0.6) 100%);
+  background: rgba(255, 255, 255, 0.85);
   z-index: -1;
 }
 
@@ -56,73 +56,68 @@ body {
 }
 
 .logo-img {
-  width: 120px;
-  height: 120px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
   object-fit: cover;
   margin-bottom: 15px;
-  box-shadow: 0 0 30px rgba(139, 0, 0, 0.5);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
-  border: 2px solid #8B0000;
+  border: 3px solid #d4af37;
 }
 
 .logo-img:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 40px rgba(139, 0, 0, 0.8);
 }
 
 .logo-text {
   font-size: 28px;
   font-weight: bold;
-  letter-spacing: 2px;
-  background: linear-gradient(135deg, #8B0000 0%, #cc0000 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  letter-spacing: 1px;
+  color: #2c3e50;
   margin-bottom: 5px;
 }
 
 .logo-subtitle {
   font-size: 12px;
-  color: #8B0000;
-  letter-spacing: 3px;
+  color: #d4af37;
+  letter-spacing: 2px;
   text-transform: uppercase;
+  font-weight: 500;
 }
 
 .card {
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(15px);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
   padding: 25px;
   border-radius: 20px;
-  border: 1px solid rgba(139, 0, 0, 0.4);
-  box-shadow: 0 8px 32px rgba(139, 0, 0, 0.2);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   animation: fadeInUp 0.8s ease-out;
 }
 
 .working-hours {
-  background: rgba(139, 0, 0, 0.2);
-  padding: 8px;
-  border-radius: 8px;
+  background: linear-gradient(135deg, #d4af37 0%, #b8942e 100%);
+  padding: 10px;
+  border-radius: 12px;
   text-align: center;
-  margin-bottom: 15px;
-  font-size: 12px;
-  color: #d6b36a;
-  border: 1px solid rgba(139, 0, 0, 0.3);
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: #fff;
+  font-weight: 500;
 }
 
 .working-hours span {
-  color: #8B0000;
   font-weight: bold;
 }
 
 h2 {
   text-align: center;
   margin-bottom: 20px;
-  font-size: 24px;
-  color: #8B0000;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  font-weight: bold;
+  font-size: 22px;
+  color: #2c3e50;
+  letter-spacing: 0.5px;
+  font-weight: 600;
 }
 
 .tables {
@@ -133,16 +128,16 @@ h2 {
 }
 
 .table {
-  padding: 15px;
-  background: rgba(20, 20, 20, 0.9);
+  padding: 14px;
+  background: #f8f9fa;
   border-radius: 12px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  border: 1px solid rgba(139, 0, 0, 0.3);
-  font-weight: bold;
-  font-size: 18px;
-  color: #fff;
+  border: 1px solid #e9ecef;
+  font-weight: 600;
+  font-size: 16px;
+  color: #2c3e50;
   position: relative;
   overflow: hidden;
 }
@@ -154,7 +149,7 @@ h2 {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(139, 0, 0, 0.3), transparent);
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
   transition: left 0.5s;
 }
 
@@ -163,16 +158,17 @@ h2 {
 }
 
 .table:hover {
-  background: rgba(139, 0, 0, 0.2);
+  background: #fff;
   transform: translateY(-2px);
-  border-color: #8B0000;
+  border-color: #d4af37;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .table.selected {
-  background: #8B0000;
+  background: #d4af37;
   color: #fff;
-  box-shadow: 0 0 20px rgba(139, 0, 0, 0.6);
-  border-color: #cc0000;
+  border-color: #b8942e;
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
 }
 
 .table.disabled {
@@ -181,8 +177,8 @@ h2 {
 }
 
 .table[data-table="VIP"] {
-  background: linear-gradient(135deg, rgba(139, 0, 0, 0.2), rgba(74, 0, 0, 0.2));
-  border-color: #8B0000;
+  background: linear-gradient(135deg, #f8f9fa, #fff);
+  border-color: #d4af37;
   position: relative;
 }
 
@@ -201,31 +197,37 @@ h2 {
 }
 
 .desc {
-  background: rgba(20, 20, 20, 0.9);
+  background: #f8f9fa;
   padding: 12px;
   border-radius: 12px;
   margin: 15px 0;
   white-space: pre-line;
   font-size: 14px;
-  border-left: 3px solid #8B0000;
+  border-left: 3px solid #d4af37;
+  color: #2c3e50;
 }
 
 input, select {
   width: 100%;
-  padding: 12px 15px;
+  padding: 14px 15px;
   margin: 8px 0;
-  border-radius: 10px;
-  border: 1px solid rgba(139, 0, 0, 0.3);
-  background: rgba(20, 20, 20, 0.9);
-  color: #fff;
-  font-size: 14px;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  background: #fff;
+  color: #2c3e50;
+  font-size: 16px;
   transition: all 0.3s ease;
+  font-family: inherit;
 }
 
 input:focus, select:focus {
   outline: none;
-  border-color: #8B0000;
-  box-shadow: 0 0 10px rgba(139, 0, 0, 0.3);
+  border-color: #d4af37;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+input::placeholder {
+  color: #adb5bd;
 }
 
 input[type="number"]::-webkit-inner-spin-button,
@@ -236,18 +238,20 @@ input[type="number"]::-webkit-outer-spin-button {
 button {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #8B0000 0%, #4a0000 100%);
+  background: linear-gradient(135deg, #d4af37 0%, #b8942e 100%);
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
-  font-weight: bold;
+  font-weight: 600;
   font-size: 16px;
   margin-top: 15px;
   color: #fff;
   transition: all 0.3s ease;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
   position: relative;
   overflow: hidden;
+  font-family: inherit;
 }
 
 button::before {
@@ -257,7 +261,7 @@ button::before {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
   transition: left 0.5s;
 }
 
@@ -267,96 +271,107 @@ button:hover::before {
 
 button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 20px rgba(139, 0, 0, 0.5);
+  box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
+}
+
+button:active {
+  transform: translateY(0);
 }
 
 .suggestion-box {
-  background: rgba(20, 20, 20, 0.95);
+  background: #f8f9fa;
   padding: 15px;
   border-radius: 12px;
   margin-top: 15px;
   display: none;
-  border: 1px solid rgba(139, 0, 0, 0.5);
+  border: 1px solid #e9ecef;
 }
 
 .suggestion-box h4 {
   margin: 0 0 10px 0;
-  color: #8B0000;
+  color: #d4af37;
   font-size: 16px;
 }
 
 .suggestion-item {
   padding: 12px;
   margin: 8px 0;
-  background: rgba(30, 30, 30, 0.9);
-  border-radius: 8px;
+  background: #fff;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-left: 2px solid #8B0000;
+  border-left: 2px solid #d4af37;
 }
 
 .suggestion-item:hover {
-  background: rgba(139, 0, 0, 0.2);
+  background: #f8f9fa;
   transform: translateX(5px);
 }
 
 .suggestion-item.selected {
-  background: #8B0000;
+  background: #d4af37;
   color: #fff;
 }
 
 .blocked-warning {
-  background: linear-gradient(135deg, rgba(139, 0, 0, 0.9), rgba(74, 0, 0, 0.9));
+  background: #fee2e2;
   padding: 12px;
   border-radius: 10px;
   margin-top: 10px;
   display: none;
-  color: #fff;
+  color: #dc2626;
   text-align: center;
   font-size: 14px;
   animation: shake 0.5s ease;
+  border: 1px solid #fecaca;
 }
 
 .hookah-warning {
-  background: linear-gradient(135deg, rgba(139, 0, 0, 0.7), rgba(74, 0, 0, 0.7));
+  background: #fef3c7;
   padding: 12px;
   border-radius: 10px;
   margin-top: 10px;
   display: none;
-  color: #ffcc00;
+  color: #d97706;
   text-align: center;
   font-size: 13px;
-  border-left: 3px solid #ffcc00;
+  border-left: 3px solid #f59e0b;
 }
 
 .footer {
   margin-top: 25px;
   text-align: center;
-  font-size: 13px;
-  color: #888;
-  border-top: 1px solid rgba(139, 0, 0, 0.3);
+  font-size: 12px;
+  color: #6c757d;
+  border-top: 1px solid #e9ecef;
   padding-top: 20px;
+}
+
+.footer p {
+  margin: 5px 0;
 }
 
 .map-btn {
   display: inline-block;
   margin-top: 10px;
   padding: 8px 20px;
-  background: rgba(20, 20, 20, 0.9);
+  background: #f8f9fa;
   border-radius: 20px;
   text-decoration: none;
-  color: #8B0000;
+  color: #d4af37;
   font-size: 12px;
   transition: all 0.3s ease;
-  border: 1px solid rgba(139, 0, 0, 0.5);
+  border: 1px solid #e9ecef;
+  font-weight: 500;
 }
 
 .map-btn:hover {
-  background: #8B0000;
+  background: #d4af37;
   color: #fff;
+  transform: translateY(-2px);
 }
 
 @keyframes fadeInDown {
@@ -382,15 +397,16 @@ button:hover {
 .loading {
   text-align: center;
   padding: 20px;
-  color: #8B0000;
+  color: #d4af37;
 }
 
 @media (max-width: 480px) {
   .container { padding: 15px; }
   .card { padding: 20px; }
-  .logo-img { width: 100px; height: 100px; }
+  .logo-img { width: 80px; height: 80px; }
   .logo-text { font-size: 24px; }
-  .table { padding: 12px; font-size: 16px; }
+  .table { padding: 12px; font-size: 14px; }
+  input, select, button { font-size: 14px; }
 }
 </style>
 </head>
@@ -410,7 +426,7 @@ button:hover {
 
   <div class="card">
     <div class="working-hours">
-      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 01:00 | ПТ-СБ: 12:00 - 02:00</span>
+      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 23:00 | ПТ-СБ: 12:00 - 00:00</span>
     </div>
     
     <h2>🍷 БРОНИРОВАНИЕ СТОЛОВ</h2>
@@ -431,9 +447,9 @@ button:hover {
     <select id="time">
       <option value="">⏰ ВЫБЕРИТЕ ВРЕМЯ</option>
     </select>
-    <input id="guests" type="number" placeholder="👥 КОЛИЧЕСТВО ГОСТЕЙ" min="1" max="20" step="1">
-    <input id="name" placeholder="👤 ВАШЕ ИМЯ">
-    <input id="phone" placeholder="📞 ТЕЛЕФОН (+7XXXXXXXXXX)" maxlength="12">
+    <input id="guests" type="number" placeholder="👥 КОЛИЧЕСТВО ГОСТЕЙ" min="1" max="20" step="1" autocomplete="off">
+    <input id="name" placeholder="👤 ВАШЕ ИМЯ" autocomplete="name">
+    <input id="phone" placeholder="📞 ТЕЛЕФОН (+7XXXXXXXXXX)" maxlength="12" autocomplete="tel">
 
     <div id="hookahWarning" class="hookah-warning">
       💨 ВНИМАНИЕ!<br>
@@ -458,7 +474,7 @@ button:hover {
 </div>
 
 <script>
-// Описания столов с указанием максимального количества гостей
+// Описания столов
 const tableDescriptions = {
   "1": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 7 ГОСТЕЙ",
   "2": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ",
@@ -469,15 +485,8 @@ const tableDescriptions = {
   "VIP": "⭐ VIP КОМНАТА (ДЕПОЗИТНАЯ)\n👑 ОБСЛУЖИВАНИЕ ЧЕРЕЗ АДМИНИСТРАТОРА"
 };
 
-// Максимальное количество гостей для каждого стола
 const TABLE_CAPACITY = {
-  "1": 7,
-  "2": 5,
-  "3": 5,
-  "4": 5,
-  "5": 5,
-  "6": 3,
-  "VIP": 20
+  "1": 7, "2": 5, "3": 5, "4": 5, "5": 5, "6": 3, "VIP": 20
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -500,7 +509,18 @@ const hookahWarning = document.getElementById("hookahWarning");
 let selectedTable = null;
 let suggestedOption = null;
 
-// Получить режим работы в зависимости от дня недели
+// Автозаполнение из Telegram WebApp
+if(tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+  const user = tg.initDataUnsafe.user;
+  if(user.first_name) {
+    nameInput.value = user.first_name;
+  }
+  if(user.last_name && nameInput.value) {
+    nameInput.value += " " + user.last_name;
+  }
+}
+
+// Получить режим работы
 function getWorkingHours(date) {
   const day = new Date(date).getDay();
   if (day === 5 || day === 6) {
@@ -510,32 +530,23 @@ function getWorkingHours(date) {
   }
 }
 
-// Функция для конвертации времени в минуты
 function timeToMinutes(timeStr) {
   let [hours, minutes] = timeStr.split(':').map(Number);
   return hours * 60 + minutes;
 }
 
-// Проверка интервала между бронями (минимум 3 часа = 180 минут)
 function checkTimeInterval(existingTimes, newTime, minIntervalMinutes = 180) {
   let newTimeMinutes = timeToMinutes(newTime);
-  
   for (let existingTime of existingTimes) {
     let existingMinutes = timeToMinutes(existingTime);
     let diff = Math.abs(newTimeMinutes - existingMinutes);
-    
     if (diff < minIntervalMinutes) {
-      return {
-        allowed: false,
-        conflictTime: existingTime,
-        diffMinutes: diff
-      };
+      return { allowed: false, conflictTime: existingTime };
     }
   }
   return { allowed: true };
 }
 
-// Генерация времени с учетом режима работы и интервалов
 function generateTimesWithInterval(date, busyTimes, workingHours) {
   let times = [];
   let startHour = workingHours.start;
@@ -545,10 +556,8 @@ function generateTimesWithInterval(date, busyTimes, workingHours) {
   for(let h = startHour; h < endHour; h++) {
     let time1 = `${String(h).padStart(2,'0')}:00`;
     let time2 = `${String(h).padStart(2,'0')}:30`;
-    
     let check1 = checkTimeInterval(sortedBusy, time1, 180);
     let check2 = checkTimeInterval(sortedBusy, time2, 180);
-    
     if(check1.allowed) times.push(time1);
     if(check2.allowed) times.push(time2);
   }
@@ -563,7 +572,6 @@ function shakeElement(element) {
 function showError(message, element = null) {
   if (element) shakeElement(element);
   else shakeElement(bookBtn);
-  
   blockedWarning.innerHTML = `❌ ${message}`;
   blockedWarning.style.display = "block";
   setTimeout(() => blockedWarning.style.display = "none", 5000);
@@ -576,27 +584,28 @@ function showSuccess(message) {
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: linear-gradient(135deg, #006600, #004400);
+    background: linear-gradient(135deg, #10b981, #059669);
     color: #fff;
-    padding: 12px 20px;
-    border-radius: 10px;
+    padding: 14px 20px;
+    border-radius: 12px;
     z-index: 10000;
     font-size: 14px;
-    font-weight: bold;
+    font-weight: 500;
     animation: fadeInDown 0.3s ease-out;
-    border-left: 3px solid #00ff00;
+    border-left: 3px solid #fff;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    max-width: 90%;
+    text-align: center;
   `;
   successDiv.innerHTML = `✅ ${message}`;
   document.body.appendChild(successDiv);
-  setTimeout(() => successDiv.remove(), 3000);
+  setTimeout(() => successDiv.remove(), 4000);
 }
 
-// Загрузка всех занятых времен для всех столов
 async function loadAllBusyTimes(date) {
   try {
     let allTables = ["1", "2", "3", "4", "5", "6"];
     let busyData = {};
-    
     for (let table of allTables) {
       let res = await fetch(`${API}/busy_times?date=${date}&table=${table}`);
       let busy = await res.json();
@@ -609,25 +618,19 @@ async function loadAllBusyTimes(date) {
   }
 }
 
-// Загрузка доступных времен для выбранного стола
 async function loadTimes() {
   if(!dateInput.value || !selectedTable || selectedTable === "VIP") return;
-  
   try {
     let allBusy = await loadAllBusyTimes(dateInput.value);
     let busyForTable = allBusy[selectedTable] || [];
     let workingHours = getWorkingHours(dateInput.value);
-    
     let availableTimes = generateTimesWithInterval(dateInput.value, busyForTable, workingHours);
     let now = new Date();
-    
     timeSelect.innerHTML = '<option value="">⏰ ВЫБЕРИТЕ ВРЕМЯ</option>';
-    
     availableTimes.forEach(time => {
       let [h,m] = time.split(":");
       let slot = new Date(dateInput.value);
       slot.setHours(h, m);
-      
       if(slot >= now) {
         let option = document.createElement("option");
         option.value = time;
@@ -635,90 +638,49 @@ async function loadTimes() {
         timeSelect.appendChild(option);
       }
     });
-    
     if(availableTimes.length === 0) {
       timeSelect.innerHTML = '<option value="">❌ НЕТ СВОБОДНЫХ ВРЕМЕН</option>';
-      let hours = getWorkingHours(dateInput.value);
-      showError(`На ${dateInput.value} нет свободных времен с учетом режима работы (${hours.text}) и 3-часового интервала между бронями`);
     }
-  } catch(e) {
-    console.error(e);
-  }
+  } catch(e) { console.error(e); }
 }
 
-// Проверка количества гостей при изменении поля
 guestsInput.addEventListener("input", () => {
   if(selectedTable && selectedTable !== "VIP") {
     let guests = parseInt(guestsInput.value) || 0;
     let maxGuests = TABLE_CAPACITY[selectedTable];
-    
-    // Проверка на превышение максимального количества
     if(guests > maxGuests) {
-      showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ МАКСИМУМ ${maxGuests} ГОСТЕЙ!\nПожалуйста, уменьшите количество гостей или выберите другой стол`, guestsInput);
+      showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ МАКСИМУМ ${maxGuests} ГОСТЕЙ!`, guestsInput);
       guestsInput.value = maxGuests;
       guests = maxGuests;
     }
-    
-    if(guests < 1) {
-      guestsInput.value = 1;
-      guests = 1;
-    }
-    
-    // Проверка на компанию от 5 человек (кальянное предупреждение)
-    if(guests >= 5) {
-      hookahWarning.style.display = "block";
-    } else {
-      hookahWarning.style.display = "none";
-    }
+    if(guests < 1) { guestsInput.value = 1; guests = 1; }
+    if(guests >= 5) { hookahWarning.style.display = "block"; }
+    else { hookahWarning.style.display = "none"; }
   }
 });
 
-// Обработчики кнопок столов
 document.querySelectorAll(".table").forEach(el => {
   el.onclick = async () => {
     if(el.classList.contains("disabled")) return;
-    
-    // Убираем выделение со всех столов
     document.querySelectorAll(".table").forEach(t => t.classList.remove("selected"));
-    
-    // Выделяем выбранный стол
     el.classList.add("selected");
-    
-    // Сохраняем выбранный стол
     selectedTable = el.dataset.table;
-    
-    // Показываем описание стола
-    tableInfo.innerText = tableDescriptions[selectedTable] || "✨ ВЫБЕРИТЕ СТОЛ ДЛЯ БРОНИРОВАНИЯ";
-    
-    // Обновляем max атрибут для поля гостей
+    tableInfo.innerText = tableDescriptions[selectedTable];
     let maxGuests = TABLE_CAPACITY[selectedTable];
     guestsInput.max = maxGuests;
     guestsInput.placeholder = `👥 КОЛИЧЕСТВО ГОСТЕЙ (МАКС. ${maxGuests})`;
-    
-    // Проверяем текущее значение гостей
     let currentGuests = parseInt(guestsInput.value) || 0;
     if(currentGuests > maxGuests) {
       guestsInput.value = maxGuests;
-      currentGuests = maxGuests;
       showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ МАКСИМУМ ${maxGuests} ГОСТЕЙ`, guestsInput);
     }
-    
-    // Проверка на компанию от 5 человек
-    if(currentGuests >= 5) {
-      hookahWarning.style.display = "block";
-    } else {
-      hookahWarning.style.display = "none";
-    }
-    
-    // Загружаем доступные времена для выбранного стола
-    if(selectedTable !== "VIP") {
-      await loadTimes();
-    } else {
+    if(currentGuests >= 5) { hookahWarning.style.display = "block"; }
+    else { hookahWarning.style.display = "none"; }
+    if(selectedTable !== "VIP") { await loadTimes(); }
+    else {
       timeSelect.innerHTML = '<option value="">⏰ VIP ПО ТЕЛЕФОНУ</option>';
-      guestsInput.placeholder = "👥 КОЛИЧЕСТВО ГОСТЕЙ (УТОЧНИТЕ ПО ТЕЛЕФОНУ)";
       hookahWarning.style.display = "none";
     }
-    
     suggestionBox.style.display = "none";
     blockedWarning.style.display = "none";
   };
@@ -756,15 +718,12 @@ bookBtn.onclick = async () => {
   if(!nameVal) { showError("ВВЕДИТЕ ИМЯ", nameInput); return; }
   if(phoneVal.length !== 12) { showError("НЕВЕРНЫЙ НОМЕР (+7XXXXXXXXXX)", phoneInput); return; }
   if(guestsVal < 1) { showError("УКАЖИТЕ КОЛИЧЕСТВО ГОСТЕЙ", guestsInput); return; }
-  
-  // Проверка количества гостей
   if(guestsVal > maxGuests) {
-    showError(`❌ СТОЛ ${selectedTable} ВМЕЩАЕТ МАКСИМУМ ${maxGuests} ГОСТЕЙ!\nВы указали ${guestsVal} гостей.\n\nПожалуйста, уменьшите количество гостей или выберите другой стол`, guestsInput);
+    showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ ${maxGuests} ГОСТЕЙ!`, guestsInput);
     guestsInput.value = maxGuests;
     return;
   }
   
-  // Проверка на компанию от 5 человек - показываем предупреждение но не блокируем
   if(guestsVal >= 5) {
     let confirmHookah = confirm(`💨 ВНИМАНИЕ!\n\nДля компании из ${guestsVal} человек обязательно бронирование 2 кальянов.\n\nВы подтверждаете, что согласны с этим условием?`);
     if(!confirmHookah) {
@@ -773,21 +732,18 @@ bookBtn.onclick = async () => {
     }
   }
   
-  // Проверка времени работы
   let [hours, minutes] = selectedTime.split(':').map(Number);
   if (hours < workingHours.start || hours >= workingHours.end) {
-    showError(`⏰ РЕСТОРАН РАБОТАЕТ: ${workingHours.text}\nВыберите время в рабочие часы`);
+    showError(`⏰ РЕСТОРАН РАБОТАЕТ: ${workingHours.text}`);
     return;
   }
   
-  // Проверяем интервал с существующими бронями
   let allBusy = await loadAllBusyTimes(dateInput.value);
   let busyForTable = allBusy[selectedTable] || [];
-  
   let intervalCheck = checkTimeInterval(busyForTable, selectedTime, 180);
   
   if(!intervalCheck.allowed) {
-    showError(`⚠️ Слишком близко к брони на ${intervalCheck.conflictTime}\n📌 Между бронями должно быть минимум 3 часа\n\n💡 Выберите другое время`);
+    showError(`⚠️ Слишком близко к брони на ${intervalCheck.conflictTime}\n📌 Между бронями минимум 3 часа`);
     await loadTimes();
     return;
   }
@@ -818,11 +774,9 @@ bookBtn.onclick = async () => {
     
     if(result.ok || result.id) {
       if(tg) tg.sendData(JSON.stringify(data));
-      let hookahMessage = "";
-      if(guestsVal >= 5) {
-        hookahMessage = "\n\n💨 Напоминание: для компании из 5+ человек обязательны 2 кальяна";
-      }
-      showSuccess(`БРОНЬ СОЗДАНА!\n🪑 Стол ${selectedTable}\n⏰ ${selectedTime}\n👥 ${guestsVal} гостей\n👤 ${nameVal}\n\n🏠 Режим работы: ${workingHours.text}${hookahMessage}`);
+      
+      let hookahMsg = guestsVal >= 5 ? "\n\n💨 Напоминание: для компании из 5+ человек обязательны 2 кальяна" : "";
+      showSuccess(`БРОНЬ СОЗДАНА!\n🪑 Стол ${selectedTable}\n⏰ ${selectedTime}\n👥 ${guestsVal} гостей\n👤 ${nameVal}\n\nМы отправили вам подтверждение в Telegram!${hookahMsg}`);
       
       nameInput.value = "";
       guestsInput.value = "";
