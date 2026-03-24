@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy import create_engine, Column, Integer, String, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 from datetime import datetime, timedelta
 import requests
@@ -44,19 +44,25 @@ class Booking(Base):
     status = Column(String, default="active")
     chat_id = Column(String, nullable=True)
 
-# Создаем таблицы с добавлением колонки chat_id
+# Создаем таблицы и проверяем наличие колонки chat_id
 try:
     # Проверяем и добавляем колонку chat_id если её нет
     with engine.connect() as conn:
         try:
-            conn.execute("ALTER TABLE bookings ADD COLUMN chat_id VARCHAR")
-            conn.commit()
-            print("✅ Добавлена колонка chat_id")
-        except Exception as e:
-            if "already exists" in str(e):
-                print("✅ Колонка chat_id уже существует")
+            # Проверяем существует ли колонка chat_id
+            result = conn.execute(text("""
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name='bookings' AND column_name='chat_id'
+            """))
+            if result.fetchone() is None:
+                conn.execute(text("ALTER TABLE bookings ADD COLUMN chat_id VARCHAR"))
+                conn.commit()
+                print("✅ Добавлена колонка chat_id")
             else:
-                print(f"⚠️ {e}")
+                print("✅ Колонка chat_id уже существует")
+        except Exception as e:
+            print(f"⚠️ Ошибка при проверке колонки: {e}")
     
     Base.metadata.create_all(bind=engine)
     print("✅ Database tables created successfully!")
@@ -135,8 +141,8 @@ completion_timers = {}
 
 def send_telegram_to_user(chat_id, text):
     """Отправка сообщения пользователю (гостю)"""
-    if not chat_id:
-        print("⚠️ Нет chat_id, сообщение не отправлено")
+    if not chat_id or chat_id == "" or chat_id == "None":
+        print(f"⚠️ Нет chat_id, сообщение не отправлено")
         return False
     try:
         response = requests.post(
@@ -152,7 +158,7 @@ def send_telegram_to_user(chat_id, text):
             print(f"✅ Сообщение отправлено гостю {chat_id}")
             return True
         else:
-            print(f"❌ Ошибка отправки гостю: {response.status_code}")
+            print(f"❌ Ошибка отправки гостю: {response.status_code} - {response.text}")
             return False
     except Exception as e:
         print(f"❌ Ошибка: {e}")
@@ -172,6 +178,8 @@ def send_telegram_to_admin(text):
         )
         if response.status_code == 200:
             print("✅ Уведомление отправлено админу")
+        else:
+            print(f"❌ Ошибка админу: {response.status_code}")
     except Exception as e:
         print("❌ Ошибка:", e)
 
@@ -190,7 +198,7 @@ def send_booking_confirmation(booking):
         f"📞 <b>Телефон:</b> +7‒913‒432‒01‒01\n\n"
         f"❤️ Ждем вас в Dubrovka!"
     )
-    if booking.chat_id:
+    if booking.chat_id and booking.chat_id != "" and booking.chat_id != "None":
         send_telegram_to_user(booking.chat_id, message)
     else:
         print(f"⚠️ У гостя {booking.name} нет chat_id, подтверждение не отправлено")
@@ -208,7 +216,7 @@ def send_reminder_to_guest(booking):
         f"📞 <b>По вопросам:</b> +7‒913‒432‒01‒01\n\n"
         f"🌟 Пожалуйста, не опаздывайте!"
     )
-    if booking.chat_id:
+    if booking.chat_id and booking.chat_id != "" and booking.chat_id != "None":
         send_telegram_to_user(booking.chat_id, message)
         print(f"⏰ Напоминание отправлено гостю для брони {booking.id}")
     else:
@@ -232,7 +240,7 @@ def send_thank_you_to_guest(booking):
         f"🔗 <a href='{TWO_GIS_REVIEW_URL}'>Написать отзыв в 2ГИС</a>\n\n"
         f"❤️ Ждем вас снова в Dubrovka!"
     )
-    if booking.chat_id:
+    if booking.chat_id and booking.chat_id != "" and booking.chat_id != "None":
         send_telegram_to_user(booking.chat_id, message)
         print(f"📱 Благодарность отправлена гостю {booking.name}")
     else:
@@ -241,7 +249,8 @@ def send_thank_you_to_guest(booking):
             f"✅ <b>ГОСТЬ ПОСЕТИЛ (нет чата)</b>\n\n"
             f"👤 {booking.name}\n"
             f"📞 {booking.phone}\n"
-            f"🪑 Стол {booking.table}\n\n"
+            f"🪑 Стол {booking.table}\n"
+            f"📅 {booking.date} {booking.time}\n\n"
             f"🔗 <b>Ссылка на отзыв для гостя:</b>\n"
             f"{TWO_GIS_REVIEW_URL}"
         )
@@ -332,7 +341,7 @@ def root():
 def health():
     try:
         db = SessionLocal()
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         db.close()
         return {"status": "healthy"}
     except Exception as e:
@@ -379,6 +388,9 @@ def busy_times(date: str, table: str):
             Booking.status == "active"
         ).all()
         return [b.time for b in data]
+    except Exception as e:
+        print(f"❌ Ошибка в busy_times: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
 
@@ -426,7 +438,7 @@ def create_booking(data: dict):
             date=date,
             time=time,
             status="active",
-            chat_id=chat_id if chat_id else None
+            chat_id=chat_id if chat_id and chat_id != "0" and chat_id != "None" else None
         )
 
         db.add(booking)
@@ -454,7 +466,7 @@ def create_booking(data: dict):
             f"🪑 <b>Стол:</b> {table}\n"
             f"📅 <b>Дата:</b> {date}\n"
             f"⏰ <b>Время:</b> {time}\n"
-            f"📱 <b>Telegram ID:</b> {chat_id if chat_id else 'нет'}"
+            f"📱 <b>Telegram ID:</b> {chat_id if chat_id and chat_id != '0' else 'нет'}"
         )
 
         return {"ok": True, "id": booking.id}
@@ -505,7 +517,7 @@ def done(id: int):
             f"⏰ <b>Время:</b> {booking.time}"
         )
         
-        # 🔥 ОТПРАВЛЯЕМ БЛАГОДАРНОСТЬ ГОСТЮ
+        # Отправляем благодарность гостю
         send_thank_you_to_guest(booking)
 
         return {"ok": True, "message": "Booking completed"}
@@ -549,7 +561,7 @@ def cancel(id: int):
         )
         
         # Уведомляем гостя об отмене
-        if booking.chat_id:
+        if booking.chat_id and booking.chat_id != "" and booking.chat_id != "None":
             cancel_message = (
                 f"❌ <b>Бронь отменена</b>\n\n"
                 f"Уважаемый(ая) {booking.name},\n\n"
