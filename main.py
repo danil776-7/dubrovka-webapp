@@ -17,7 +17,6 @@ DATABASE_URL = "postgresql://postgres:YOhOreaGeQiTXNqnHsUACbozGqnVlQcb@postgres.
 
 print(f"✅ Connecting to database...")
 
-# Создаем engine
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
@@ -69,10 +68,7 @@ app.add_middleware(
 # CONFIG - ВАШИ ДАННЫЕ ТЕЛЕГРАМ
 # =====================
 
-# 🔥 ВАШ ТОКЕН ТЕЛЕГРАМ БОТА
 TELEGRAM_BOT_TOKEN = "8769949339:AAFwvdkPFgj7l4BQwGfmcljauMWXRx7qves"
-
-# 🔥 ВАШ ID АДМИНА
 ADMIN_CHAT_ID = "7545540622"
 
 print(f"✅ Telegram configured for admin: {ADMIN_CHAT_ID}")
@@ -82,11 +78,11 @@ print(f"✅ Telegram configured for admin: {ADMIN_CHAT_ID}")
 # =====================
 
 TABLE_LIMITS = {
-    "1": 11,
-    "2": 6,
-    "3": 6,
-    "4": 6,
-    "5": 6,
+    "1": 7,
+    "2": 5,
+    "3": 5,
+    "4": 5,
+    "5": 5,
     "6": 3,
     "VIP": 20
 }
@@ -248,7 +244,6 @@ def busy_times(date: str, table: str):
 def create_booking(data: dict):
     db = SessionLocal()
     try:
-        # Проверка обязательных полей
         required = ["name", "phone", "guests", "table", "date", "time"]
         for field in required:
             if field not in data:
@@ -259,18 +254,15 @@ def create_booking(data: dict):
         time = data["time"]
         guests = int(data["guests"])
 
-        # Проверка стола
         if table not in TABLE_LIMITS:
             raise HTTPException(status_code=400, detail=f"Table {table} does not exist")
 
-        # Лимит гостей
         if guests > TABLE_LIMITS[table]:
             raise HTTPException(
                 status_code=400, 
                 detail=f"Too many guests. Max for table {table} is {TABLE_LIMITS[table]}"
             )
 
-        # Проверка занятости
         exists = db.query(Booking).filter(
             Booking.date == date,
             Booking.time == time,
@@ -281,7 +273,6 @@ def create_booking(data: dict):
         if exists:
             raise HTTPException(status_code=409, detail="Time slot already booked")
 
-        # Создание брони
         booking = Booking(
             name=data["name"],
             phone=data["phone"],
@@ -296,12 +287,10 @@ def create_booking(data: dict):
         db.commit()
         db.refresh(booking)
 
-        # Запускаем таймер автоматического завершения через 4 часа
         start_auto_complete_timer(booking.id)
 
-        print(f"✅ New booking created: ID={booking.id}, Table={table}, Time={time}, Guest={data['name']}")
+        print(f"✅ New booking created: ID={booking.id}, Table={table}, Time={time}")
 
-        # Telegram уведомление
         send_telegram(
             f"🔥 <b>НОВАЯ БРОНЬ!</b>\n\n"
             f"👤 <b>Имя:</b> {data['name']}\n"
@@ -320,7 +309,7 @@ def create_booking(data: dict):
         raise
     except Exception as e:
         db.rollback()
-        print(f"❌ Error creating booking: {e}")
+        print(f"❌ Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
@@ -344,10 +333,7 @@ def done(id: int):
         booking.status = "completed"
         db.commit()
 
-        # Останавливаем таймер если он есть
         if id in booking_timers:
-            # Таймер уже запущен в отдельном потоке, мы его не можем остановить
-            # Просто удаляем из словаря, чтобы не дублировать
             del booking_timers[id]
 
         print(f"✅ Booking {id} marked as completed")
@@ -389,7 +375,6 @@ def cancel(id: int):
         booking.status = "cancelled"
         db.commit()
 
-        # Останавливаем таймер если он есть
         if id in booking_timers:
             del booking_timers[id]
 
