@@ -154,16 +154,55 @@ h2 {
   cursor: not-allowed;
 }
 
-.table[data-table="VIP"] {
-  position: relative;
+/* VIP кнопка внизу */
+.vip-button-container {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  text-align: center;
 }
 
-.table[data-table="VIP"]::after {
-  content: "⭐";
+.vip-btn {
+  display: inline-block;
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #8B0000 0%, #4a0000 100%);
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 700;
+  font-size: 16px;
+  color: #ffffff;
+  text-align: center;
+  letter-spacing: 1px;
+  font-family: inherit;
+  position: relative;
+  overflow: hidden;
+}
+
+.vip-btn::before {
+  content: '⭐';
   position: absolute;
-  top: -6px;
-  right: -6px;
-  font-size: 12px;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+}
+
+.vip-btn::after {
+  content: '⭐';
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+}
+
+.vip-btn:hover {
+  background: linear-gradient(135deg, #a00000 0%, #5a0000 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(139, 0, 0, 0.4);
+  border-color: #d4af37;
 }
 
 .desc {
@@ -350,6 +389,8 @@ button:hover {
   .logo-text { font-size: 22px; }
   .table { padding: 12px; font-size: 13px; }
   .time-slot { padding: 8px 10px; font-size: 12px; min-width: 60px; }
+  .vip-btn { padding: 14px; font-size: 14px; }
+  .vip-btn::before, .vip-btn::after { font-size: 14px; }
   input, select, button { font-size: 14px; padding: 12px; }
 }
 </style>
@@ -369,7 +410,7 @@ button:hover {
 
   <div class="card">
     <div class="working-hours">
-      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 23:00 | ПТ-СБ: 12:00 - 00:00</span>
+      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 01:00 | ПТ-СБ: 12:00 - 02:00</span>
     </div>
     
     <h2>🍷 БРОНИРОВАНИЕ СТОЛОВ</h2>
@@ -381,7 +422,13 @@ button:hover {
       <div class="table" data-table="4">СТОЛ 4</div>
       <div class="table" data-table="5">СТОЛ 5</div>
       <div class="table" data-table="6">СТОЛ 6</div>
-      <div class="table" data-table="VIP">VIP ЗАЛ</div>
+    </div>
+
+    <!-- VIP кнопка внизу -->
+    <div class="vip-button-container">
+      <div class="vip-btn" id="vipBtn">
+        ⭐ VIP ЗАЛ ⭐
+      </div>
     </div>
 
     <div id="tableInfo" class="desc">✨ ВЫБЕРИТЕ СТОЛ ДЛЯ БРОНИРОВАНИЯ</div>
@@ -418,12 +465,11 @@ const tableDescriptions = {
   "3": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ\n⏱ МИНИМУМ 1.5 ЧАСА",
   "4": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ\n⏱ МИНИМУМ 1.5 ЧАСА",
   "5": "✨ ОТКРЫТАЯ ЗОНА БЕЗ ШТОРОК\n👥 ДО 5 ГОСТЕЙ\n⏱ МИНИМУМ 1.5 ЧАСА",
-  "6": "🪑 КОМПАКТНЫЙ СТОЛ\n👥 ДО 3 ГОСТЕЙ\n⏱ МИНИМУМ 1.5 ЧАСА",
-  "VIP": "⭐ VIP КОМНАТА (ДЕПОЗИТНАЯ)\n👑 ОБСЛУЖИВАНИЕ ЧЕРЕЗ АДМИНИСТРАТОРА"
+  "6": "🪑 КОМПАКТНЫЙ СТОЛ\n👥 ДО 3 ГОСТЕЙ\n⏱ МИНИМУМ 1.5 ЧАСА"
 };
 
 const TABLE_CAPACITY = {
-  "1": 7, "2": 5, "3": 5, "4": 5, "5": 5, "6": 3, "VIP": 20
+  "1": 7, "2": 5, "3": 5, "4": 5, "5": 5, "6": 3
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -440,12 +486,17 @@ const warningMessage = document.getElementById("warningMessage");
 const tableInfo = document.getElementById("tableInfo");
 const bookBtn = document.getElementById("bookBtn");
 const hookahWarning = document.getElementById("hookahWarning");
+const vipBtn = document.getElementById("vipBtn");
 
 let selectedTable = null;
 let selectedTime = null;
 let userChatId = null;
 let busyTimes = [];
-let nextBookingTime = null;
+
+// VIP кнопка
+vipBtn.onclick = () => {
+  alert("⭐ VIP ЗАЛ ⭐\n\nБронирование VIP зала осуществляется только через администратора.\n\n📞 Позвоните нам: +7‒913‒432‒01‒01\n\nИли напишите в Telegram: @dubrovka_admin");
+};
 
 // Получаем chat_id из Telegram WebApp
 if(tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
@@ -463,9 +514,11 @@ if(tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
 
 function getWorkingHours(date) {
   const day = new Date(date).getDay();
+  // 5 - пятница, 6 - суббота
   if (day === 5 || day === 6) {
     return { start: 12, end: 24, text: "ПТ-СБ: 12:00 - 00:00" };
   } else {
+    // воскресенье (0) - четверг (4)
     return { start: 12, end: 23, text: "ВС-ЧТ: 12:00 - 23:00" };
   }
 }
@@ -709,14 +762,9 @@ document.querySelectorAll(".table").forEach(el => {
     }
     if(currentGuests >= 5) { hookahWarning.style.display = "block"; }
     else { hookahWarning.style.display = "none"; }
-    if(selectedTable !== "VIP") { 
-      await loadBusyTimes();
-      selectedTime = null;
-      warningMessage.style.display = "none";
-    } else {
-      timeSlotsContainer.innerHTML = '<div style="text-align:center;padding:20px;">⭐ VIP по телефону +7‒913‒432‒01‒01</div>';
-      hookahWarning.style.display = "none";
-    }
+    await loadBusyTimes();
+    selectedTime = null;
+    warningMessage.style.display = "none";
   };
 });
 
@@ -740,7 +788,6 @@ phoneInput.addEventListener("input", () => {
 
 bookBtn.onclick = async () => {
   if(!selectedTable) { showError("ВЫБЕРИТЕ СТОЛ"); return; }
-  if(selectedTable === "VIP") { showError("VIP бронируется через администратора\n📞 +7‒913‒432‒01‒01"); return; }
   if(!dateInput.value) { showError("ВЫБЕРИТЕ ДАТУ"); return; }
   if(!selectedTime) { showError("ВЫБЕРИТЕ ВРЕМЯ"); return; }
   
