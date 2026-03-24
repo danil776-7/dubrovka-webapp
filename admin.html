@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Dubrovka Admin</title>
+<title>Dubrovka PRO Admin</title>
 
 <style>
 body{
@@ -14,21 +14,18 @@ background:#0b0b0b;
 color:#fff;
 }
 
-.container{
-display:flex;
-height:100vh;
-}
+.container{display:flex;height:100vh;}
 
 /* sidebar */
 .sidebar{
-width:220px;
+width:230px;
 background:#111;
 padding:20px;
 }
 
 .logo{
 color:#ff2a2a;
-font-size:18px;
+font-size:20px;
 margin-bottom:20px;
 }
 
@@ -39,13 +36,8 @@ border-radius:8px;
 cursor:pointer;
 }
 
-.menu div:hover{
-background:#1a1a1a;
-}
-
-.active{
-background:#ff2a2a;
-}
+.menu div:hover{background:#1a1a1a;}
+.active{background:#ff2a2a;}
 
 /* content */
 .content{
@@ -54,15 +46,14 @@ padding:20px;
 overflow:auto;
 }
 
-/* header */
 .header{
 display:flex;
-justify-content:space-between;
-align-items:center;
+gap:10px;
+flex-wrap:wrap;
 margin-bottom:15px;
 }
 
-input{
+input, select{
 padding:10px;
 border-radius:8px;
 border:none;
@@ -70,34 +61,45 @@ background:#111;
 color:#fff;
 }
 
-/* cards */
+/* grid */
 .grid{
 display:grid;
-grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
 gap:12px;
 }
 
+/* card */
 .card{
 background:#151515;
 padding:15px;
 border-radius:12px;
 border:1px solid #222;
-transition:0.2s;
+transition:0.3s;
 }
 
-.card:hover{
-transform:scale(1.02);
+.card.new{
+border:1px solid #ff2a2a;
+box-shadow:0 0 10px #ff2a2a55;
 }
 
-.card h3{
-margin:0 0 8px;
+.time{
+font-size:22px;
 color:#ff2a2a;
 }
 
-.small{
-color:#aaa;
-font-size:13px;
+.name{font-size:18px;}
+.phone{color:#ccc;margin-bottom:8px;}
+
+.status{
+font-size:12px;
+padding:3px 6px;
+border-radius:6px;
+display:inline-block;
+margin-bottom:6px;
 }
+
+.pending{background:#444;}
+.done{background:#0a7d3b;}
 
 button{
 padding:8px 12px;
@@ -107,15 +109,6 @@ background:#ff2a2a;
 color:#fff;
 cursor:pointer;
 margin-top:10px;
-}
-
-.status{
-font-size:12px;
-padding:3px 6px;
-border-radius:6px;
-background:#222;
-display:inline-block;
-margin-bottom:6px;
 }
 
 .date-title{
@@ -128,10 +121,14 @@ color:#ff2a2a;
 
 <body>
 
+<audio id="notifySound">
+<source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg">
+</audio>
+
 <div class="container">
 
 <div class="sidebar">
-<div class="logo">Dubrovka Admin</div>
+<div class="logo">Dubrovka PRO</div>
 
 <div class="menu">
 <div class="active" onclick="showToday(this)">Сегодня</div>
@@ -142,7 +139,13 @@ color:#ff2a2a;
 <div class="content">
 
 <div class="header">
-<h2>Брони</h2>
+<input type="text" id="search" placeholder="Поиск (имя / телефон)">
+<select id="tableFilter">
+<option value="">Все столы</option>
+<option>1</option><option>2</option><option>3</option>
+<option>4</option><option>5</option><option>6</option>
+<option>VIP</option>
+</select>
 <input type="date" id="dateInput" style="display:none;">
 </div>
 
@@ -156,161 +159,158 @@ color:#ff2a2a;
 const API = "https://dubrovka-webapp-production-a00c.up.railway.app";
 const list = document.getElementById("list");
 
-let currentMode = "today";
 let currentData = [];
+let previousIds = new Set();
+let currentMode = "today";
 
-/* правильная дата (фикс таймзоны) */
+/* дата */
 function getLocalDate(){
-    let now = new Date();
-    let tzOffset = now.getTimezoneOffset() * 60000;
-    let localISO = new Date(now - tzOffset).toISOString();
-    return localISO.split("T")[0];
+let now=new Date();
+let tz=now.getTimezoneOffset()*60000;
+return new Date(now-tz).toISOString().split("T")[0];
 }
 
 /* загрузка */
-async function loadToday(){
-    let today = getLocalDate();
-    currentMode = "today";
-    await loadByDate(today);
+async function load(date){
+let res = await fetch(`${API}/bookings_by_date?date=${date}`);
+let data = await res.json();
+
+handleNew(data);
+currentData = data;
+render();
 }
 
-async function loadByDate(date){
-    currentMode = "calendar";
+/* новые брони */
+function handleNew(data){
 
-    let res = await fetch(`${API}/bookings_by_date?date=${date}`);
-    let data = await res.json();
+let newIds = data.map(b=>b.id);
+let hasNew = false;
 
-    currentData = data;
-    render();
+newIds.forEach(id=>{
+if(!previousIds.has(id)){
+hasNew = true;
+}
+});
+
+if(hasNew){
+document.getElementById("notifySound").play();
 }
 
-/* рендер */
+previousIds = new Set(newIds);
+}
+
+/* фильтр */
+function applyFilters(data){
+
+let search = document.getElementById("search").value.toLowerCase();
+let table = document.getElementById("tableFilter").value;
+
+return data.filter(b=>{
+
+let matchSearch =
+b.name.toLowerCase().includes(search) ||
+b.phone.includes(search);
+
+let matchTable = !table || b.table == table;
+
+return matchSearch && matchTable;
+
+});
+}
+
+/* render */
 function render(){
 
-    let html = "";
+let data = applyFilters(currentData);
 
-    if(currentData.length === 0){
-        html = "<div>Нет броней</div>";
-        list.innerHTML = html;
-        return;
-    }
-
-    /* сортировка по дате + времени */
-    currentData.sort((a,b)=>{
-        let d1 = new Date(`${a.date}T${a.time}`);
-        let d2 = new Date(`${b.date}T${b.time}`);
-        return d1 - d2;
-    });
-
-    /* группировка по дате */
-    let grouped = {};
-
-    currentData.forEach(b=>{
-        if(!grouped[b.date]) grouped[b.date] = [];
-        grouped[b.date].push(b);
-    });
-
-    /* вывод */
-    for(let date in grouped){
-
-        html += `<div class="date-title">📅 ${date}</div>`;
-        html += `<div class="grid">`;
-
-        grouped[date]
-        .sort((a,b)=>a.time.localeCompare(b.time))
-        .forEach(b=>{
-
-            html += `
-            <div class="card">
-
-            <div class="status">${b.status}</div>
-
-            <h3>${b.name}</h3>
-
-            <div class="small">
-            📞 ${b.phone}<b
-           👥 ${b.guests} гостей<br
-          🪑 Стол: ${b.table}
-
-         ⏰ ${b.time}
-            </div>
-
-            <button onclick="done(${b.id})">
-            Гость ушёл
-            </button>
-
-            </div>
-            `;
-        });
-
-        html += `</div>`;
-    }
-
-    list.innerHTML = html;
+if(data.length === 0){
+list.innerHTML = "Нет броней";
+return;
 }
 
-/* завершение */
+data.sort((a,b)=> new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`));
+
+let grouped = {};
+data.forEach(b=>{
+if(!grouped[b.date]) grouped[b.date]=[];
+grouped[b.date].push(b);
+});
+
+let html="";
+
+for(let date in grouped){
+
+html += `<div class="date-title">📅 ${date}</div><div class="grid">`;
+
+grouped[date].forEach(b=>{
+
+let isNew = !previousIds.has(b.id);
+
+html += `
+<div class="card ${isNew ? 'new':''}">
+
+<div class="status ${b.status}">${b
+
+
+s}</div>
+
+<div class="time">${b.time}</div>
+
+<div class="name">${b.name}</div>
+
+<div class="phone">${b.phone}</div>
+
+<div>🪑 ${b.table} | 👥 ${b.guests}</div>
+
+<button onclick="done(${b.id})">Гость ушёл</button>
+
+</div>
+`;
+});
+
+html += `</div>`;
+}
+
+list.innerHTML = html;
+}
+
+/* done */
 async function done(id){
-
-    await fetch(API+"/done/"+id,{method:"POST"});
-
-    currentData = currentData.map(b => {
-
-
-if(b.id === id){
-            b.status = "done";
-        }
-        return b;
-    });
-
-    render();
+await fetch(API+"/done/"+id,{method:"POST"});
+currentData = currentData.map(b=> b.id===id ? {...b,status:"done"} : b);
+render();
 }
 
-/* вкладки */
-function setActive(el){
-    document.querySelectorAll(".menu div").forEach(e=>e.classList.remove("active"));
-    el.classList.add("active");
-}
-
+/* табы */
 function showToday(el){
-    setActive(el);
-    dateInput.style.display="none";
-    loadToday();
+setActive(el);
+dateInput.style.display="none";
+load(getLocalDate());
 }
 
 function showCalendar(el){
-    setActive(el);
-    dateInput.style.display="block";
+setActive(el);
+dateInput.style.display="block";
+}
+
+function setActive(el){
+document.querySelectorAll(".menu div").forEach(e=>e.classList.remove("active"));
+el.classList.add("active");
 }
 
 /* события */
-dateInput.onchange = () => {
-    loadByDate(dateInput.value);
-};
+dateInput.onchange=()=>load(dateInput.value);
+search.oninput=render;
+tableFilter.onchange=render;
 
 /* автообновление */
-async function refresh(){
-
-    let date;
-
-    if(currentMode === "today"){
-        date = getLocalDate();
-    }else{
-        if(!dateInput.value) return;
-        date = dateInput.value;
-    }
-
-    let res = await fetch(`${API}/bookings_by_date?date=${date}`);
-    let data = await res.json();
-
-    currentData = data;
-    render();
-}
-
-setInterval(refresh, 3000);
+setInterval(()=>{
+let date = currentMode==="today" ? getLocalDate() : dateInput.value;
+if(date) load(date);
+},3000);
 
 /* старт */
-loadToday();
+load(getLocalDate());
 </script>
 
 </body>
