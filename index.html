@@ -435,10 +435,25 @@ button:hover {
 </div>
 
 <script>
+// Описания столов
+const tableDescriptions = {
+  "1": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 7 ГОСТЕЙ | ⏱ МИНИМУМ 2-3 ЧАСА",
+  "2": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ | ⏱ МИНИМУМ 2-3 ЧАСА",
+  "3": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ | ⏱ МИНИМУМ 2-3 ЧАСА",
+  "4": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ | ⏱ МИНИМУМ 2-3 ЧАСА",
+  "5": "✨ ОТКРЫТАЯ ЗОНА БЕЗ ШТОРОК\n👥 ДО 5 ГОСТЕЙ | ⏱ МИНИМУМ 2-3 ЧАСА",
+  "6": "🪑 КОМПАКТНЫЙ СТОЛ\n👥 ДО 3 ГОСТЕЙ | ⏱ МИНИМУМ 2-3 ЧАСА",
+  "VIP": "⭐ VIP КОМНАТА (ДЕПОЗИТНАЯ)\n👑 ОБСЛУЖИВАНИЕ ЧЕРЕЗ АДМИНИСТРАТОРА | ⏱ МИНИМУМ 3-4 ЧАСА"
+};
+
+const TABLE_CAPACITY = {
+  "1": 7, "2": 5, "3": 5, "4": 5, "5": 5, "6": 3, "VIP": 20
+};
+
 document.addEventListener("DOMContentLoaded", () => {
 const API = "https://dubrovka-webapp-production-a00c.up.railway.app";
 const tg = window.Telegram.WebApp;
-tg.expand();
+if(tg) tg.expand();
 
 const phoneInput = document.getElementById("phone");
 const nameInput = document.getElementById("name");
@@ -452,19 +467,14 @@ const suggestionsDiv = document.getElementById("suggestions");
 const blockedWarning = document.getElementById("blockedWarning");
 
 let selectedTable = null;
-let allBusyTimes = {};
 let suggestedOption = null;
 
 // Получить режим работы в зависимости от дня недели
 function getWorkingHours(date) {
   const day = new Date(date).getDay();
-  // day: 0 - воскресенье, 5 - пятница, 6 - суббота
-  
   if (day === 5 || day === 6) {
-    // Пятница и суббота: 12:00 до 00:00
     return { start: 12, end: 24, text: "ПТ-СБ: 12:00 - 00:00" };
   } else {
-    // Воскресенье - четверг: 12:00 до 23:00
     return { start: 12, end: 23, text: "ВС-ЧТ: 12:00 - 23:00" };
   }
 }
@@ -487,12 +497,10 @@ function checkTimeInterval(existingTimes, newTime, minIntervalMinutes = 180) {
       return {
         allowed: false,
         conflictTime: existingTime,
-        diffMinutes: diff,
-        requiredGap: minIntervalMinutes
+        diffMinutes: diff
       };
     }
   }
-  
   return { allowed: true };
 }
 
@@ -501,22 +509,18 @@ function generateTimesWithInterval(date, busyTimes, workingHours) {
   let times = [];
   let startHour = workingHours.start;
   let endHour = workingHours.end;
-  
-  // Сортируем занятые времена
   let sortedBusy = [...busyTimes].sort();
   
   for(let h = startHour; h < endHour; h++) {
     let time1 = `${String(h).padStart(2,'0')}:00`;
     let time2 = `${String(h).padStart(2,'0')}:30`;
     
-    // Проверяем время с учетом интервала
     let check1 = checkTimeInterval(sortedBusy, time1, 180);
     let check2 = checkTimeInterval(sortedBusy, time2, 180);
     
     if(check1.allowed) times.push(time1);
     if(check2.allowed) times.push(time2);
   }
-  
   return times;
 }
 
@@ -556,21 +560,6 @@ function showSuccess(message) {
   setTimeout(() => successDiv.remove(), 3000);
 }
 
-const tables = {
-"1": "🍷 ПРИВАТНАЯ ЗОНА\n👥 ДО 7 ГОСТЕЙ | ⏱ МИНИМУМ 2-3 ЧАСА",
-"2": "🍷 ПРИВАТНАЯ ЗОНА\n👥 ДО 5 ГОСТЕЙ | ⏱ МИНИМУМ 2-3 ЧАСА",
-"3": "🍷 ПРИВАТНАЯ ЗОНА\n👥 ДО 5 ГОСТЕЙ | ⏱ МИНИМУМ 2-3 ЧАСА",
-"4": "🍷 ПРИВАТНАЯ ЗОНА\n👥 ДО 5 ГОСТЕЙ | ⏱ МИНИМУМ 2-3 ЧАСА",
-"5": "✨ ОТКРЫТАЯ ЗОНА\n👥 ДО 5 ГОСТЕЙ | ⏱ МИНИМУМ 2-3 ЧАСА",
-"6": "🪑 КОМПАКТНЫЙ СТОЛ\n👥 ДО 3 ГОСТЕЙ | ⏱ МИНИМУМ 2-3 ЧАСА",
-"VIP": "⭐ VIP КОМНАТА\n👑 ЧЕРЕЗ АДМИНИСТРАТОРА | ⏱ МИНИМУМ 3-4 ЧАСА"
-};
-
-const TABLE_CAPACITY = {"1": 7, "2": 5, "3": 5, "4": 5, "5": 5, "6": 3, "VIP": 20};
-
-dateInput.min = new Date().toISOString().split("T")[0];
-dateInput.value = new Date().toISOString().split("T")[0];
-
 // Загрузка всех занятых времен для всех столов
 async function loadAllBusyTimes(date) {
   try {
@@ -582,7 +571,6 @@ async function loadAllBusyTimes(date) {
       let busy = await res.json();
       busyData[table] = Array.isArray(busy) ? busy : [];
     }
-    
     return busyData;
   } catch(e) {
     console.error(e);
@@ -590,22 +578,7 @@ async function loadAllBusyTimes(date) {
   }
 }
 
-document.querySelectorAll(".table").forEach(el => {
-  el.onclick = async () => {
-    if(el.classList.contains("disabled")) return;
-    document.querySelectorAll(".table").forEach(t => t.classList.remove("selected"));
-    el.classList.add("selected");
-    selectedTable = el.dataset.table;
-    tableInfo.innerText = tables[selectedTable];
-    
-    if(selectedTable !== "VIP") {
-      await loadTimes();
-    }
-    suggestionBox.style.display = "none";
-    blockedWarning.style.display = "none";
-  };
-});
-
+// Загрузка доступных времен для выбранного стола
 async function loadTimes() {
   if(!dateInput.value || !selectedTable || selectedTable === "VIP") return;
   
@@ -637,11 +610,42 @@ async function loadTimes() {
       let hours = getWorkingHours(dateInput.value);
       showError(`На ${dateInput.value} нет свободных времен с учетом режима работы (${hours.text}) и 3-часового интервала между бронями`);
     }
-    
   } catch(e) {
     console.error(e);
   }
 }
+
+// Обработчики кнопок столов
+document.querySelectorAll(".table").forEach(el => {
+  el.onclick = async () => {
+    if(el.classList.contains("disabled")) return;
+    
+    // Убираем выделение со всех столов
+    document.querySelectorAll(".table").forEach(t => t.classList.remove("selected"));
+    
+    // Выделяем выбранный стол
+    el.classList.add("selected");
+    
+    // Сохраняем выбранный стол
+    selectedTable = el.dataset.table;
+    
+    // Показываем описание стола
+    tableInfo.innerText = tableDescriptions[selectedTable] || "✨ ВЫБЕРИТЕ СТОЛ ДЛЯ БРОНИРОВАНИЯ";
+    
+    // Загружаем доступные времена для выбранного стола
+    if(selectedTable !== "VIP") {
+      await loadTimes();
+    } else {
+      timeSelect.innerHTML = '<option value="">⏰ VIP ПО ТЕЛЕФОНУ</option>';
+    }
+    
+    suggestionBox.style.display = "none";
+    blockedWarning.style.display = "none";
+  };
+});
+
+dateInput.min = new Date().toISOString().split("T")[0];
+dateInput.value = new Date().toISOString().split("T")[0];
 
 dateInput.addEventListener("change", () => {
   if(selectedTable && selectedTable !== "VIP") loadTimes();
@@ -690,7 +694,7 @@ bookBtn.onclick = async () => {
   let intervalCheck = checkTimeInterval(busyForTable, selectedTime, 180);
   
   if(!intervalCheck.allowed) {
-    showError(`${intervalCheck.reason}\n\n💡 Выберите другое время (минимум через 3 часа после предыдущей брони)`);
+    showError(`⚠️ Слишком близко к брони на ${intervalCheck.conflictTime}\n📌 Между бронями должно быть минимум 3 часа\n\n💡 Выберите другое время`);
     await loadTimes();
     return;
   }
@@ -702,7 +706,7 @@ bookBtn.onclick = async () => {
     table: selectedTable,
     date: dateInput.value,
     time: selectedTime,
-    user_id: tg.initDataUnsafe?.user?.id || 0
+    user_id: tg?.initDataUnsafe?.user?.id || 0
   };
   
   try {
@@ -720,7 +724,7 @@ bookBtn.onclick = async () => {
     }
     
     if(result.ok || result.id) {
-      tg.sendData(JSON.stringify(data));
+      if(tg) tg.sendData(JSON.stringify(data));
       showSuccess(`БРОНЬ СОЗДАНА!\n🪑 Стол ${selectedTable}\n⏰ ${selectedTime}\n👤 ${nameVal}\n\n⏱ Минимальное время посещения: 2-3 часа\n🏠 Режим работы: ${workingHours.text}`);
       
       nameInput.value = "";
@@ -738,6 +742,7 @@ bookBtn.onclick = async () => {
     showError("ОШИБКА СОЕДИНЕНИЯ С СЕРВЕРОМ");
   }
 };
+});
 </script>
 </body>
 </html>
