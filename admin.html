@@ -9,8 +9,8 @@
 body{
 margin:0;
 font-family:Arial;
-background:#faf9f7;
-color:#4a4a4a;
+background:#0a0a0a;
+color:#e0e0e0;
 }
 
 .container{display:flex;height:100vh;}
@@ -18,9 +18,9 @@ color:#4a4a4a;
 /* sidebar */
 .sidebar{
 width:230px;
-background:#ffffff;
+background:#111;
 padding:20px;
-border-right:1px solid #efe8df;
+border-right:1px solid #2a2a2a;
 }
 
 .logo{
@@ -38,8 +38,8 @@ cursor:pointer;
 transition:all 0.2s;
 }
 
-.menu div:hover{background:#f5f2ed;}
-.active{background:#e8dbbc;color:#6b5a3a;}
+.menu div:hover{background:#1a1a1a;}
+.active{background:#b89a4b;color:#0a0a0a;}
 
 /* content */
 .content{
@@ -58,30 +58,30 @@ margin-bottom:15px;
 input, select{
 padding:10px 12px;
 border-radius:12px;
-border:1px solid #efe8df;
-background:#ffffff;
-color:#4a4a4a;
+border:1px solid #2a2a2a;
+background:#1a1a1a;
+color:#e0e0e0;
 font-size:14px;
 }
 
 input:focus, select:focus{
 outline:none;
-border-color:#e8dbbc;
+border-color:#b89a4b;
 }
 
 button{
 padding:10px 16px;
 border-radius:12px;
 border:none;
-background:#e8dbbc;
-color:#6b5a3a;
+background:#b89a4b;
+color:#0a0a0a;
 cursor:pointer;
 font-weight:500;
 transition:all 0.2s;
 }
 
 button:hover{
-background:#e2d4b0;
+background:#c9aa5c;
 }
 
 /* grid */
@@ -93,16 +93,16 @@ gap:12px;
 
 /* card */
 .card{
-background:#ffffff;
+background:#111;
 padding:15px;
 border-radius:16px;
-border:1px solid #efe8df;
+border:1px solid #2a2a2a;
 transition:0.2s;
 }
 
 .card.new{
-border:1px solid #e8dbbc;
-box-shadow:0 2px 8px rgba(184,154,75,0.1);
+border:1px solid #b89a4b;
+box-shadow:0 0 10px rgba(184,154,75,0.2);
 }
 
 .time{
@@ -112,7 +112,7 @@ font-weight:500;
 }
 
 .name{font-size:18px;font-weight:500;margin:8px 0 4px;}
-.phone{color:#bcb2a4;margin-bottom:8px;font-size:13px;}
+.phone{color:#8a8a8a;margin-bottom:8px;font-size:13px;}
 
 .status{
 font-size:11px;
@@ -123,17 +123,17 @@ margin-bottom:6px;
 font-weight:500;
 }
 
-.active{background:#e8dbbc;color:#6b5a3a;}
-.completed{background:#d4e0d4;color:#4a6b4a;}
-.cancelled{background:#f0e4dc;color:#b87a5a;}
-.pending{background:#f0ede8;color:#8a7a6a;}
+.active{background:#2a5a2a;color:#a0e0a0;}
+.completed{background:#3a5a3a;color:#a0c0a0;}
+.cancelled{background:#5a3a3a;color:#e0a0a0;}
+.pending{background:#3a3a3a;color:#c0c0c0;}
 
 button.done-btn{
 padding:8px 12px;
 border:none;
 border-radius:12px;
-background:#e8dbbc;
-color:#6b5a3a;
+background:#b89a4b;
+color:#0a0a0a;
 cursor:pointer;
 margin-top:10px;
 width:100%;
@@ -142,7 +142,7 @@ font-weight:500;
 }
 
 button.done-btn:hover{
-background:#e2d4b0;
+background:#c9aa5c;
 }
 
 .date-title{
@@ -153,19 +153,19 @@ font-weight:500;
 }
 
 .error-message{
-background:#fef5f0;
+background:#2a1a1a;
 padding:15px;
 border-radius:12px;
-color:#c97e5a;
+color:#e0a0a0;
 text-align:center;
 margin:20px;
-border:1px solid #fae5d6;
+border:1px solid #5a3a3a;
 }
 
 .loading{
 text-align:center;
 padding:40px;
-color:#bcb2a4;
+color:#8a8a8a;
 }
 </style>
 </head>
@@ -198,7 +198,7 @@ color:#bcb2a4;
 <option>VIP</option>
 </select>
 <input type="date" id="dateInput" style="display:none;">
-<button onclick="refresh()" style="background:#f5f2ed;">🔄 Обновить</button>
+<button onclick="refresh()">🔄 Обновить</button>
 </div>
 
 <div id="list"></div>
@@ -208,7 +208,6 @@ color:#bcb2a4;
 </div>
 
 <script>
-// ПРЯМАЯ ССЫЛКА НА API (без переменных окружения)
 const API = "https://dubrovka-webapp-production-a00c.up.railway.app";
 const list = document.getElementById("list");
 
@@ -216,98 +215,74 @@ let currentData = [];
 let previousIds = new Set();
 let currentMode = "today";
 
-/* дата */
 function getLocalDate(){
 let now=new Date();
 let tz=now.getTimezoneOffset()*60000;
 return new Date(now-tz).toISOString().split("T")[0];
 }
 
-/* загрузка с обработкой ошибок */
 async function load(date){
 if(!date) return;
 try {
 console.log(`🔄 Загрузка броней на ${date}...`);
 let res = await fetch(`${API}/bookings_by_date?date=${date}`);
-console.log(`📡 Статус ответа: ${res.status}`);
-if(!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+if(!res.ok) throw new Error(`HTTP ${res.status}`);
 let data = await res.json();
-console.log(`✅ Загружено броней: ${data.length}`, data);
 handleNew(data);
 currentData = data;
 render();
 } catch(e) {
-console.error("❌ Ошибка загрузки:", e);
+console.error("❌ Ошибка:", e);
 list.innerHTML = `<div class="error-message">
-❌ Ошибка загрузки данных<br>
-<small>${e.message}</small><br><br>
-<button onclick="refresh()" style="background:#e8dbbc;">Повторить</button>
+❌ Ошибка загрузки: ${e.message}<br>
+<button onclick="refresh()" style="margin-top:10px;">Повторить</button>
 </div>`;
 }
 }
 
-/* новые брони */
 function handleNew(data){
 let newIds = data.map(b=>b.id);
 let hasNew = false;
-
 newIds.forEach(id=>{
-if(!previousIds.has(id)){
-hasNew = true;
-console.log("🔔 Новая бронь:", id);
-}
+if(!previousIds.has(id)) hasNew = true;
 });
-
 if(hasNew){
 let sound = document.getElementById("notifySound");
-if(sound) sound.play().catch(e=>console.log("Звук не воспроизведен"));
+if(sound) sound.play().catch(e=>console.log("Звук заблокирован"));
 }
-
 previousIds = new Set(newIds);
 }
 
-/* фильтр */
 function applyFilters(data){
 let search = document.getElementById("search").value.toLowerCase();
 let table = document.getElementById("tableFilter").value;
-
 return data.filter(b=>{
-let matchSearch = 
-b.name.toLowerCase().includes(search) ||
-b.phone.includes(search);
+let matchSearch = b.name.toLowerCase().includes(search) || b.phone.includes(search);
 let matchTable = !table || b.table == table;
 return matchSearch && matchTable;
 });
 }
 
-/* render */
 function render(){
 let data = applyFilters(currentData);
-
 if(data.length === 0){
-list.innerHTML = "<div style='text-align:center;padding:40px;color:#bcb2a4;'>📭 Нет броней на этот день</div>";
+list.innerHTML = "<div style='text-align:center;padding:40px;color:#8a8a8a;'>📭 Нет броней</div>";
 return;
 }
-
 data.sort((a,b)=> new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`));
-
 let grouped = {};
 data.forEach(b=>{
 if(!grouped[b.date]) grouped[b.date]=[];
 grouped[b.date].push(b);
 });
-
 let html="";
-
 for(let date in grouped){
 html += `<div class="date-title">📅 ${date}</div><div class="grid">`;
-
 grouped[date].forEach(b=>{
 let isNew = !previousIds.has(b.id);
 let statusText = b.status === "active" ? "✅ Активна" : 
                  b.status === "completed" ? "✔ Завершена" : 
                  b.status === "cancelled" ? "❌ Отменена" : b.status;
-
 html += `
 <div class="card ${isNew ? 'new':''}">
 <div class="status ${b.status}">${statusText}</div>
@@ -316,49 +291,36 @@ html += `
 <div class="phone">📞 ${b.phone}</div>
 <div>🪑 Стол ${b.table} | 👥 ${b.guests} чел.</div>
 `;
-
 if(b.status === "active"){
 html += `<button class="done-btn" onclick="done(${b.id})">✅ Гость ушёл</button>`;
 }
-
 html += `</div>`;
 });
-
 html += `</div>`;
 }
-
 list.innerHTML = html;
 }
 
-/* done */
 async function done(id){
 if(!confirm("Отметить что гость ушел?")) return;
 try {
-console.log(`📤 Отправка запроса на завершение брони ${id}...`);
 let res = await fetch(`${API}/done/${id}`, {method:"POST"});
 if(res.ok){
 currentData = currentData.map(b=> b.id===id ? {...b,status:"completed"} : b);
 render();
-console.log(`✅ Бронь ${id} завершена`);
 } else {
 throw new Error(`HTTP ${res.status}`);
 }
 } catch(e) {
-console.error("❌ Ошибка:", e);
 alert("Ошибка: " + e.message);
 }
 }
 
-/* refresh */
 function refresh(){
 let date = currentMode === "today" ? getLocalDate() : dateInput.value;
-if(date) {
-list.innerHTML = '<div class="loading">🔄 Загрузка...</div>';
-load(date);
-}
+if(date) load(date);
 }
 
-/* табы */
 function showToday(el){
 currentMode = "today";
 setActive(el);
@@ -379,20 +341,17 @@ document.querySelectorAll(".menu div").forEach(e=>e.classList.remove("active"));
 el.classList.add("active");
 }
 
-/* события */
 document.getElementById("dateInput").onchange=()=>{
 if(currentMode === "calendar") load(dateInput.value);
 };
 document.getElementById("search").oninput=render;
 document.getElementById("tableFilter").onchange=render;
 
-/* автообновление каждые 5 секунд */
 setInterval(()=>{
 let date = currentMode === "today" ? getLocalDate() : document.getElementById("dateInput").value;
 if(date) load(date);
 },5000);
 
-/* старт */
 console.log("🚀 Админ панель запущена");
 console.log(`📡 API URL: ${API}`);
 load(getLocalDate());
