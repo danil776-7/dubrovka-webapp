@@ -228,6 +228,11 @@ input:focus, select:focus {
   box-shadow: 0 0 10px rgba(139, 0, 0, 0.3);
 }
 
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  opacity: 1;
+}
+
 button {
   width: 100%;
   padding: 14px;
@@ -414,7 +419,7 @@ button:hover {
     <select id="time">
       <option value="">⏰ ВЫБЕРИТЕ ВРЕМЯ</option>
     </select>
-    <input id="guests" type="number" placeholder="👥 КОЛИЧЕСТВО ГОСТЕЙ" min="1" max="20">
+    <input id="guests" type="number" placeholder="👥 КОЛИЧЕСТВО ГОСТЕЙ" min="1" max="20" step="1">
     <input id="name" placeholder="👤 ВАШЕ ИМЯ">
     <input id="phone" placeholder="📞 ТЕЛЕФОН (+7XXXXXXXXXX)" maxlength="12">
 
@@ -435,7 +440,7 @@ button:hover {
 </div>
 
 <script>
-// Описания столов (без упоминания времени)
+// Описания столов с указанием максимального количества гостей
 const tableDescriptions = {
   "1": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 7 ГОСТЕЙ",
   "2": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ",
@@ -446,8 +451,15 @@ const tableDescriptions = {
   "VIP": "⭐ VIP КОМНАТА (ДЕПОЗИТНАЯ)\n👑 ОБСЛУЖИВАНИЕ ЧЕРЕЗ АДМИНИСТРАТОРА"
 };
 
+// Максимальное количество гостей для каждого стола
 const TABLE_CAPACITY = {
-  "1": 7, "2": 5, "3": 5, "4": 5, "5": 5, "6": 3, "VIP": 20
+  "1": 7,
+  "2": 5,
+  "3": 5,
+  "4": 5,
+  "5": 5,
+  "6": 3,
+  "VIP": 20
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -615,6 +627,23 @@ async function loadTimes() {
   }
 }
 
+// Проверка количества гостей при изменении поля
+guestsInput.addEventListener("input", () => {
+  if(selectedTable && selectedTable !== "VIP") {
+    let guests = parseInt(guestsInput.value) || 0;
+    let maxGuests = TABLE_CAPACITY[selectedTable];
+    
+    if(guests > maxGuests) {
+      showError(`⚠️ СТОЛ ${selectedTable} ВМЕЩАЕТ МАКСИМУМ ${maxGuests} ГОСТЕЙ!\nПожалуйста, уменьшите количество гостей или выберите другой стол`, guestsInput);
+      guestsInput.value = maxGuests;
+    }
+    
+    if(guests < 1) {
+      guestsInput.value = 1;
+    }
+  }
+});
+
 // Обработчики кнопок столов
 document.querySelectorAll(".table").forEach(el => {
   el.onclick = async () => {
@@ -632,11 +661,24 @@ document.querySelectorAll(".table").forEach(el => {
     // Показываем описание стола
     tableInfo.innerText = tableDescriptions[selectedTable] || "✨ ВЫБЕРИТЕ СТОЛ ДЛЯ БРОНИРОВАНИЯ";
     
+    // Обновляем max атрибут для поля гостей
+    let maxGuests = TABLE_CAPACITY[selectedTable];
+    guestsInput.max = maxGuests;
+    guestsInput.placeholder = `👥 КОЛИЧЕСТВО ГОСТЕЙ (МАКС. ${maxGuests})`;
+    
+    // Проверяем текущее значение гостей
+    let currentGuests = parseInt(guestsInput.value) || 0;
+    if(currentGuests > maxGuests) {
+      guestsInput.value = maxGuests;
+      showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ МАКСИМУМ ${maxGuests} ГОСТЕЙ`, guestsInput);
+    }
+    
     // Загружаем доступные времена для выбранного стола
     if(selectedTable !== "VIP") {
       await loadTimes();
     } else {
       timeSelect.innerHTML = '<option value="">⏰ VIP ПО ТЕЛЕФОНУ</option>';
+      guestsInput.placeholder = "👥 КОЛИЧЕСТВО ГОСТЕЙ (УТОЧНИТЕ ПО ТЕЛЕФОНУ)";
     }
     
     suggestionBox.style.display = "none";
@@ -671,12 +713,16 @@ bookBtn.onclick = async () => {
   let guestsVal = parseInt(guestsInput.value || 0);
   let selectedTime = timeSelect.value;
   let workingHours = getWorkingHours(dateInput.value);
+  let maxGuests = TABLE_CAPACITY[selectedTable];
   
   if(!nameVal) { showError("ВВЕДИТЕ ИМЯ", nameInput); return; }
   if(phoneVal.length !== 12) { showError("НЕВЕРНЫЙ НОМЕР (+7XXXXXXXXXX)", phoneInput); return; }
   if(guestsVal < 1) { showError("УКАЖИТЕ КОЛИЧЕСТВО ГОСТЕЙ", guestsInput); return; }
-  if(guestsVal > TABLE_CAPACITY[selectedTable]) {
-    showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ ${TABLE_CAPACITY[selectedTable]} ГОСТЕЙ`, guestsInput);
+  
+  // 🔥 ОСНОВНАЯ ПРОВЕРКА КОЛИЧЕСТВА ГОСТЕЙ
+  if(guestsVal > maxGuests) {
+    showError(`❌ СТОЛ ${selectedTable} ВМЕЩАЕТ МАКСИМУМ ${maxGuests} ГОСТЕЙ!\nВы указали ${guestsVal} гостей.\n\nПожалуйста, уменьшите количество гостей или выберите другой стол`, guestsInput);
+    guestsInput.value = maxGuests;
     return;
   }
   
@@ -725,7 +771,7 @@ bookBtn.onclick = async () => {
     
     if(result.ok || result.id) {
       if(tg) tg.sendData(JSON.stringify(data));
-      showSuccess(`БРОНЬ СОЗДАНА!\n🪑 Стол ${selectedTable}\n⏰ ${selectedTime}\n👤 ${nameVal}\n\n🏠 Режим работы: ${workingHours.text}`);
+      showSuccess(`БРОНЬ СОЗДАНА!\n🪑 Стол ${selectedTable}\n⏰ ${selectedTime}\n👥 ${guestsVal} гостей\n👤 ${nameVal}\n\n🏠 Режим работы: ${workingHours.text}`);
       
       nameInput.value = "";
       guestsInput.value = "";
@@ -733,6 +779,8 @@ bookBtn.onclick = async () => {
       document.querySelectorAll(".table").forEach(t => t.classList.remove("selected"));
       selectedTable = null;
       tableInfo.innerText = "✨ ВЫБЕРИТЕ СТОЛ ДЛЯ БРОНИРОВАНИЯ";
+      guestsInput.placeholder = "👥 КОЛИЧЕСТВО ГОСТЕЙ";
+      guestsInput.max = 20;
       await loadTimes();
     } else {
       showError("ОШИБКА: " + (result.detail || "НЕИЗВЕСТНАЯ ОШИБКА"));
