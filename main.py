@@ -7,38 +7,18 @@ import requests
 import os
 
 # =====================
-# DATABASE (RAILWAY POSTGRES)
+# DATABASE - ПРЯМАЯ ССЫЛКА
 # =====================
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = "postgresql://postgres:feCstjzIcdnSWsORvYoWsKCkvaUYQNaK@postgres.railway.internal:5432/railway"
 
-# 🔥 ПРОВЕРКА: если переменная не установлена
-if not DATABASE_URL:
-    print("❌ ERROR: DATABASE_URL environment variable is not set!")
-    print("📌 Please add it in Railway: Variables → DATABASE_URL")
-    print("📌 Or use: postgresql://postgres:feCstjzIcdnSWsORvYoWsKCkvaUYQNaK@postgres.railway.internal:5432/railway")
-    
-    # 🔥 ВРЕМЕННО ДЛЯ ТЕСТА - раскомментируйте следующую строку
-    # DATABASE_URL = "postgresql://postgres:feCstjzIcdnSWsORvYoWsKCkvaUYQNaK@postgres.railway.internal:5432/railway"
-    
-    # Если не хотите хардкодить, просто выходим с ошибкой
-    raise ValueError("DATABASE_URL is required. Please set it in Railway Variables.")
-
-# 🔥 фикс Railway postgres://
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://")
-
-print(f"✅ Database URL configured (host: {DATABASE_URL.split('@')[1].split('/')[0]})")
-
-try:
-    engine = create_engine(
-        DATABASE_URL,
-        pool_pre_ping=True
-    )
-    print("✅ Database engine created")
-except Exception as e:
-    print(f"❌ Failed to create database engine: {e}")
-    raise
+# Для PostgreSQL нужны эти параметры
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True,
+    pool_size=5,
+    max_overflow=10
+)
 
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
@@ -62,10 +42,10 @@ class Booking(Base):
 # Создаем таблицы
 try:
     Base.metadata.create_all(bind=engine)
-    print("✅ Database tables created/verified")
+    print("✅ Database tables created successfully!")
 except Exception as e:
     print(f"❌ Error creating tables: {e}")
-    print("📌 Make sure the database exists and credentials are correct")
+    print("Make sure PostgreSQL is running and credentials are correct")
     raise
 
 # =====================
@@ -82,14 +62,16 @@ app.add_middleware(
 )
 
 # =====================
-# CONFIG
+# CONFIG - ВАШИ ДАННЫЕ
 # =====================
 
-TELEGRAM_BOT_TOKEN = os.getenv("8769949339:AAFwvdkPFgj7l4BQwGfmcljauMWXRx7qves")
-ADMIN_CHAT_ID = os.getenv("7545540622")
+# 🔥 ВАШ ТОКЕН ТЕЛЕГРАМ БОТА
+TELEGRAM_BOT_TOKEN = "8769949339:AAFwvdkPFgj7l4BQwGfmcljauMWXRx7qves"
 
-if not TELEGRAM_BOT_TOKEN or not ADMIN_CHAT_ID:
-    print("⚠️ WARNING: Telegram not configured. Add TELEGRAM_BOT_TOKEN and ADMIN_CHAT_ID to Variables")
+# 🔥 ВАШ ID АДМИНА
+ADMIN_CHAT_ID = "7545540622"
+
+print(f"✅ Telegram configured for admin: {ADMIN_CHAT_ID}")
 
 # =====================
 # LIMITS
@@ -110,10 +92,6 @@ TABLE_LIMITS = {
 # =====================
 
 def send_telegram(text):
-    if not TELEGRAM_BOT_TOKEN or not ADMIN_CHAT_ID:
-        print("⚠️ Telegram not configured")
-        return
-    
     try:
         response = requests.post(
             f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
@@ -125,9 +103,9 @@ def send_telegram(text):
             timeout=5
         )
         if response.status_code == 200:
-            print("✅ Telegram sent")
+            print("✅ Telegram notification sent")
         else:
-            print(f"❌ Telegram error: {response.status_code}")
+            print(f"❌ Telegram error: {response.status_code} - {response.text}")
     except Exception as e:
         print("❌ TG ERROR:", e)
 
@@ -139,7 +117,7 @@ def normalize_date(date_str):
     try:
         return datetime.strptime(date_str, "%Y-%m-%d").strftime("%Y-%m-%d")
     except:
-        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+        raise HTTPException(status_code=400, detail="Invalid date. Use YYYY-MM-DD")
 
 # =====================
 # ROOT
@@ -148,9 +126,9 @@ def normalize_date(date_str):
 @app.get("/")
 def root():
     return {
-        "status": "ok",
-        "database": "connected",
-        "database_url_configured": bool(DATABASE_URL)
+        "status": "ok", 
+        "database": "postgresql",
+        "telegram": "configured"
     }
 
 # =====================
@@ -174,15 +152,12 @@ def health():
 @app.get("/bookings_by_date")
 def bookings_by_date(date: str):
     db = SessionLocal()
-
     try:
         date = normalize_date(date)
-
         data = db.query(Booking).filter(
             Booking.date == date,
             Booking.status == "active"
         ).all()
-
         return [
             {
                 "id": b.id,
@@ -196,7 +171,6 @@ def bookings_by_date(date: str):
             }
             for b in data
         ]
-
     finally:
         db.close()
 
@@ -207,18 +181,14 @@ def bookings_by_date(date: str):
 @app.get("/busy_times")
 def busy_times(date: str, table: str):
     db = SessionLocal()
-
     try:
         date = normalize_date(date)
-
         data = db.query(Booking).filter(
             Booking.date == date,
             Booking.table == table,
             Booking.status == "active"
         ).all()
-
         return [b.time for b in data]
-
     finally:
         db.close()
 
@@ -229,7 +199,6 @@ def busy_times(date: str, table: str):
 @app.post("/booking")
 def create_booking(data: dict):
     db = SessionLocal()
-
     try:
         # Проверка обязательных полей
         required = ["name", "phone", "guests", "table", "date", "time"]
@@ -242,15 +211,18 @@ def create_booking(data: dict):
         time = data["time"]
         guests = int(data["guests"])
 
-        # Проверка существования стола
+        # Проверка стола
         if table not in TABLE_LIMITS:
             raise HTTPException(status_code=400, detail=f"Table {table} does not exist")
 
-        # лимит гостей
+        # Лимит гостей
         if guests > TABLE_LIMITS[table]:
-            raise HTTPException(status_code=400, detail=f"Too many guests. Max for table {table} is {TABLE_LIMITS[table]}")
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Too many guests. Max for table {table} is {TABLE_LIMITS[table]}"
+            )
 
-        # проверка занятости (только активные)
+        # Проверка занятости
         exists = db.query(Booking).filter(
             Booking.date == date,
             Booking.time == time,
@@ -261,6 +233,7 @@ def create_booking(data: dict):
         if exists:
             raise HTTPException(status_code=409, detail="Time slot already booked")
 
+        # Создание брони
         booking = Booking(
             name=data["name"],
             phone=data["phone"],
@@ -275,16 +248,18 @@ def create_booking(data: dict):
         db.commit()
         db.refresh(booking)
 
-        # Telegram только после успешного создания
+        print(f"✅ New booking created: ID={booking.id}, Table={table}, Time={time}, Guest={data['name']}")
+
+        # Telegram уведомление админу
         send_telegram(
-            f"🔥 <b>Новая бронь</b>\n\n"
-            f"👤 {data['name']}\n"
-            f"📞 {data['phone']}\n"
-            f"👥 {guests} чел.\n"
-            f"🪑 Стол {table}\n"
-            f"📅 {date}\n"
-            f"⏰ {time}\n"
-            f"🆔 ID: {booking.id}"
+            f"🔥 <b>НОВАЯ БРОНЬ!</b>\n\n"
+            f"👤 <b>Имя:</b> {data['name']}\n"
+            f"📞 <b>Телефон:</b> {data['phone']}\n"
+            f"👥 <b>Гостей:</b> {guests}\n"
+            f"🪑 <b>Стол:</b> {table}\n"
+            f"📅 <b>Дата:</b> {date}\n"
+            f"⏰ <b>Время:</b> {time}\n"
+            f"🆔 <b>ID брони:</b> {booking.id}"
         )
 
         return {"ok": True, "id": booking.id}
@@ -299,13 +274,12 @@ def create_booking(data: dict):
         db.close()
 
 # =====================
-# ГОСТЬ УШЕЛ (СМЕНА СТАТУСА)
+# ГОСТЬ УШЕЛ
 # =====================
 
 @app.post("/done/{id}")
 def done(id: int):
     db = SessionLocal()
-
     try:
         booking = db.query(Booking).filter(
             Booking.id == id,
@@ -315,15 +289,21 @@ def done(id: int):
         if not booking:
             raise HTTPException(status_code=404, detail="Active booking not found")
 
+        old_status = booking.status
         booking.status = "completed"
         db.commit()
 
+        print(f"✅ Booking {id} marked as completed (guest left)")
+
+        # Telegram уведомление
         send_telegram(
-            f"✅ <b>Гость ушел</b>\n\n"
-            f"🆔 ID: {id}\n"
-            f"👤 {booking.name}\n"
-            f"🪑 Стол {booking.table}\n"
-            f"📅 {booking.date} {booking.time}"
+            f"✅ <b>ГОСТЬ УШЕЛ</b>\n\n"
+            f"🆔 <b>ID брони:</b> {id}\n"
+            f"👤 <b>Имя:</b> {booking.name}\n"
+            f"🪑 <b>Стол:</b> {booking.table}\n"
+            f"📅 <b>Дата:</b> {booking.date}\n"
+            f"⏰ <b>Время:</b> {booking.time}\n"
+            f"👥 <b>Было гостей:</b> {booking.guests}"
         )
 
         return {"ok": True, "message": "Booking completed"}
@@ -340,7 +320,6 @@ def done(id: int):
 @app.post("/cancel/{id}")
 def cancel(id: int):
     db = SessionLocal()
-
     try:
         booking = db.query(Booking).filter(
             Booking.id == id,
@@ -353,17 +332,47 @@ def cancel(id: int):
         booking.status = "cancelled"
         db.commit()
 
+        print(f"❌ Booking {id} cancelled")
+
+        # Telegram уведомление
         send_telegram(
-            f"❌ <b>Бронь отменена</b>\n\n"
-            f"🆔 ID: {id}\n"
-            f"👤 {booking.name}\n"
-            f"🪑 Стол {booking.table}\n"
-            f"📅 {booking.date} {booking.time}"
+            f"❌ <b>БРОНЬ ОТМЕНЕНА</b>\n\n"
+            f"🆔 <b>ID брони:</b> {id}\n"
+            f"👤 <b>Имя:</b> {booking.name}\n"
+            f"📞 <b>Телефон:</b> {booking.phone}\n"
+            f"🪑 <b>Стол:</b> {booking.table}\n"
+            f"📅 <b>Дата:</b> {booking.date}\n"
+            f"⏰ <b>Время:</b> {booking.time}"
         )
 
         return {"ok": True, "message": "Booking cancelled"}
 
     except HTTPException:
         raise
+    finally:
+        db.close()
+
+# =====================
+# ВСЕ БРОНИ (ДЛЯ ОТЛАДКИ)
+# =====================
+
+@app.get("/all_bookings")
+def all_bookings():
+    db = SessionLocal()
+    try:
+        data = db.query(Booking).all()
+        return [
+            {
+                "id": b.id,
+                "name": b.name,
+                "phone": b.phone,
+                "guests": b.guests,
+                "table": b.table,
+                "date": b.date,
+                "time": b.time,
+                "status": b.status
+            }
+            for b in data
+        ]
     finally:
         db.close()
