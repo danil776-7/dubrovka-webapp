@@ -57,13 +57,21 @@ except Exception as e:
 
 app = FastAPI()
 
-# CORS настройки - разрешаем все источники
+# 🔥 ПРАВИЛЬНЫЕ CORS НАСТРОЙКИ - ДОБАВЛЯЕМ ВАШ GitHub PAGES
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "*",  # Разрешаем все для теста
+        "https://danil776-7.github.io",
+        "https://danil776-7.github.io/*",
+        "http://localhost:3000",
+        "http://localhost:5500",
+        "https://dubrovka-webapp-production-a00c.up.railway.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 # =====================
@@ -487,3 +495,11 @@ def all_bookings():
         ]
     finally:
         db.close()
+
+# =====================
+# OPTIONS - для CORS preflight
+# =====================
+
+@app.options("/{path:path}")
+async def options_handler(path: str):
+    return {}
