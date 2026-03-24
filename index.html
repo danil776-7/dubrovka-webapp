@@ -3,186 +3,558 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dubrovka Lounge</title>
+<title>Dubrovka Lounge | Красный & Черный</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#000;color:#e7d9c0;}
-video{position:fixed;width:100%;height:100%;object-fit:cover;z-index:-2;}
-.overlay{position:fixed;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:-1;}
-
-.container{max-width:420px;margin:auto;padding:20px;}
-
-.card{
-background:rgba(255,255,255,0.05);
-backdrop-filter:blur(12px);
-padding:20px;
-border-radius:20px;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.tables{
-display:grid;
-grid-template-columns:repeat(2,1fr);
-gap:10px;
+body {
+  font-family: 'Arial', sans-serif;
+  background: #000;
+  color: #e7d9c0;
+  min-height: 100vh;
 }
 
-.table{
-padding:15px;
-background:#222;
-border-radius:10px;
-text-align:center;
-cursor:pointer;
-transition:all 0.3s;
+/* Видео фон */
+.video-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
 }
 
-.table.selected{background:#d6b36a;color:black;}
-.table.suggested{background:#d6b36a44;border:1px solid #d6b36a;}
-.table.disabled{opacity:0.5;cursor:not-allowed;background:#333;}
-
-.desc{
-background:#111;
-padding:10px;
-border-radius:10px;
-margin:10px 0;
-white-space:pre-line;
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(0,0,0,0.85) 0%, rgba(139,0,0,0.4) 100%);
+  z-index: -1;
 }
 
-input, select{
-width:100%;
-padding:12px;
-margin:6px 0;
-border-radius:10px;
-border:none;
-background:#222;
-color:#fff;
+.container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+  position: relative;
+  z-index: 1;
 }
 
-button{
-width:100%;
-padding:14px;
-background:#d6b36a;
-border:none;
-border-radius:10px;
-cursor:pointer;
-font-weight:bold;
-margin-top:10px;
+/* Логотип */
+.logo-container {
+  text-align: center;
+  margin-bottom: 20px;
+  animation: fadeInDown 0.8s ease-out;
 }
 
-button:hover{background:#c4a25a;}
-button:disabled{opacity:0.5;cursor:not-allowed;}
-
-.suggestion-box{
-background:#1a1a1a;
-padding:15px;
-border-radius:10px;
-margin-top:15px;
-display:none;
+.logo {
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, #8B0000 0%, #4a0000 100%);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px;
+  box-shadow: 0 0 30px rgba(139, 0, 0, 0.5);
+  transition: transform 0.3s ease;
+  border: 2px solid #8B0000;
 }
 
-.suggestion-box h4{margin:0 0 10px 0;color:#d6b36a;}
-.suggestion-item{
-padding:12px;
-margin:8px 0;
-background:#222;
-border-radius:8px;
-cursor:pointer;
-transition:all 0.2s;
-display:flex;
-justify-content:space-between;
-align-items:center;
+.logo:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 40px rgba(139, 0, 0, 0.8);
 }
 
-.suggestion-item:hover{background:#333;}
-.suggestion-item.selected{background:#d6b36a;color:black;}
-.suggestion-time{font-weight:bold;color:#d6b36a;}
-.suggestion-table{background:#333;padding:2px 8px;border-radius:12px;}
-
-.blocked-warning{
-background:#8b0000;
-padding:10px;
-border-radius:8px;
-margin-top:10px;
-display:none;
-color:#fff;
-text-align:center;
+.logo span {
+  font-size: 48px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(139, 0, 0, 0.5);
 }
 
-.footer{
-margin-top:20px;
-text-align:center;
-font-size:14px;
-color:#ccc;
+.logo-text {
+  font-size: 28px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  background: linear-gradient(135deg, #8B0000 0%, #cc0000 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 5px;
+  text-shadow: 0 0 10px rgba(139, 0, 0, 0.3);
 }
 
-.map-btn{
-display:block;
-margin-top:10px;
-padding:10px;
-background:#222;
-border-radius:8px;
-text-decoration:none;
-color:white;
-text-align:center;
+.logo-subtitle {
+  font-size: 12px;
+  color: #8B0000;
+  letter-spacing: 3px;
+  text-transform: uppercase;
 }
 
-.loading{
-text-align:center;
-padding:10px;
-color:#d6b36a;
+/* Карточка */
+.card {
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(15px);
+  padding: 25px;
+  border-radius: 20px;
+  border: 1px solid rgba(139, 0, 0, 0.5);
+  box-shadow: 0 8px 32px rgba(139, 0, 0, 0.2);
+  animation: fadeInUp 0.8s ease-out;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 24px;
+  color: #8B0000;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: bold;
+  text-shadow: 0 0 5px rgba(139, 0, 0, 0.5);
+}
+
+/* Столы */
+.tables {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.table {
+  padding: 15px;
+  background: rgba(20, 20, 20, 0.9);
+  border-radius: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(139, 0, 0, 0.3);
+  font-weight: bold;
+  font-size: 18px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.table::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(139, 0, 0, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.table:hover::before {
+  left: 100%;
+}
+
+.table:hover {
+  background: rgba(139, 0, 0, 0.2);
+  transform: translateY(-2px);
+  border-color: #8B0000;
+  box-shadow: 0 0 15px rgba(139, 0, 0, 0.3);
+}
+
+.table.selected {
+  background: #8B0000;
+  color: #fff;
+  box-shadow: 0 0 20px rgba(139, 0, 0, 0.8);
+  border-color: #cc0000;
+}
+
+.table.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: rgba(51, 51, 51, 0.8);
+}
+
+.table.disabled:hover {
+  transform: none;
+  background: rgba(51, 51, 51, 0.8);
+}
+
+/* VIP особый стиль */
+.table[data-table="VIP"] {
+  background: linear-gradient(135deg, rgba(139, 0, 0, 0.2), rgba(74, 0, 0, 0.2));
+  border-color: #8B0000;
+  position: relative;
+}
+
+.table[data-table="VIP"]::after {
+  content: "⭐";
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 14px;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+}
+
+.desc {
+  background: rgba(20, 20, 20, 0.9);
+  padding: 12px;
+  border-radius: 12px;
+  margin: 15px 0;
+  white-space: pre-line;
+  font-size: 14px;
+  line-height: 1.5;
+  border-left: 3px solid #8B0000;
+  color: #ccc;
+}
+
+/* Форма */
+input, select {
+  width: 100%;
+  padding: 12px 15px;
+  margin: 8px 0;
+  border-radius: 10px;
+  border: 1px solid rgba(139, 0, 0, 0.3);
+  background: rgba(20, 20, 20, 0.9);
+  color: #fff;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: #8B0000;
+  background: rgba(20, 20, 20, 1);
+  box-shadow: 0 0 10px rgba(139, 0, 0, 0.3);
+}
+
+input::placeholder {
+  color: #666;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #8B0000 0%, #4a0000 100%);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;
+  margin-top: 15px;
+  color: #fff;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+}
+
+button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+button:hover::before {
+  left: 100%;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(139, 0, 0, 0.5);
+  background: linear-gradient(135deg, #a00000 0%, #5a0000 100%);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Блок предложений */
+.suggestion-box {
+  background: rgba(20, 20, 20, 0.95);
+  padding: 15px;
+  border-radius: 12px;
+  margin-top: 15px;
+  display: none;
+  border: 1px solid rgba(139, 0, 0, 0.5);
+  animation: slideDown 0.3s ease-out;
+}
+
+.suggestion-box h4 {
+  margin: 0 0 10px 0;
+  color: #8B0000;
+  font-size: 16px;
+  text-transform: uppercase;
+}
+
+.suggestion-item {
+  padding: 12px;
+  margin: 8px 0;
+  background: rgba(30, 30, 30, 0.9);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 2px solid #8B0000;
+}
+
+.suggestion-item:hover {
+  background: rgba(139, 0, 0, 0.2);
+  transform: translateX(5px);
+  border-left: 3px solid #8B0000;
+}
+
+.suggestion-item.selected {
+  background: #8B0000;
+  color: #fff;
+}
+
+.suggestion-time {
+  font-weight: bold;
+  color: #8B0000;
+}
+
+.suggestion-item.selected .suggestion-time {
+  color: #fff;
+}
+
+.blocked-warning {
+  background: linear-gradient(135deg, rgba(139, 0, 0, 0.9), rgba(74, 0, 0, 0.9));
+  padding: 12px;
+  border-radius: 10px;
+  margin-top: 10px;
+  display: none;
+  color: #fff;
+  text-align: center;
+  font-size: 14px;
+  animation: shake 0.5s ease;
+  border: 1px solid #ff0000;
+}
+
+/* Футер */
+.footer {
+  margin-top: 25px;
+  text-align: center;
+  font-size: 13px;
+  color: #888;
+  border-top: 1px solid rgba(139, 0, 0, 0.3);
+  padding-top: 20px;
+}
+
+.footer p {
+  margin: 5px 0;
+}
+
+.map-btn {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 8px 20px;
+  background: rgba(20, 20, 20, 0.9);
+  border-radius: 20px;
+  text-decoration: none;
+  color: #8B0000;
+  font-size: 12px;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(139, 0, 0, 0.5);
+}
+
+.map-btn:hover {
+  background: #8B0000;
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 0 10px rgba(139, 0, 0, 0.5);
+}
+
+/* Анимации */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Эффект встряски */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* Класс для встряски */
+.shake-animation {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Загрузка */
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #8B0000;
+}
+
+/* Адаптивность */
+@media (max-width: 480px) {
+  .container {
+    padding: 15px;
+  }
+  
+  .card {
+    padding: 20px;
+  }
+  
+  .logo {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .logo span {
+    font-size: 40px;
+  }
+  
+  .logo-text {
+    font-size: 24px;
+  }
+  
+  .tables {
+    gap: 8px;
+  }
+  
+  .table {
+    padding: 12px;
+    font-size: 16px;
+  }
+}
+
+/* Стиль для скролла */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #8B0000;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #cc0000;
 }
 </style>
 </head>
 
 <body>
-<video autoplay muted loop playsinline>
-<source src="bg.mp4" type="video/mp4">
+<video class="video-background" autoplay muted loop playsinline>
+  <source src="bg.mp4" type="video/mp4">
+  Ваш браузер не поддерживает видео
 </video>
 <div class="overlay"></div>
 
 <div class="container">
-<div class="card">
-<h2>🍽 Dubrovka Lounge</h2>
+  <div class="logo-container">
+    <div class="logo">
+      <span>🍷</span>
+    </div>
+    <div class="logo-text">DUBROVKA</div>
+    <div class="logo-subtitle">LOUNGE & RESTAURANT</div>
+  </div>
 
-<div class="tables">
-<div class="table" data-table="1">1</div>
-<div class="table" data-table="2">2</div>
-<div class="table" data-table="3">3</div>
-<div class="table" data-table="4">4</div>
-<div class="table" data-table="5">5</div>
-<div class="table" data-table="6">6</div>
-<div class="table" data-table="VIP">VIP</div>
-</div>
+  <div class="card">
+    <h2>🍷 БРОНИРОВАНИЕ СТОЛОВ</h2>
 
-<div id="tableInfo" class="desc">Выберите стол</div>
+    <div class="tables">
+      <div class="table" data-table="1">СТОЛ 1</div>
+      <div class="table" data-table="2">СТОЛ 2</div>
+      <div class="table" data-table="3">СТОЛ 3</div>
+      <div class="table" data-table="4">СТОЛ 4</div>
+      <div class="table" data-table="5">СТОЛ 5</div>
+      <div class="table" data-table="6">СТОЛ 6</div>
+      <div class="table" data-table="VIP">VIP ЗАЛ</div>
+    </div>
 
-<input id="date" type="date">
-<select id="time">
-<option value="">Выберите время</option>
-</select>
-<input id="guests" type="number" placeholder="Количество гостей" min="1" max="20">
-<input id="name" placeholder="Имя">
-<input id="phone" placeholder="+7999" maxlength="12">
+    <div id="tableInfo" class="desc">✨ ВЫБЕРИТЕ СТОЛ ДЛЯ БРОНИРОВАНИЯ</div>
 
-<button id="bookBtn">Забронировать</button>
+    <input id="date" type="date" placeholder="📅 ДАТА">
+    <select id="time">
+      <option value="">⏰ ВЫБЕРИТЕ ВРЕМЯ</option>
+    </select>
+    <input id="guests" type="number" placeholder="👥 КОЛИЧЕСТВО ГОСТЕЙ" min="1" max="20">
+    <input id="name" placeholder="👤 ВАШЕ ИМЯ">
+    <input id="phone" placeholder="📞 ТЕЛЕФОН (+7XXXXXXXXXX)" maxlength="12">
 
-<div id="blockedWarning" class="blocked-warning">
-⚠️ Это время временно недоступно для бронирования<br>
-<small>Стол забронирован и ожидает гостей</small>
-</div>
+    <button id="bookBtn">ЗАБРОНИРОВАТЬ</button>
 
-<div id="suggestionBox" class="suggestion-box">
-<h4>💡 Альтернативные варианты</h4>
-<div id="suggestions"></div>
-</div>
+    <div id="blockedWarning" class="blocked-warning">
+      ⚠️ ЭТО ВРЕМЯ ВРЕМЕННО НЕДОСТУПНО ДЛЯ БРОНИРОВАНИЯ<br>
+      <small>СТОЛ ЗАБРОНИРОВАН И ОЖИДАЕТ ГОСТЕЙ</small>
+    </div>
 
-<div class="footer">
-📍 Ермакова 11<br>
-📞 +7‒913‒432‒01‒01
-<a class="map-btn" href="https://2gis.ru/novokuznetsk/geo/70000001067987554" target="_blank">
-🗺 Открыть в 2ГИС
-</a>
-</div>
-</div>
+    <div id="suggestionBox" class="suggestion-box">
+      <h4>💡 АЛЬТЕРНАТИВНЫЕ ВАРИАНТЫ</h4>
+      <div id="suggestions"></div>
+    </div>
+
+    <div class="footer">
+      <p>📍 Ермакова 11, Новокузнецк</p>
+      <p>📞 +7‒913‒432‒01‒01</p>
+      <a class="map-btn" href="https://2gis.ru/novokuznetsk/geo/70000001067987554" target="_blank">
+        🗺 ОТКРЫТЬ В 2ГИС
+      </a>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -207,14 +579,58 @@ let currentBusyTimes = {};
 let suggestedOption = null;
 let blockedTimes = new Set();
 
+// Функция для добавления эффекта встряски
+function shakeElement(element) {
+  element.classList.add('shake-animation');
+  setTimeout(() => {
+    element.classList.remove('shake-animation');
+  }, 500);
+}
+
+// Функция для показа ошибки с встряской
+function showError(message, element = null) {
+  if (element) {
+    shakeElement(element);
+  } else {
+    // Если нет конкретного элемента, встряхиваем кнопку
+    shakeElement(bookBtn);
+  }
+  
+  // Создаем всплывающее уведомление
+  const errorDiv = document.createElement('div');
+  errorDiv.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #8B0000, #4a0000);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    z-index: 10000;
+    font-size: 14px;
+    font-weight: bold;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    animation: slideDown 0.3s ease-out;
+    border-left: 3px solid #ff0000;
+  `;
+  errorDiv.innerHTML = `❌ ${message}`;
+  document.body.appendChild(errorDiv);
+  
+  setTimeout(() => {
+    errorDiv.style.animation = 'shake 0.3s ease-out reverse';
+    setTimeout(() => errorDiv.remove(), 500);
+  }, 3000);
+}
+
 const tables = {
-"1": "Приватная зона со шторками и PlayStation\nДо 7 гостей",
-"2": "Приватная зона со шторками и PlayStation\nДо 5 гостей",
-"3": "Приватная зона со шторками и PlayStation\nДо 5 гостей",
-"4": "Приватная зона со шторками и PlayStation\nДо 5 гостей",
-"5": "Открытая зона без шторок\nДо 5 гостей",
-"6": "Компактный стол для 2–3 гостей",
-"VIP": "VIP комната (депозитная)\nЧерез администратора"
+"1": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 7 ГОСТЕЙ",
+"2": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ",
+"3": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ",
+"4": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ",
+"5": "✨ ОТКРЫТАЯ ЗОНА БЕЗ ШТОРОК\n👥 ДО 5 ГОСТЕЙ",
+"6": "🪑 КОМПАКТНЫЙ СТОЛ\n👥 ДО 3 ГОСТЕЙ",
+"VIP": "⭐ VIP КОМНАТА (ДЕПОЗИТНАЯ)\n👑 ОБСЛУЖИВАНИЕ ЧЕРЕЗ АДМИНИСТРАТОРА"
 };
 
 const TABLE_CAPACITY = {
@@ -222,6 +638,7 @@ const TABLE_CAPACITY = {
 };
 
 dateInput.min = new Date().toISOString().split("T")[0];
+dateInput.value = new Date().toISOString().split("T")[0];
 
 document.querySelectorAll(".table").forEach(el => {
 el.onclick = () => {
@@ -256,7 +673,7 @@ if(!Array.isArray(busy)) busy = [];
 currentBusyTimes[selectedTable] = busy;
 let allTimes = generateTimes(dateInput.value);
 let now = new Date();
-timeSelect.innerHTML = '<option value="">Выберите время</option>';
+timeSelect.innerHTML = '<option value="">⏰ ВЫБЕРИТЕ ВРЕМЯ</option>';
 blockedTimes.clear();
 allTimes.forEach(t => {
 let [h,m] = t.split(":");
@@ -328,20 +745,20 @@ return alternatives;
 
 async function showSuggestions() {
 if(!selectedTable || !dateInput.value || !timeSelect.value) return;
-suggestionsDiv.innerHTML = '<div class="loading">🔄 Поиск альтернатив...</div>';
+suggestionsDiv.innerHTML = '<div class="loading">🔄 ПОИСК АЛЬТЕРНАТИВ...</div>';
 suggestionBox.style.display = "block";
 let alternatives = await findAlternatives();
 if(!alternatives || alternatives.length === 0) {
-suggestionsDiv.innerHTML = '<div style="text-align:center;color:#888;">😔 Нет свободных альтернатив</div>';
+suggestionsDiv.innerHTML = '<div style="text-align:center;color:#888;">😔 НЕТ СВОБОДНЫХ АЛЬТЕРНАТИВ</div>';
 return;
 }
 let html = '';
 alternatives.forEach((alt, index) => {
-let typeText = alt.type === "same_time" ? "🕐 То же время" : "🕐 Другое время";
+let typeText = alt.type === "same_time" ? "🕐 ТО ЖЕ ВРЕМЯ" : "🕐 ДРУГОЕ ВРЕМЯ";
 html += `
 <div class="suggestion-item" onclick="selectAlternative(${index})">
 <div>
-<strong>Стол ${alt.table}</strong><br>
+<strong>СТОЛ ${alt.table}</strong><br>
 <small>${typeText}</small>
 </div>
 <div class="suggestion-time">${alt.time}</div>
@@ -399,28 +816,28 @@ guestsInput.addEventListener("change", () => {
 if(selectedTable) {
 let guests = parseInt(guestsInput.value) || 1;
 if(guests > TABLE_CAPACITY[selectedTable]) {
-alert(`⚠️ Стол ${selectedTable} вмещает максимум ${TABLE_CAPACITY[selectedTable]} гостей`);
+showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ МАКСИМУМ ${TABLE_CAPACITY[selectedTable]} ГОСТЕЙ`, guestsInput);
 }
 }
 });
 
 bookBtn.onclick = async () => {
-if(!selectedTable) { alert("Выберите стол"); return; }
-if(selectedTable === "VIP") { alert("VIP бронируется через администратора"); return; }
-if(!dateInput.value) { alert("Выберите дату"); return; }
-if(!timeSelect.value) { alert("Выберите время"); return; }
+if(!selectedTable) { showError("ВЫБЕРИТЕ СТОЛ", document.querySelector('.tables')); return; }
+if(selectedTable === "VIP") { showError("VIP БРОНИРУЕТСЯ ЧЕРЕЗ АДМИНИСТРАТОРА\n📞 ПОЗВОНИТЕ: +7‒913‒432‒01‒01", bookBtn); return; }
+if(!dateInput.value) { showError("ВЫБЕРИТЕ ДАТУ", dateInput); return; }
+if(!timeSelect.value) { showError("ВЫБЕРИТЕ ВРЕМЯ", timeSelect); return; }
 let nameVal = nameInput.value.trim();
 let phoneVal = phoneInput.value;
 let guestsVal = parseInt(guestsInput.value || 0);
-if(!nameVal) { alert("Введите имя"); return; }
-if(phoneVal.length !== 12) { alert("Введите корректный номер (+7XXXXXXXXXX)"); return; }
-if(guestsVal < 1) { alert("Укажите количество гостей"); return; }
+if(!nameVal) { showError("ВВЕДИТЕ ВАШЕ ИМЯ", nameInput); return; }
+if(phoneVal.length !== 12) { showError("ВВЕДИТЕ КОРРЕКТНЫЙ НОМЕР (+7XXXXXXXXXX)", phoneInput); return; }
+if(guestsVal < 1) { showError("УКАЖИТЕ КОЛИЧЕСТВО ГОСТЕЙ", guestsInput); return; }
 if(guestsVal > TABLE_CAPACITY[selectedTable]) {
-alert(`⚠️ Стол ${selectedTable} вмещает максимум ${TABLE_CAPACITY[selectedTable]} гостей`);
+showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ МАКСИМУМ ${TABLE_CAPACITY[selectedTable]} ГОСТЕЙ`, guestsInput);
 return;
 }
 if(blockedTimes.has(timeSelect.value)) {
-alert("❌ Это время уже забронировано и ожидает гостей!\n\nВыберите другое время или стол");
+showError("ЭТО ВРЕМЯ УЖЕ ЗАБРОНИРОВАНО И ОЖИДАЕТ ГОСТЕЙ!\n💡 ВЫБЕРИТЕ ДРУГОЕ ВРЕМЯ ИЛИ СТОЛ", bookBtn);
 showSuggestions();
 return;
 }
@@ -441,14 +858,32 @@ body: JSON.stringify(data)
 });
 let result = await res.json();
 if(result.error === "busy" || result.detail === "Time slot already booked") {
-alert("❌ Стол уже занят в это время");
+showError("СТОЛ УЖЕ ЗАНЯТ В ЭТО ВРЕМЯ", bookBtn);
 blockedWarning.style.display = "block";
 await showSuggestions();
 return;
 }
 if(result.ok || result.id) {
 tg.sendData(JSON.stringify(data));
-alert("✅ Бронь успешно создана!\n\nВы получите уведомление в Telegram");
+const successDiv = document.createElement('div');
+successDiv.style.cssText = `
+position: fixed;
+top: 20px;
+left: 50%;
+transform: translateX(-50%);
+background: linear-gradient(135deg, #00aa00, #006600);
+color: white;
+padding: 12px 20px;
+border-radius: 10px;
+z-index: 10000;
+font-size: 14px;
+font-weight: bold;
+box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+animation: slideDown 0.3s ease-out;
+`;
+successDiv.innerHTML = `✅ БРОНЬ УСПЕШНО СОЗДАНА!\n📱 ВЫ ПОЛУЧИТЕ УВЕДОМЛЕНИЕ В TELEGRAM`;
+document.body.appendChild(successDiv);
+setTimeout(() => successDiv.remove(), 3000);
 nameInput.value = "";
 guestsInput.value = "";
 timeSelect.value = "";
@@ -456,14 +891,14 @@ suggestionBox.style.display = "none";
 blockedWarning.style.display = "none";
 document.querySelectorAll(".table").forEach(t => t.classList.remove("selected"));
 selectedTable = null;
-tableInfo.innerText = "Выберите стол";
+tableInfo.innerText = "✨ ВЫБЕРИТЕ СТОЛ ДЛЯ БРОНИРОВАНИЯ";
 await loadTimes();
 } else {
-alert("❌ Ошибка: " + (result.detail || "Неизвестная ошибка"));
+showError("ОШИБКА: " + (result.detail || "НЕИЗВЕСТНАЯ ОШИБКА"), bookBtn);
 }
 } catch(e) {
 console.error(e);
-alert("❌ Ошибка соединения с сервером");
+showError("ОШИБКА СОЕДИНЕНИЯ С СЕРВЕРОМ", bookBtn);
 }
 };
 });
