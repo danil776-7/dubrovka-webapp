@@ -5,6 +5,8 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from datetime import datetime
 import requests
 import os
+import threading
+import time
 
 # =====================
 # DATABASE - НОВАЯ ССЫЛКА
@@ -67,7 +69,10 @@ app.add_middleware(
 # CONFIG - ВАШИ ДАННЫЕ ТЕЛЕГРАМ
 # =====================
 
+# 🔥 ВАШ ТОКЕН ТЕЛЕГРАМ БОТА
 TELEGRAM_BOT_TOKEN = "8769949339:AAFwvdkPFgj7l4BQwGfmcljauMWXRx7qves"
+
+# 🔥 ВАШ ID АДМИНА
 ADMIN_CHAT_ID = "7545540622"
 
 print(f"✅ Telegram configured for admin: {ADMIN_CHAT_ID}")
@@ -85,6 +90,50 @@ TABLE_LIMITS = {
     "6": 3,
     "VIP": 20
 }
+
+# =====================
+# ХРАНИЛИЩЕ ДЛЯ ТАЙМЕРОВ
+# =====================
+
+booking_timers = {}
+
+def auto_complete_booking(booking_id):
+    """Автоматическое завершение брони через 4 часа"""
+    try:
+        time.sleep(4 * 3600)  # 4 часа
+        db = SessionLocal()
+        booking = db.query(Booking).filter(
+            Booking.id == booking_id,
+            Booking.status == "active"
+        ).first()
+        
+        if booking:
+            booking.status = "completed"
+            db.commit()
+            print(f"🤖 Auto-completed booking {booking_id}")
+            
+            send_telegram(
+                f"🤖 <b>АВТОМАТИЧЕСКОЕ ЗАВЕРШЕНИЕ</b>\n\n"
+                f"🆔 <b>ID брони:</b> {booking_id}\n"
+                f"👤 <b>Имя:</b> {booking.name}\n"
+                f"🪑 <b>Стол:</b> {booking.table}\n"
+                f"📅 <b>Дата:</b> {booking.date}\n"
+                f"⏰ <b>Время:</b> {booking.time}\n\n"
+                f"🔓 Стол {booking.table} на {booking.time} теперь доступен для бронирования!"
+            )
+        db.close()
+    except Exception as e:
+        print(f"Error in auto_complete: {e}")
+    finally:
+        if booking_id in booking_timers:
+            del booking_timers[booking_id]
+
+def start_auto_complete_timer(booking_id):
+    """Запуск таймера в отдельном потоке"""
+    timer_thread = threading.Thread(target=auto_complete_booking, args=(booking_id,))
+    timer_thread.daemon = True
+    timer_thread.start()
+    booking_timers[booking_id] = timer_thread
 
 # =====================
 # TELEGRAM
@@ -247,6 +296,9 @@ def create_booking(data: dict):
         db.commit()
         db.refresh(booking)
 
+        # Запускаем таймер автоматического завершения через 4 часа
+        start_auto_complete_timer(booking.id)
+
         print(f"✅ New booking created: ID={booking.id}, Table={table}, Time={time}, Guest={data['name']}")
 
         # Telegram уведомление
@@ -258,7 +310,8 @@ def create_booking(data: dict):
             f"🪑 <b>Стол:</b> {table}\n"
             f"📅 <b>Дата:</b> {date}\n"
             f"⏰ <b>Время:</b> {time}\n"
-            f"🆔 <b>ID брони:</b> {booking.id}"
+            f"🆔 <b>ID брони:</b> {booking.id}\n\n"
+            f"⏰ Бронь автоматически завершится через 4 часа"
         )
 
         return {"ok": True, "id": booking.id}
@@ -291,6 +344,12 @@ def done(id: int):
         booking.status = "completed"
         db.commit()
 
+        # Останавливаем таймер если он есть
+        if id in booking_timers:
+            # Таймер уже запущен в отдельном потоке, мы его не можем остановить
+            # Просто удаляем из словаря, чтобы не дублировать
+            del booking_timers[id]
+
         print(f"✅ Booking {id} marked as completed")
 
         send_telegram(
@@ -300,7 +359,8 @@ def done(id: int):
             f"🪑 <b>Стол:</b> {booking.table}\n"
             f"📅 <b>Дата:</b> {booking.date}\n"
             f"⏰ <b>Время:</b> {booking.time}\n"
-            f"👥 <b>Было гостей:</b> {booking.guests}"
+            f"👥 <b>Было гостей:</b> {booking.guests}\n\n"
+            f"🔓 Стол {booking.table} на {booking.time} теперь доступен для бронирования!"
         )
 
         return {"ok": True, "message": "Booking completed"}
@@ -329,6 +389,10 @@ def cancel(id: int):
         booking.status = "cancelled"
         db.commit()
 
+        # Останавливаем таймер если он есть
+        if id in booking_timers:
+            del booking_timers[id]
+
         print(f"❌ Booking {id} cancelled")
 
         send_telegram(
@@ -338,7 +402,8 @@ def cancel(id: int):
             f"📞 <b>Телефон:</b> {booking.phone}\n"
             f"🪑 <b>Стол:</b> {booking.table}\n"
             f"📅 <b>Дата:</b> {booking.date}\n"
-            f"⏰ <b>Время:</b> {booking.time}"
+            f"⏰ <b>Время:</b> {booking.time}\n\n"
+            f"🔓 Стол {booking.table} на {booking.time} теперь доступен для бронирования!"
         )
 
         return {"ok": True, "message": "Booking cancelled"}
