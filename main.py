@@ -14,21 +14,31 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 # 🔥 ПРОВЕРКА: если переменная не установлена
 if not DATABASE_URL:
-    raise ValueError(
-        "DATABASE_URL environment variable is not set. "
-        "Please add it in Railway Variables."
-    )
+    print("❌ ERROR: DATABASE_URL environment variable is not set!")
+    print("📌 Please add it in Railway: Variables → DATABASE_URL")
+    print("📌 Or use: postgresql://postgres:feCstjzIcdnSWsORvYoWsKCkvaUYQNaK@postgres.railway.internal:5432/railway")
+    
+    # 🔥 ВРЕМЕННО ДЛЯ ТЕСТА - раскомментируйте следующую строку
+    # DATABASE_URL = "postgresql://postgres:feCstjzIcdnSWsORvYoWsKCkvaUYQNaK@postgres.railway.internal:5432/railway"
+    
+    # Если не хотите хардкодить, просто выходим с ошибкой
+    raise ValueError("DATABASE_URL is required. Please set it in Railway Variables.")
 
 # 🔥 фикс Railway postgres://
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://")
 
-print(f"✅ Connecting to database: {DATABASE_URL.replace('postgresql://postgres:', 'postgresql://***:***@')}")  # Лог без пароля
+print(f"✅ Database URL configured (host: {DATABASE_URL.split('@')[1].split('/')[0]})")
 
-engine = create_engine(
-    DATABASE_URL,
-    pool_pre_ping=True
-)
+try:
+    engine = create_engine(
+        DATABASE_URL,
+        pool_pre_ping=True
+    )
+    print("✅ Database engine created")
+except Exception as e:
+    print(f"❌ Failed to create database engine: {e}")
+    raise
 
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
@@ -55,6 +65,7 @@ try:
     print("✅ Database tables created/verified")
 except Exception as e:
     print(f"❌ Error creating tables: {e}")
+    print("📌 Make sure the database exists and credentials are correct")
     raise
 
 # =====================
@@ -77,9 +88,8 @@ app.add_middleware(
 TELEGRAM_BOT_TOKEN = os.getenv("8769949339:AAFwvdkPFgj7l4BQwGfmcljauMWXRx7qves")
 ADMIN_CHAT_ID = os.getenv("7545540622")
 
-# Проверка Telegram переменных
 if not TELEGRAM_BOT_TOKEN or not ADMIN_CHAT_ID:
-    print("⚠️ WARNING: TELEGRAM_BOT_TOKEN or ADMIN_CHAT_ID not set. Telegram notifications disabled.")
+    print("⚠️ WARNING: Telegram not configured. Add TELEGRAM_BOT_TOKEN and ADMIN_CHAT_ID to Variables")
 
 # =====================
 # LIMITS
@@ -101,11 +111,11 @@ TABLE_LIMITS = {
 
 def send_telegram(text):
     if not TELEGRAM_BOT_TOKEN or not ADMIN_CHAT_ID:
-        print("⚠️ Telegram not configured, skipping notification")
+        print("⚠️ Telegram not configured")
         return
     
     try:
-        requests.post(
+        response = requests.post(
             f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
             json={
                 "chat_id": ADMIN_CHAT_ID,
@@ -114,7 +124,10 @@ def send_telegram(text):
             },
             timeout=5
         )
-        print("✅ Telegram notification sent")
+        if response.status_code == 200:
+            print("✅ Telegram sent")
+        else:
+            print(f"❌ Telegram error: {response.status_code}")
     except Exception as e:
         print("❌ TG ERROR:", e)
 
@@ -126,7 +139,7 @@ def normalize_date(date_str):
     try:
         return datetime.strptime(date_str, "%Y-%m-%d").strftime("%Y-%m-%d")
     except:
-        raise HTTPException(status_code=400, detail="Invalid date")
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
 
 # =====================
 # ROOT
@@ -136,8 +149,23 @@ def normalize_date(date_str):
 def root():
     return {
         "status": "ok",
-        "database": "connected" if DATABASE_URL else "not configured"
+        "database": "connected",
+        "database_url_configured": bool(DATABASE_URL)
     }
+
+# =====================
+# HEALTH CHECK
+# =====================
+
+@app.get("/health")
+def health():
+    try:
+        db = SessionLocal()
+        db.execute("SELECT 1")
+        db.close()
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        return {"status": "unhealthy", "database": "disconnected", "error": str(e)}
 
 # =====================
 # БРОНИ ПО ДАТЕ (АДМИНКА)
@@ -220,7 +248,7 @@ def create_booking(data: dict):
 
         # лимит гостей
         if guests > TABLE_LIMITS[table]:
-            raise HTTPException(status_code=400, detail="Too many guests for this table")
+            raise HTTPException(status_code=400, detail=f"Too many guests. Max for table {table} is {TABLE_LIMITS[table]}")
 
         # проверка занятости (только активные)
         exists = db.query(Booking).filter(
@@ -265,7 +293,7 @@ def create_booking(data: dict):
         raise
     except Exception as e:
         db.rollback()
-        print(f"❌ Error: {e}")
+        print(f"❌ Error creating booking: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
@@ -280,11 +308,12 @@ def done(id: int):
 
     try:
         booking = db.query(Booking).filter(
-            Booking.id == id
+            Booking.id == id,
+            Booking.status == "active"
         ).first()
 
         if not booking:
-            raise HTTPException(status_code=404, detail="Booking not found")
+            raise HTTPException(status_code=404, detail="Active booking not found")
 
         booking.status = "completed"
         db.commit()
