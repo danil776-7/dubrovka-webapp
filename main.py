@@ -28,7 +28,7 @@ SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
 # =====================
-# MODEL (без chat_id)
+# MODEL
 # =====================
 
 class Booking(Base):
@@ -42,9 +42,22 @@ class Booking(Base):
     date = Column(String)
     time = Column(String)
     status = Column(String, default="active")
+    chat_id = Column(String, nullable=True)
 
-# Создаем таблицы
+# Создаем таблицы с добавлением колонки chat_id
 try:
+    # Проверяем и добавляем колонку chat_id если её нет
+    with engine.connect() as conn:
+        try:
+            conn.execute("ALTER TABLE bookings ADD COLUMN chat_id VARCHAR")
+            conn.commit()
+            print("✅ Добавлена колонка chat_id")
+        except Exception as e:
+            if "already exists" in str(e):
+                print("✅ Колонка chat_id уже существует")
+            else:
+                print(f"⚠️ {e}")
+    
     Base.metadata.create_all(bind=engine)
     print("✅ Database tables created successfully!")
 except Exception as e:
@@ -117,10 +130,36 @@ reminder_timers = {}
 completion_timers = {}
 
 # =====================
-# ФУНКЦИИ
+# ФУНКЦИИ ОТПРАВКИ СООБЩЕНИЙ
 # =====================
 
+def send_telegram_to_user(chat_id, text):
+    """Отправка сообщения пользователю (гостю)"""
+    if not chat_id:
+        print("⚠️ Нет chat_id, сообщение не отправлено")
+        return False
+    try:
+        response = requests.post(
+            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
+            json={
+                "chat_id": chat_id,
+                "text": text,
+                "parse_mode": "HTML"
+            },
+            timeout=10
+        )
+        if response.status_code == 200:
+            print(f"✅ Сообщение отправлено гостю {chat_id}")
+            return True
+        else:
+            print(f"❌ Ошибка отправки гостю: {response.status_code}")
+            return False
+    except Exception as e:
+        print(f"❌ Ошибка: {e}")
+        return False
+
 def send_telegram_to_admin(text):
+    """Отправка уведомления админу"""
     try:
         response = requests.post(
             f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
@@ -136,38 +175,79 @@ def send_telegram_to_admin(text):
     except Exception as e:
         print("❌ Ошибка:", e)
 
-def send_reminder_to_admin(booking):
-    """Отправка напоминания админу (вместо гостя)"""
+def send_booking_confirmation(booking):
+    """Подтверждение брони гостю"""
+    message = (
+        f"✅ <b>БРОНЬ ПОДТВЕРЖДЕНА!</b>\n\n"
+        f"🆔 <b>ID брони:</b> {booking.id}\n"
+        f"👤 <b>Имя:</b> {booking.name}\n"
+        f"🪑 <b>Стол:</b> {booking.table}\n"
+        f"👥 <b>Гостей:</b> {booking.guests}\n"
+        f"📅 <b>Дата:</b> {booking.date}\n"
+        f"⏰ <b>Время:</b> {booking.time}\n\n"
+        f"🔔 <b>Напоминание:</b> Мы пришлем уведомление за 30 минут до брони.\n\n"
+        f"📍 <b>Адрес:</b> Ермакова 11, Новокузнецк\n"
+        f"📞 <b>Телефон:</b> +7‒913‒432‒01‒01\n\n"
+        f"❤️ Ждем вас в Dubrovka!"
+    )
+    if booking.chat_id:
+        send_telegram_to_user(booking.chat_id, message)
+    else:
+        print(f"⚠️ У гостя {booking.name} нет chat_id, подтверждение не отправлено")
+
+def send_reminder_to_guest(booking):
+    """Напоминание гостю за 30 минут"""
     message = (
         f"🔔 <b>НАПОМИНАНИЕ О БРОНИ!</b>\n\n"
         f"🪑 <b>Стол:</b> {booking.table}\n"
         f"📅 <b>Сегодня:</b> {booking.date}\n"
         f"⏰ <b>Через 30 минут:</b> {booking.time}\n\n"
-        f"👤 <b>Гость:</b> {booking.name}\n"
-        f"📞 <b>Телефон:</b> {booking.phone}\n"
+        f"👤 <b>На имя:</b> {booking.name}\n"
         f"👥 <b>Гостей:</b> {booking.guests}\n\n"
-        f"📍 <b>Адрес:</b> Ермакова 11\n"
-        f"📞 <b>Телефон:</b> +7‒913‒432‒01‒01"
+        f"📍 <b>Ждем вас по адресу:</b> Ермакова 11\n"
+        f"📞 <b>По вопросам:</b> +7‒913‒432‒01‒01\n\n"
+        f"🌟 Пожалуйста, не опаздывайте!"
     )
-    send_telegram_to_admin(message)
-    print(f"⏰ Напоминание отправлено админу для брони {booking.id}")
+    if booking.chat_id:
+        send_telegram_to_user(booking.chat_id, message)
+        print(f"⏰ Напоминание отправлено гостю для брони {booking.id}")
+    else:
+        # Если нет chat_id, отправляем админу напоминание что нужно позвонить
+        send_telegram_to_admin(
+            f"🔔 <b>НАПОМИНАНИЕ (позвонить гостю)</b>\n\n"
+            f"🪑 Стол {booking.table}\n"
+            f"👤 {booking.name}\n"
+            f"📞 {booking.phone}\n"
+            f"📅 {booking.date} {booking.time}"
+        )
 
-def send_thank_you_to_admin(booking):
-    """Отправка благодарности админу (вместо гостя)"""
+def send_thank_you_to_guest(booking):
+    """Благодарность гостю после посещения"""
     message = (
-        f"✅ <b>ГОСТЬ ПОСЕТИЛ</b>\n\n"
-        f"🆔 ID: {booking.id}\n"
-        f"👤 {booking.name}\n"
-        f"📞 {booking.phone}\n"
-        f"🪑 Стол {booking.table}\n"
-        f"👥 {booking.guests} чел.\n"
-        f"📅 {booking.date} {booking.time}\n\n"
-        f"🔗 <b>Ссылка на отзыв в 2ГИС:</b>\n"
-        f"{TWO_GIS_REVIEW_URL}"
+        f"🌟 <b>Спасибо, что посетили Dubrovka Lounge & Bar!</b> 🌟\n\n"
+        f"👤 <b>{booking.name}</b>, мы благодарим вас за визит!\n\n"
+        f"🍷 Надеемся, вам понравилась атмосфера, обслуживание и кухня.\n\n"
+        f"📝 <b>Пожалуйста, оставьте отзыв о нашем заведении в 2ГИС</b>\n"
+        f"Ваше мнение очень важно для нас!\n\n"
+        f"🔗 <a href='{TWO_GIS_REVIEW_URL}'>Написать отзыв в 2ГИС</a>\n\n"
+        f"❤️ Ждем вас снова в Dubrovka!"
     )
-    send_telegram_to_admin(message)
+    if booking.chat_id:
+        send_telegram_to_user(booking.chat_id, message)
+        print(f"📱 Благодарность отправлена гостю {booking.name}")
+    else:
+        # Если нет chat_id, отправляем админу ссылку для отзыва
+        send_telegram_to_admin(
+            f"✅ <b>ГОСТЬ ПОСЕТИЛ (нет чата)</b>\n\n"
+            f"👤 {booking.name}\n"
+            f"📞 {booking.phone}\n"
+            f"🪑 Стол {booking.table}\n\n"
+            f"🔗 <b>Ссылка на отзыв для гостя:</b>\n"
+            f"{TWO_GIS_REVIEW_URL}"
+        )
 
 def schedule_reminder(booking):
+    """Запланировать напоминание за 30 минут"""
     try:
         booking_datetime = datetime.strptime(f"{booking.date} {booking.time}", "%Y-%m-%d %H:%M")
         reminder_time = booking_datetime - timedelta(minutes=30)
@@ -175,15 +255,18 @@ def schedule_reminder(booking):
         
         if reminder_time > now:
             delay = (reminder_time - now).total_seconds()
-            timer = threading.Timer(delay, send_reminder_to_admin, args=[booking])
+            timer = threading.Timer(delay, send_reminder_to_guest, args=[booking])
             timer.daemon = True
             timer.start()
             reminder_timers[booking.id] = timer
             print(f"⏰ Напоминание запланировано на {reminder_time}")
+        else:
+            print(f"⚠️ Время напоминания уже прошло для брони {booking.id}")
     except Exception as e:
         print(f"❌ Ошибка планирования: {e}")
 
 def schedule_auto_complete(booking):
+    """Запланировать автоматическое завершение через 4 часа"""
     try:
         timer = threading.Timer(4 * 3600, auto_complete_booking, args=[booking.id])
         timer.daemon = True
@@ -194,6 +277,7 @@ def schedule_auto_complete(booking):
         print(f"❌ Ошибка: {e}")
 
 def auto_complete_booking(booking_id):
+    """Автоматическое завершение брони через 4 часа"""
     try:
         time.sleep(4 * 3600)
         db = SessionLocal()
@@ -211,9 +295,13 @@ def auto_complete_booking(booking_id):
                 f"🤖 <b>АВТО-ЗАВЕРШЕНИЕ</b>\n\n"
                 f"🆔 ID: {booking_id}\n"
                 f"👤 {booking.name}\n"
+                f"📞 {booking.phone}\n"
                 f"🪑 Стол {booking.table}\n"
                 f"📅 {booking.date} {booking.time}"
             )
+            
+            # Отправляем благодарность гостю
+            send_thank_you_to_guest(booking)
             
         db.close()
     except Exception as e:
@@ -309,6 +397,7 @@ def create_booking(data: dict):
         table = str(data["table"])
         time = data["time"]
         guests = int(data["guests"])
+        chat_id = str(data.get("chat_id", ""))
 
         if table not in TABLE_LIMITS:
             raise HTTPException(status_code=400, detail=f"Table {table} does not exist")
@@ -336,13 +425,17 @@ def create_booking(data: dict):
             table=table,
             date=date,
             time=time,
-            status="active"
+            status="active",
+            chat_id=chat_id if chat_id else None
         )
 
         db.add(booking)
         db.commit()
         db.refresh(booking)
 
+        # Отправляем подтверждение брони гостю
+        send_booking_confirmation(booking)
+        
         # Планируем напоминание за 30 минут
         schedule_reminder(booking)
         
@@ -351,15 +444,17 @@ def create_booking(data: dict):
 
         print(f"✅ Новая бронь: ID={booking.id}")
 
+        # Отправляем уведомление админу
         send_telegram_to_admin(
             f"🔥 <b>НОВАЯ БРОНЬ!</b>\n\n"
-            f"🆔 ID: {booking.id}\n"
-            f"👤 {data['name']}\n"
-            f"📞 {data['phone']}\n"
-            f"👥 {guests}\n"
-            f"🪑 Стол {table}\n"
-            f"📅 {date}\n"
-            f"⏰ {time}"
+            f"🆔 <b>ID:</b> {booking.id}\n"
+            f"👤 <b>Имя:</b> {data['name']}\n"
+            f"📞 <b>Телефон:</b> {data['phone']}\n"
+            f"👥 <b>Гостей:</b> {guests}\n"
+            f"🪑 <b>Стол:</b> {table}\n"
+            f"📅 <b>Дата:</b> {date}\n"
+            f"⏰ <b>Время:</b> {time}\n"
+            f"📱 <b>Telegram ID:</b> {chat_id if chat_id else 'нет'}"
         )
 
         return {"ok": True, "id": booking.id}
@@ -398,17 +493,20 @@ def done(id: int):
 
         print(f"✅ Бронь {id} завершена")
 
+        # Отправляем уведомление админу
         send_telegram_to_admin(
             f"✅ <b>ГОСТЬ УШЕЛ</b>\n\n"
-            f"🆔 ID: {id}\n"
-            f"👤 {booking.name}\n"
-            f"📞 {booking.phone}\n"
-            f"🪑 Стол {booking.table}\n"
-            f"👥 {booking.guests} чел.\n"
-            f"📅 {booking.date} {booking.time}\n\n"
-            f"🔗 <b>Ссылка на отзыв для гостя:</b>\n"
-            f"{TWO_GIS_REVIEW_URL}"
+            f"🆔 <b>ID:</b> {id}\n"
+            f"👤 <b>Имя:</b> {booking.name}\n"
+            f"📞 <b>Телефон:</b> {booking.phone}\n"
+            f"🪑 <b>Стол:</b> {booking.table}\n"
+            f"👥 <b>Гостей:</b> {booking.guests}\n"
+            f"📅 <b>Дата:</b> {booking.date}\n"
+            f"⏰ <b>Время:</b> {booking.time}"
         )
+        
+        # 🔥 ОТПРАВЛЯЕМ БЛАГОДАРНОСТЬ ГОСТЮ
+        send_thank_you_to_guest(booking)
 
         return {"ok": True, "message": "Booking completed"}
 
@@ -449,6 +547,16 @@ def cancel(id: int):
             f"🪑 Стол {booking.table}\n"
             f"📅 {booking.date} {booking.time}"
         )
+        
+        # Уведомляем гостя об отмене
+        if booking.chat_id:
+            cancel_message = (
+                f"❌ <b>Бронь отменена</b>\n\n"
+                f"Уважаемый(ая) {booking.name},\n\n"
+                f"Ваша бронь в Dubrovka на {booking.date} {booking.time} (стол {booking.table}) была отменена администратором.\n\n"
+                f"Если у вас есть вопросы, звоните: 📞 +7‒913‒432‒01‒01"
+            )
+            send_telegram_to_user(booking.chat_id, cancel_message)
 
         return {"ok": True, "message": "Booking cancelled"}
 
