@@ -15,12 +15,11 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-  background: #0a0e1a;
+  background: #0a0a0f;
   color: #ffffff;
   min-height: 100vh;
 }
 
-/* Видео фон - хорошо видно */
 .video-background {
   position: fixed;
   top: 0;
@@ -29,10 +28,8 @@ body {
   height: 100%;
   object-fit: cover;
   z-index: -1;
-  opacity: 0.7;
+  opacity: 0.5;
 }
-
-/* Нет затемнения - видео видно полностью */
 
 .container {
   max-width: 500px;
@@ -56,7 +53,7 @@ body {
   margin-bottom: 12px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
   transition: transform 0.3s ease;
-  border: 2px solid #2c5f8a;
+  border: 2px solid #d4af37;
 }
 
 .logo-img:hover {
@@ -67,44 +64,46 @@ body {
   font-size: 26px;
   font-weight: 700;
   letter-spacing: 1px;
-  color: #ffffff;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #d4af37 0%, #f5e5a3 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   margin-bottom: 4px;
 }
 
 .logo-subtitle {
   font-size: 11px;
-  color: #5a9fd4;
+  color: #d4af37;
   letter-spacing: 2px;
   text-transform: uppercase;
   font-weight: 500;
 }
 
 .card {
-  background: rgba(10, 14, 26, 0.75);
+  background: rgba(10, 10, 15, 0.85);
   backdrop-filter: blur(12px);
   padding: 24px;
   border-radius: 24px;
-  border: 1px solid rgba(44, 95, 138, 0.4);
+  border: 1px solid rgba(212, 175, 55, 0.25);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   animation: fadeInUp 0.8s ease-out;
 }
 
 .working-hours {
-  background: rgba(44, 95, 138, 0.2);
+  background: rgba(212, 175, 55, 0.1);
   padding: 10px;
   border-radius: 16px;
   text-align: center;
   margin-bottom: 20px;
   font-size: 12px;
-  color: #7ab3d4;
+  color: #d4af37;
   font-weight: 500;
-  border: 1px solid rgba(44, 95, 138, 0.3);
+  border: 1px solid rgba(212, 175, 55, 0.2);
 }
 
 .working-hours span {
   font-weight: 600;
-  color: #9ac2e0;
+  color: #f5e5a3;
 }
 
 h2 {
@@ -125,28 +124,28 @@ h2 {
 
 .table {
   padding: 14px;
-  background: rgba(20, 28, 40, 0.85);
+  background: rgba(20, 20, 30, 0.9);
   border-radius: 16px;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid rgba(44, 95, 138, 0.3);
+  border: 1px solid rgba(212, 175, 55, 0.2);
   font-weight: 600;
   font-size: 15px;
   color: #e0e0e0;
 }
 
 .table:hover {
-  background: rgba(44, 95, 138, 0.4);
+  background: rgba(212, 175, 55, 0.15);
   transform: translateY(-1px);
-  border-color: rgba(44, 95, 138, 0.8);
+  border-color: rgba(212, 175, 55, 0.5);
 }
 
 .table.selected {
-  background: linear-gradient(135deg, #2c5f8a 0%, #1e405e 100%);
-  color: #ffffff;
-  border-color: #5a9fd4;
-  box-shadow: 0 4px 15px rgba(44, 95, 138, 0.4);
+  background: linear-gradient(135deg, #d4af37 0%, #b88d2a 100%);
+  color: #0a0a0f;
+  border-color: #d4af37;
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
   font-weight: 700;
 }
 
@@ -165,19 +164,79 @@ h2 {
   top: -6px;
   right: -6px;
   font-size: 12px;
-  color: #ffd966;
 }
 
 .desc {
-  background: rgba(20, 28, 40, 0.85);
+  background: rgba(20, 20, 30, 0.9);
   padding: 12px;
   border-radius: 16px;
   margin: 15px 0;
   white-space: pre-line;
   font-size: 13px;
-  border-left: 3px solid #2c5f8a;
-  color: #cbd5e6;
+  border-left: 3px solid #d4af37;
+  color: #c0c0c0;
   line-height: 1.4;
+}
+
+.time-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 15px 0;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 5px;
+}
+
+.time-slot {
+  padding: 10px 12px;
+  background: rgba(30, 30, 40, 0.9);
+  border-radius: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 70px;
+}
+
+.time-slot:hover {
+  background: rgba(212, 175, 55, 0.2);
+  transform: scale(1.02);
+}
+
+.time-slot.selected {
+  background: #d4af37;
+  color: #0a0a0f;
+  border-color: #d4af37;
+}
+
+.time-slot.busy {
+  background: rgba(220, 53, 69, 0.2);
+  border-color: rgba(220, 53, 69, 0.3);
+  color: #ff8a7a;
+  cursor: not-allowed;
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+
+.time-slot.warning {
+  background: rgba(255, 193, 7, 0.2);
+  border-color: rgba(255, 193, 7, 0.3);
+  color: #ffc107;
+}
+
+.warning-message {
+  background: rgba(255, 193, 7, 0.15);
+  padding: 12px;
+  border-radius: 12px;
+  margin: 10px 0;
+  display: none;
+  color: #ffc107;
+  text-align: center;
+  font-size: 12px;
+  border-left: 3px solid #ffc107;
 }
 
 input, select {
@@ -185,8 +244,8 @@ input, select {
   padding: 14px 15px;
   margin: 8px 0;
   border-radius: 16px;
-  border: 1px solid rgba(44, 95, 138, 0.4);
-  background: rgba(20, 28, 40, 0.85);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: rgba(20, 20, 30, 0.9);
   color: #ffffff;
   font-size: 15px;
   transition: all 0.2s ease;
@@ -195,115 +254,54 @@ input, select {
 
 input:focus, select:focus {
   outline: none;
-  border-color: #5a9fd4;
-  box-shadow: 0 0 0 2px rgba(90, 159, 212, 0.2);
-  background: rgba(20, 28, 40, 1);
+  border-color: #d4af37;
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
 }
 
 input::placeholder {
-  color: #6b7a8a;
-}
-
-input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.7);
+  color: #6b6b7a;
 }
 
 button {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #2c5f8a 0%, #1e405e 100%);
+  background: linear-gradient(135deg, #d4af37 0%, #b88d2a 100%);
   border: none;
   border-radius: 16px;
   cursor: pointer;
   font-weight: 700;
   font-size: 15px;
   margin-top: 15px;
-  color: #ffffff;
+  color: #0a0a0f;
   transition: all 0.2s ease;
   letter-spacing: 0.5px;
   font-family: inherit;
 }
 
 button:hover {
-  background: linear-gradient(135deg, #3a72a0 0%, #2c5f8a 100%);
+  background: linear-gradient(135deg, #e5c14a 0%, #c99f32 100%);
   transform: translateY(-1px);
-  box-shadow: 0 4px 15px rgba(44, 95, 138, 0.4);
-}
-
-button:active {
-  transform: translateY(0);
-}
-
-.suggestion-box {
-  background: rgba(20, 28, 40, 0.95);
-  padding: 15px;
-  border-radius: 16px;
-  margin-top: 15px;
-  display: none;
-  border: 1px solid rgba(44, 95, 138, 0.4);
-}
-
-.suggestion-box h4 {
-  margin: 0 0 10px 0;
-  color: #5a9fd4;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.suggestion-item {
-  padding: 12px;
-  margin: 8px 0;
-  background: rgba(30, 38, 50, 0.9);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-left: 2px solid #2c5f8a;
-}
-
-.suggestion-item:hover {
-  background: rgba(44, 95, 138, 0.3);
-  transform: translateX(3px);
-}
-
-.suggestion-item.selected {
-  background: #2c5f8a;
-  color: #ffffff;
-}
-
-.blocked-warning {
-  background: rgba(220, 53, 69, 0.2);
-  padding: 12px;
-  border-radius: 12px;
-  margin-top: 10px;
-  display: none;
-  color: #ff8a7a;
-  text-align: center;
-  font-size: 13px;
-  animation: shake 0.5s ease;
-  border: 1px solid rgba(220, 53, 69, 0.3);
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
 }
 
 .hookah-warning {
-  background: rgba(44, 95, 138, 0.2);
+  background: rgba(212, 175, 55, 0.1);
   padding: 12px;
   border-radius: 12px;
   margin-top: 10px;
   display: none;
-  color: #7ab3d4;
+  color: #d4af37;
   text-align: center;
   font-size: 12px;
-  border-left: 3px solid #2c5f8a;
+  border-left: 3px solid #d4af37;
 }
 
 .footer {
   margin-top: 25px;
   text-align: center;
   font-size: 11px;
-  color: #8a9aae;
-  border-top: 1px solid rgba(44, 95, 138, 0.3);
+  color: #6b6b7a;
+  border-top: 1px solid rgba(212, 175, 55, 0.2);
   padding-top: 18px;
 }
 
@@ -315,18 +313,18 @@ button:active {
   display: inline-block;
   margin-top: 8px;
   padding: 6px 18px;
-  background: rgba(20, 28, 40, 0.85);
+  background: rgba(20, 20, 30, 0.9);
   border-radius: 20px;
   text-decoration: none;
-  color: #5a9fd4;
+  color: #d4af37;
   font-size: 11px;
   transition: all 0.2s ease;
-  border: 1px solid rgba(44, 95, 138, 0.4);
+  border: 1px solid rgba(212, 175, 55, 0.3);
 }
 
 .map-btn:hover {
-  background: #2c5f8a;
-  color: #ffffff;
+  background: #d4af37;
+  color: #0a0a0f;
 }
 
 @keyframes fadeInDown {
@@ -339,20 +337,10 @@ button:active {
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
-}
-
-.shake-animation {
-  animation: shake 0.4s ease-in-out;
-}
-
 .loading {
   text-align: center;
   padding: 20px;
-  color: #5a9fd4;
+  color: #d4af37;
 }
 
 @media (max-width: 480px) {
@@ -361,6 +349,7 @@ button:active {
   .logo-img { width: 70px; height: 70px; }
   .logo-text { font-size: 22px; }
   .table { padding: 12px; font-size: 13px; }
+  .time-slot { padding: 8px 10px; font-size: 12px; min-width: 60px; }
   input, select, button { font-size: 14px; padding: 12px; }
 }
 </style>
@@ -380,7 +369,7 @@ button:active {
 
   <div class="card">
     <div class="working-hours">
-      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 01:00 | ПТ-СБ: 12:00 - 02:00</span>
+      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 23:00 | ПТ-СБ: 12:00 - 00:00</span>
     </div>
     
     <h2>🍷 БРОНИРОВАНИЕ СТОЛОВ</h2>
@@ -398,9 +387,11 @@ button:active {
     <div id="tableInfo" class="desc">✨ ВЫБЕРИТЕ СТОЛ ДЛЯ БРОНИРОВАНИЯ</div>
 
     <input id="date" type="date">
-    <select id="time">
-      <option value="">⏰ ВЫБЕРИТЕ ВРЕМЯ</option>
-    </select>
+    
+    <div id="timeSlotsContainer" class="time-slots"></div>
+    
+    <div id="warningMessage" class="warning-message"></div>
+    
     <input id="guests" type="number" placeholder="👥 КОЛИЧЕСТВО ГОСТЕЙ" min="1" max="20" step="1" autocomplete="off">
     <input id="name" placeholder="👤 ВАШЕ ИМЯ" autocomplete="name">
     <input id="phone" placeholder="📞 ТЕЛЕФОН (+7XXXXXXXXXX)" maxlength="12" autocomplete="tel">
@@ -410,12 +401,6 @@ button:active {
     </div>
 
     <button id="bookBtn">ЗАБРОНИРОВАТЬ</button>
-
-    <div id="blockedWarning" class="blocked-warning"></div>
-    <div id="suggestionBox" class="suggestion-box">
-      <h4>💡 АЛЬТЕРНАТИВНЫЕ ВАРИАНТЫ</h4>
-      <div id="suggestions"></div>
-    </div>
 
     <div class="footer">
       <p>📍 Ермакова 11, Новокузнецк</p>
@@ -428,12 +413,12 @@ button:active {
 <script>
 // Описания столов
 const tableDescriptions = {
-  "1": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 7 ГОСТЕЙ",
-  "2": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ",
-  "3": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ",
-  "4": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ",
-  "5": "✨ ОТКРЫТАЯ ЗОНА БЕЗ ШТОРОК\n👥 ДО 5 ГОСТЕЙ",
-  "6": "🪑 КОМПАКТНЫЙ СТОЛ\n👥 ДО 3 ГОСТЕЙ",
+  "1": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 7 ГОСТЕЙ\n⏱ МИНИМУМ 1.5 ЧАСА",
+  "2": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ\n⏱ МИНИМУМ 1.5 ЧАСА",
+  "3": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ\n⏱ МИНИМУМ 1.5 ЧАСА",
+  "4": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ\n⏱ МИНИМУМ 1.5 ЧАСА",
+  "5": "✨ ОТКРЫТАЯ ЗОНА БЕЗ ШТОРОК\n👥 ДО 5 ГОСТЕЙ\n⏱ МИНИМУМ 1.5 ЧАСА",
+  "6": "🪑 КОМПАКТНЫЙ СТОЛ\n👥 ДО 3 ГОСТЕЙ\n⏱ МИНИМУМ 1.5 ЧАСА",
   "VIP": "⭐ VIP КОМНАТА (ДЕПОЗИТНАЯ)\n👑 ОБСЛУЖИВАНИЕ ЧЕРЕЗ АДМИНИСТРАТОРА"
 };
 
@@ -450,17 +435,17 @@ const phoneInput = document.getElementById("phone");
 const nameInput = document.getElementById("name");
 const guestsInput = document.getElementById("guests");
 const dateInput = document.getElementById("date");
-const timeSelect = document.getElementById("time");
+const timeSlotsContainer = document.getElementById("timeSlotsContainer");
+const warningMessage = document.getElementById("warningMessage");
 const tableInfo = document.getElementById("tableInfo");
 const bookBtn = document.getElementById("bookBtn");
-const suggestionBox = document.getElementById("suggestionBox");
-const suggestionsDiv = document.getElementById("suggestions");
-const blockedWarning = document.getElementById("blockedWarning");
 const hookahWarning = document.getElementById("hookahWarning");
 
 let selectedTable = null;
-let suggestedOption = null;
+let selectedTime = null;
 let userChatId = null;
+let busyTimes = [];
+let nextBookingTime = null;
 
 // Получаем chat_id из Telegram WebApp
 if(tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
@@ -490,33 +475,152 @@ function timeToMinutes(timeStr) {
   return hours * 60 + minutes;
 }
 
-function checkTimeInterval(existingTimes, newTime, minIntervalMinutes = 180) {
+function minutesToTime(minutes) {
+  let hours = Math.floor(minutes / 60);
+  let mins = minutes % 60;
+  return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+}
+
+// Проверка интервала между бронями (1.5 часа = 90 минут)
+function checkTimeInterval(existingTimes, newTime, minIntervalMinutes = 90) {
   let newTimeMinutes = timeToMinutes(newTime);
+  let nextTime = null;
+  
   for (let existingTime of existingTimes) {
     let existingMinutes = timeToMinutes(existingTime);
     let diff = Math.abs(newTimeMinutes - existingMinutes);
+    
     if (diff < minIntervalMinutes) {
-      return { allowed: false, conflictTime: existingTime };
+      return { 
+        allowed: false, 
+        conflictTime: existingTime,
+        needToLeaveBy: minutesToTime(existingMinutes - minIntervalMinutes)
+      };
+    }
+    
+    // Находим следующую бронь после выбранного времени
+    if (existingMinutes > newTimeMinutes) {
+      if (!nextTime || existingMinutes < timeToMinutes(nextTime)) {
+        nextTime = existingTime;
+      }
     }
   }
-  return { allowed: true };
+  
+  return { allowed: true, nextBookingTime: nextTime };
 }
 
-function generateTimesWithInterval(date, busyTimes, workingHours) {
+function generateTimes(date, busyTimes) {
   let times = [];
+  let workingHours = getWorkingHours(date);
   let startHour = workingHours.start;
   let endHour = workingHours.end;
-  let sortedBusy = [...busyTimes].sort();
   
   for(let h = startHour; h < endHour; h++) {
     let time1 = `${String(h).padStart(2,'0')}:00`;
     let time2 = `${String(h).padStart(2,'0')}:30`;
-    let check1 = checkTimeInterval(sortedBusy, time1, 180);
-    let check2 = checkTimeInterval(sortedBusy, time2, 180);
-    if(check1.allowed) times.push(time1);
-    if(check2.allowed) times.push(time2);
+    times.push(time1);
+    times.push(time2);
   }
   return times;
+}
+
+function renderTimeSlots(allTimes, busyTimes, selectedTable, date) {
+  if (!allTimes.length) {
+    timeSlotsContainer.innerHTML = '<div style="text-align:center;padding:20px;color:#888;">Нет доступных времен</div>';
+    return;
+  }
+  
+  let now = new Date();
+  let html = '';
+  
+  allTimes.forEach(time => {
+    let [h,m] = time.split(":");
+    let slot = new Date(date);
+    slot.setHours(h, m);
+    
+    let isPast = slot < now;
+    let isBusy = busyTimes.includes(time);
+    
+    // Проверяем интервал с существующими бронями
+    let intervalCheck = checkTimeInterval(busyTimes, time, 90);
+    let isTooClose = !intervalCheck.allowed;
+    let needToLeaveBy = intervalCheck.needToLeaveBy;
+    let nextBooking = intervalCheck.nextBookingTime;
+    
+    let statusClass = '';
+    let statusText = '';
+    let onclick = '';
+    
+    if (isPast) {
+      statusClass = 'busy';
+      statusText = ' (прошло)';
+    } else if (isBusy) {
+      statusClass = 'busy';
+      statusText = ' (занято)';
+    } else if (isTooClose) {
+      statusClass = 'warning';
+      statusText = `⚠️ (надо уйти до ${needToLeaveBy})`;
+      onclick = `selectTimeSlot('${time}', '${needToLeaveBy}')`;
+    } else if (nextBooking) {
+      let leaveTime = minutesToTime(timeToMinutes(nextBooking) - 90);
+      statusClass = 'warning';
+      statusText = `⚠️ (надо уйти до ${leaveTime})`;
+      onclick = `selectTimeSlot('${time}', '${leaveTime}')`;
+    } else {
+      statusClass = '';
+      statusText = '';
+      onclick = `selectTimeSlot('${time}', null)`;
+    }
+    
+    html += `
+      <div class="time-slot ${statusClass}" onclick="${onclick}">
+        ${time}${statusText}
+      </div>
+    `;
+  });
+  
+  timeSlotsContainer.innerHTML = html;
+}
+
+window.selectTimeSlot = (time, needToLeaveBy) => {
+  selectedTime = time;
+  
+  // Убираем выделение со всех слотов
+  document.querySelectorAll('.time-slot').forEach(slot => {
+    slot.classList.remove('selected');
+  });
+  
+  // Выделяем выбранный слот
+  const slots = document.querySelectorAll('.time-slot');
+  for (let slot of slots) {
+    if (slot.innerText.includes(time)) {
+      slot.classList.add('selected');
+      break;
+    }
+  }
+  
+  // Показываем предупреждение если нужно
+  if (needToLeaveBy) {
+    warningMessage.innerHTML = `⚠️ <b>Важное предупреждение!</b><br>Следующая бронь в ${needToLeaveBy}. Пожалуйста, освободите стол до этого времени. Минимальное время посещения: 1.5 часа.`;
+    warningMessage.style.display = "block";
+  } else {
+    warningMessage.style.display = "none";
+  }
+};
+
+async function loadBusyTimes() {
+  if(!dateInput.value || !selectedTable || selectedTable === "VIP") return;
+  
+  try {
+    let res = await fetch(`${API}/busy_times?date=${dateInput.value}&table=${selectedTable}`);
+    busyTimes = await res.json();
+    busyTimes = Array.isArray(busyTimes) ? busyTimes : [];
+    
+    let allTimes = generateTimes(dateInput.value, busyTimes);
+    renderTimeSlots(allTimes, busyTimes, selectedTable, dateInput.value);
+  } catch(e) {
+    console.error(e);
+  }
 }
 
 function shakeElement(element) {
@@ -527,9 +631,27 @@ function shakeElement(element) {
 function showError(message, element = null) {
   if (element) shakeElement(element);
   else shakeElement(bookBtn);
-  blockedWarning.innerHTML = `❌ ${message}`;
-  blockedWarning.style.display = "block";
-  setTimeout(() => blockedWarning.style.display = "none", 5000);
+  
+  const errorDiv = document.createElement('div');
+  errorDiv.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 20px;
+    z-index: 10000;
+    font-size: 13px;
+    font-weight: 500;
+    animation: fadeInDown 0.3s ease-out;
+    max-width: 90%;
+    text-align: center;
+  `;
+  errorDiv.innerHTML = `❌ ${message}`;
+  document.body.appendChild(errorDiv);
+  setTimeout(() => errorDiv.remove(), 3500);
 }
 
 function showSuccess(message) {
@@ -539,8 +661,8 @@ function showSuccess(message) {
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: #2c5f8a;
-    color: #ffffff;
+    background: #d4af37;
+    color: #0a0a0f;
     padding: 12px 20px;
     border-radius: 20px;
     z-index: 10000;
@@ -554,48 +676,6 @@ function showSuccess(message) {
   successDiv.innerHTML = `✅ ${message}`;
   document.body.appendChild(successDiv);
   setTimeout(() => successDiv.remove(), 3500);
-}
-
-async function loadAllBusyTimes(date) {
-  try {
-    let allTables = ["1", "2", "3", "4", "5", "6"];
-    let busyData = {};
-    for (let table of allTables) {
-      let res = await fetch(`${API}/busy_times?date=${date}&table=${table}`);
-      let busy = await res.json();
-      busyData[table] = Array.isArray(busy) ? busy : [];
-    }
-    return busyData;
-  } catch(e) {
-    console.error(e);
-    return {};
-  }
-}
-
-async function loadTimes() {
-  if(!dateInput.value || !selectedTable || selectedTable === "VIP") return;
-  try {
-    let allBusy = await loadAllBusyTimes(dateInput.value);
-    let busyForTable = allBusy[selectedTable] || [];
-    let workingHours = getWorkingHours(dateInput.value);
-    let availableTimes = generateTimesWithInterval(dateInput.value, busyForTable, workingHours);
-    let now = new Date();
-    timeSelect.innerHTML = '<option value="">⏰ ВЫБЕРИТЕ ВРЕМЯ</option>';
-    availableTimes.forEach(time => {
-      let [h,m] = time.split(":");
-      let slot = new Date(dateInput.value);
-      slot.setHours(h, m);
-      if(slot >= now) {
-        let option = document.createElement("option");
-        option.value = time;
-        option.innerText = time;
-        timeSelect.appendChild(option);
-      }
-    });
-    if(availableTimes.length === 0) {
-      timeSelect.innerHTML = '<option value="">❌ НЕТ СВОБОДНЫХ ВРЕМЕН</option>';
-    }
-  } catch(e) { console.error(e); }
 }
 
 guestsInput.addEventListener("input", () => {
@@ -626,17 +706,17 @@ document.querySelectorAll(".table").forEach(el => {
     let currentGuests = parseInt(guestsInput.value) || 0;
     if(currentGuests > maxGuests) {
       guestsInput.value = maxGuests;
-      showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ ${maxGuests} ГОСТЕЙ`, guestsInput);
     }
     if(currentGuests >= 5) { hookahWarning.style.display = "block"; }
     else { hookahWarning.style.display = "none"; }
-    if(selectedTable !== "VIP") { await loadTimes(); }
-    else {
-      timeSelect.innerHTML = '<option value="">⏰ VIP ПО ТЕЛЕФОНУ</option>';
+    if(selectedTable !== "VIP") { 
+      await loadBusyTimes();
+      selectedTime = null;
+      warningMessage.style.display = "none";
+    } else {
+      timeSlotsContainer.innerHTML = '<div style="text-align:center;padding:20px;">⭐ VIP по телефону +7‒913‒432‒01‒01</div>';
       hookahWarning.style.display = "none";
     }
-    suggestionBox.style.display = "none";
-    blockedWarning.style.display = "none";
   };
 });
 
@@ -644,9 +724,11 @@ dateInput.min = new Date().toISOString().split("T")[0];
 dateInput.value = new Date().toISOString().split("T")[0];
 
 dateInput.addEventListener("change", () => {
-  if(selectedTable && selectedTable !== "VIP") loadTimes();
-  suggestionBox.style.display = "none";
-  blockedWarning.style.display = "none";
+  if(selectedTable && selectedTable !== "VIP") {
+    loadBusyTimes();
+    selectedTime = null;
+    warningMessage.style.display = "none";
+  }
 });
 
 phoneInput.addEventListener("input", () => {
@@ -660,12 +742,11 @@ bookBtn.onclick = async () => {
   if(!selectedTable) { showError("ВЫБЕРИТЕ СТОЛ"); return; }
   if(selectedTable === "VIP") { showError("VIP бронируется через администратора\n📞 +7‒913‒432‒01‒01"); return; }
   if(!dateInput.value) { showError("ВЫБЕРИТЕ ДАТУ"); return; }
-  if(!timeSelect.value) { showError("ВЫБЕРИТЕ ВРЕМЯ"); return; }
+  if(!selectedTime) { showError("ВЫБЕРИТЕ ВРЕМЯ"); return; }
   
   let nameVal = nameInput.value.trim();
   let phoneVal = phoneInput.value;
   let guestsVal = parseInt(guestsInput.value || 0);
-  let selectedTime = timeSelect.value;
   let workingHours = getWorkingHours(dateInput.value);
   let maxGuests = TABLE_CAPACITY[selectedTable];
   
@@ -692,13 +773,11 @@ bookBtn.onclick = async () => {
     return;
   }
   
-  let allBusy = await loadAllBusyTimes(dateInput.value);
-  let busyForTable = allBusy[selectedTable] || [];
-  let intervalCheck = checkTimeInterval(busyForTable, selectedTime, 180);
+  // Проверяем интервал с существующими бронями
+  let intervalCheck = checkTimeInterval(busyTimes, selectedTime, 90);
   
   if(!intervalCheck.allowed) {
-    showError(`⚠️ Слишком близко к брони на ${intervalCheck.conflictTime}\n📌 Между бронями минимум 3 часа`);
-    await loadTimes();
+    showError(`⚠️ Слишком близко к брони на ${intervalCheck.conflictTime}\n📌 Между бронями минимум 1.5 часа\n\n💡 Вам нужно освободить стол до ${intervalCheck.needToLeaveBy}`);
     return;
   }
   
@@ -722,7 +801,7 @@ bookBtn.onclick = async () => {
     
     if(result.error === "busy" || result.detail === "Time slot already booked") {
       showError("СТОЛ УЖЕ ЗАНЯТ В ЭТО ВРЕМЯ");
-      await loadTimes();
+      await loadBusyTimes();
       return;
     }
     
@@ -734,14 +813,16 @@ bookBtn.onclick = async () => {
       
       nameInput.value = "";
       guestsInput.value = "";
-      timeSelect.value = "";
+      selectedTime = null;
+      warningMessage.style.display = "none";
+      document.querySelectorAll(".time-slot").forEach(t => t.classList.remove("selected"));
       document.querySelectorAll(".table").forEach(t => t.classList.remove("selected"));
       selectedTable = null;
       tableInfo.innerText = "✨ ВЫБЕРИТЕ СТОЛ ДЛЯ БРОНИРОВАНИЯ";
       guestsInput.placeholder = "👥 КОЛИЧЕСТВО ГОСТЕЙ";
       guestsInput.max = 20;
       hookahWarning.style.display = "none";
-      await loadTimes();
+      await loadBusyTimes();
     } else {
       showError("ОШИБКА: " + (result.detail || "НЕИЗВЕСТНАЯ ОШИБКА"));
     }
