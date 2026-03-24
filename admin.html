@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Dubrovka PRO Admin</title>
 
 <style>
@@ -85,9 +84,10 @@ box-shadow:0 0 10px #ff2a2a55;
 .time{
 font-size:22px;
 color:#ff2a2a;
+font-weight:bold;
 }
 
-.name{font-size:18px;}
+.name{font-size:18px;font-weight:bold;margin:8px 0 4px;}
 .phone{color:#ccc;margin-bottom:8px;}
 
 .status{
@@ -98,8 +98,10 @@ display:inline-block;
 margin-bottom:6px;
 }
 
-.pending{background:#444;}
-.done{background:#0a7d3b;}
+.active{background:#2a7f2a;color:#fff;}
+.completed{background:#0a7d3b;color:#fff;}
+.cancelled{background:#666;color:#fff;}
+.pending{background:#444;color:#fff;}
 
 button{
 padding:8px 12px;
@@ -109,12 +111,19 @@ background:#ff2a2a;
 color:#fff;
 cursor:pointer;
 margin-top:10px;
+width:100%;
+font-size:14px;
+}
+
+button:hover{
+background:#ff5555;
 }
 
 .date-title{
 margin:20px 0 10px;
 font-size:18px;
 color:#ff2a2a;
+font-weight:bold;
 }
 </style>
 </head>
@@ -128,18 +137,18 @@ color:#ff2a2a;
 <div class="container">
 
 <div class="sidebar">
-<div class="logo">Dubrovka PRO</div>
+<div class="logo">🍷 Dubrovka PRO</div>
 
 <div class="menu">
-<div class="active" onclick="showToday(this)">Сегодня</div>
-<div onclick="showCalendar(this)">Календарь</div>
+<div class="active" onclick="showToday(this)">📅 Сегодня</div>
+<div onclick="showCalendar(this)">🗓 Календарь</div>
 </div>
 </div>
 
 <div class="content">
 
 <div class="header">
-<input type="text" id="search" placeholder="Поиск (имя / телефон)">
+<input type="text" id="search" placeholder="🔍 Поиск (имя / телефон)">
 <select id="tableFilter">
 <option value="">Все столы</option>
 <option>1</option><option>2</option><option>3</option>
@@ -147,6 +156,7 @@ color:#ff2a2a;
 <option>VIP</option>
 </select>
 <input type="date" id="dateInput" style="display:none;">
+<button onclick="refresh()" style="background:#333; width:auto;">🔄 Обновить</button>
 </div>
 
 <div id="list"></div>
@@ -172,23 +182,30 @@ return new Date(now-tz).toISOString().split("T")[0];
 
 /* загрузка */
 async function load(date){
+if(!date) return;
+try {
 let res = await fetch(`${API}/bookings_by_date?date=${date}`);
+if(!res.ok) throw new Error(`HTTP ${res.status}`);
 let data = await res.json();
-
+console.log("Loaded bookings:", data);
 handleNew(data);
 currentData = data;
 render();
+} catch(e) {
+console.error("Load error:", e);
+list.innerHTML = `<div style="color:red;">❌ Ошибка загрузки: ${e.message}</div>`;
+}
 }
 
 /* новые брони */
 function handleNew(data){
-
 let newIds = data.map(b=>b.id);
 let hasNew = false;
 
 newIds.forEach(id=>{
 if(!previousIds.has(id)){
 hasNew = true;
+console.log("🔔 New booking detected:", id);
 }
 });
 
@@ -201,30 +218,24 @@ previousIds = new Set(newIds);
 
 /* фильтр */
 function applyFilters(data){
-
 let search = document.getElementById("search").value.toLowerCase();
 let table = document.getElementById("tableFilter").value;
 
 return data.filter(b=>{
-
-let matchSearch =
+let matchSearch = 
 b.name.toLowerCase().includes(search) ||
 b.phone.includes(search);
-
 let matchTable = !table || b.table == table;
-
 return matchSearch && matchTable;
-
 });
 }
 
 /* render */
 function render(){
-
 let data = applyFilters(currentData);
 
 if(data.length === 0){
-list.innerHTML = "Нет броней";
+list.innerHTML = "<div style='text-align:center;padding:40px;color:#666;'>📭 Нет броней</div>";
 return;
 }
 
@@ -239,33 +250,30 @@ grouped[b.date].push(b);
 let html="";
 
 for(let date in grouped){
-
 html += `<div class="date-title">📅 ${date}</div><div class="grid">`;
 
 grouped[date].forEach(b=>{
-
 let isNew = !previousIds.has(b.id);
+let statusText = b.status === "active" ? "✅ Активна" : 
+                 b.status === "completed" ? "✔ Завершена" : 
+                 b.status === "cancelled" ? "❌ Отменена" : b.status;
 
 html += `
 <div class="card ${isNew ? 'new':''}">
-
-<div class="status ${b.status}">${b
-
-
-s}</div>
-
-<div class="time">${b.time}</div>
-
-<div class="name">${b.name}</div>
-
-<div class="phone">${b.phone}</div>
-
-<div>🪑 ${b.table} | 👥 ${b.guests}</div>
-
-<button onclick="done(${b.id})">Гость ушёл</button>
-
-</div>
+<div class="status ${b.status}">${statusText}</div>
+<div class="time">⏰ ${b.time}</div>
+<div class="name">👤 ${b.name}</div>
+<div class="phone">📞 ${b.phone}</div>
+<div>🪑 Стол ${b.table} | 👥 ${b.guests} чел.</div>
 `;
+
+if(b.status === "active"){
+html += `<button onclick="done(${b.id})">✅ Гость ушёл</button>`;
+} else if(b.status === "active"){
+html += `<button onclick="cancel(${b.id})" style="background:#666;">❌ Отменить</button>`;
+}
+
+html += `</div>`;
 });
 
 html += `</div>`;
@@ -276,21 +284,56 @@ list.innerHTML = html;
 
 /* done */
 async function done(id){
-await fetch(API+"/done/"+id,{method:"POST"});
-currentData = currentData.map(b=> b.id===id ? {...b,status:"done"} : b);
+if(!confirm("Отметить что гость ушел?")) return;
+try {
+let res = await fetch(`${API}/done/${id}`,{method:"POST"});
+if(res.ok){
+currentData = currentData.map(b=> b.id===id ? {...b,status:"completed"} : b);
 render();
+console.log("✅ Booking marked as completed");
+}
+} catch(e) {
+console.error("Error:", e);
+alert("Ошибка: " + e.message);
+}
+}
+
+/* cancel */
+async function cancel(id){
+if(!confirm("Отменить бронь?")) return;
+try {
+let res = await fetch(`${API}/cancel/${id}`,{method:"POST"});
+if(res.ok){
+currentData = currentData.map(b=> b.id===id ? {...b,status:"cancelled"} : b);
+render();
+console.log("❌ Booking cancelled");
+}
+} catch(e) {
+console.error("Error:", e);
+alert("Ошибка: " + e.message);
+}
+}
+
+/* refresh */
+function refresh(){
+let date = currentMode === "today" ? getLocalDate() : dateInput.value;
+if(date) load(date);
 }
 
 /* табы */
 function showToday(el){
+currentMode = "today";
 setActive(el);
-dateInput.style.display="none";
+document.getElementById("dateInput").style.display="none";
 load(getLocalDate());
 }
 
 function showCalendar(el){
+currentMode = "calendar";
 setActive(el);
-dateInput.style.display="block";
+document.getElementById("dateInput").style.display="block";
+let date = document.getElementById("dateInput").value || getLocalDate();
+load(date);
 }
 
 function setActive(el){
@@ -299,17 +342,20 @@ el.classList.add("active");
 }
 
 /* события */
-dateInput.onchange=()=>load(dateInput.value);
-search.oninput=render;
-tableFilter.onchange=render;
+document.getElementById("dateInput").onchange=()=>{
+if(currentMode === "calendar") load(dateInput.value);
+};
+document.getElementById("search").oninput=render;
+document.getElementById("tableFilter").onchange=render;
 
-/* автообновление */
+/* автообновление каждые 5 секунд */
 setInterval(()=>{
-let date = currentMode==="today" ? getLocalDate() : dateInput.value;
+let date = currentMode === "today" ? getLocalDate() : document.getElementById("dateInput").value;
 if(date) load(date);
-},3000);
+},5000);
 
 /* старт */
+console.log("Admin panel started, API:", API);
 load(getLocalDate());
 </script>
 
