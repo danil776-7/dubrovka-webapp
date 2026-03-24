@@ -203,10 +203,7 @@ def create_booking(data: dict):
     # 🔥 Telegram админу
     send_telegram(
         f"🔥 <b>Новая бронь</b>\n\n"
-        f"👤 {data[
-
-
-name']}\n"
+        f"👤 {data['name']}\n"
         f"📞 {data['phone']}\n"
         f"👥 {guests}\n"
         f"🪑 Стол: {table}\n"
@@ -237,4 +234,4 @@ def done(id: int):
     db.commit()
     db.close()
 
-    return {"ok": True}'
+    return {"ok": True}
