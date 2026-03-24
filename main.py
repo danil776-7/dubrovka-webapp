@@ -7,12 +7,15 @@ import requests
 import os
 
 # =====================
-# DATABASE - ПРЯМАЯ ССЫЛКА
+# DATABASE - НОВАЯ ССЫЛКА
 # =====================
 
-DATABASE_URL = "postgresql://postgres:feCstjzIcdnSWsORvYoWsKCkvaUYQNaK@postgres.railway.internal:5432/railway"
+# 🔥 НОВАЯ ССЫЛКА НА POSTGRESQL
+DATABASE_URL = "postgresql://postgres:YOhOreaGeQiTXNqnHsUACbozGqnVlQcb@postgres.railway.internal:5432/railway"
 
-# Для PostgreSQL нужны эти параметры
+print(f"✅ Connecting to database...")
+
+# Создаем engine
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
@@ -45,7 +48,6 @@ try:
     print("✅ Database tables created successfully!")
 except Exception as e:
     print(f"❌ Error creating tables: {e}")
-    print("Make sure PostgreSQL is running and credentials are correct")
     raise
 
 # =====================
@@ -62,13 +64,10 @@ app.add_middleware(
 )
 
 # =====================
-# CONFIG - ВАШИ ДАННЫЕ
+# CONFIG - ВАШИ ДАННЫЕ ТЕЛЕГРАМ
 # =====================
 
-# 🔥 ВАШ ТОКЕН ТЕЛЕГРАМ БОТА
 TELEGRAM_BOT_TOKEN = "8769949339:AAFwvdkPFgj7l4BQwGfmcljauMWXRx7qves"
-
-# 🔥 ВАШ ID АДМИНА
 ADMIN_CHAT_ID = "7545540622"
 
 print(f"✅ Telegram configured for admin: {ADMIN_CHAT_ID}")
@@ -105,7 +104,7 @@ def send_telegram(text):
         if response.status_code == 200:
             print("✅ Telegram notification sent")
         else:
-            print(f"❌ Telegram error: {response.status_code} - {response.text}")
+            print(f"❌ Telegram error: {response.status_code}")
     except Exception as e:
         print("❌ TG ERROR:", e)
 
@@ -127,7 +126,7 @@ def normalize_date(date_str):
 def root():
     return {
         "status": "ok", 
-        "database": "postgresql",
+        "database": "connected",
         "telegram": "configured"
     }
 
@@ -146,7 +145,7 @@ def health():
         return {"status": "unhealthy", "database": "disconnected", "error": str(e)}
 
 # =====================
-# БРОНИ ПО ДАТЕ (АДМИНКА)
+# БРОНИ ПО ДАТЕ
 # =====================
 
 @app.get("/bookings_by_date")
@@ -250,7 +249,7 @@ def create_booking(data: dict):
 
         print(f"✅ New booking created: ID={booking.id}, Table={table}, Time={time}, Guest={data['name']}")
 
-        # Telegram уведомление админу
+        # Telegram уведомление
         send_telegram(
             f"🔥 <b>НОВАЯ БРОНЬ!</b>\n\n"
             f"👤 <b>Имя:</b> {data['name']}\n"
@@ -289,13 +288,11 @@ def done(id: int):
         if not booking:
             raise HTTPException(status_code=404, detail="Active booking not found")
 
-        old_status = booking.status
         booking.status = "completed"
         db.commit()
 
-        print(f"✅ Booking {id} marked as completed (guest left)")
+        print(f"✅ Booking {id} marked as completed")
 
-        # Telegram уведомление
         send_telegram(
             f"✅ <b>ГОСТЬ УШЕЛ</b>\n\n"
             f"🆔 <b>ID брони:</b> {id}\n"
@@ -334,7 +331,6 @@ def cancel(id: int):
 
         print(f"❌ Booking {id} cancelled")
 
-        # Telegram уведомление
         send_telegram(
             f"❌ <b>БРОНЬ ОТМЕНЕНА</b>\n\n"
             f"🆔 <b>ID брони:</b> {id}\n"
