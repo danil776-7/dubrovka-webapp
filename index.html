@@ -320,6 +320,18 @@ button:hover {
   animation: shake 0.5s ease;
 }
 
+.hookah-warning {
+  background: linear-gradient(135deg, rgba(139, 0, 0, 0.7), rgba(74, 0, 0, 0.7));
+  padding: 12px;
+  border-radius: 10px;
+  margin-top: 10px;
+  display: none;
+  color: #ffcc00;
+  text-align: center;
+  font-size: 13px;
+  border-left: 3px solid #ffcc00;
+}
+
 .footer {
   margin-top: 25px;
   text-align: center;
@@ -423,6 +435,12 @@ button:hover {
     <input id="name" placeholder="👤 ВАШЕ ИМЯ">
     <input id="phone" placeholder="📞 ТЕЛЕФОН (+7XXXXXXXXXX)" maxlength="12">
 
+    <div id="hookahWarning" class="hookah-warning">
+      💨 ВНИМАНИЕ!<br>
+      Для компаний от 5 человек обязательно бронирование 2 кальянов<br>
+      Пожалуйста, согласуйте выбор с администратором
+    </div>
+
     <button id="bookBtn">ЗАБРОНИРОВАТЬ</button>
 
     <div id="blockedWarning" class="blocked-warning"></div>
@@ -477,6 +495,7 @@ const bookBtn = document.getElementById("bookBtn");
 const suggestionBox = document.getElementById("suggestionBox");
 const suggestionsDiv = document.getElementById("suggestions");
 const blockedWarning = document.getElementById("blockedWarning");
+const hookahWarning = document.getElementById("hookahWarning");
 
 let selectedTable = null;
 let suggestedOption = null;
@@ -633,13 +652,23 @@ guestsInput.addEventListener("input", () => {
     let guests = parseInt(guestsInput.value) || 0;
     let maxGuests = TABLE_CAPACITY[selectedTable];
     
+    // Проверка на превышение максимального количества
     if(guests > maxGuests) {
-      showError(`⚠️ СТОЛ ${selectedTable} ВМЕЩАЕТ МАКСИМУМ ${maxGuests} ГОСТЕЙ!\nПожалуйста, уменьшите количество гостей или выберите другой стол`, guestsInput);
+      showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ МАКСИМУМ ${maxGuests} ГОСТЕЙ!\nПожалуйста, уменьшите количество гостей или выберите другой стол`, guestsInput);
       guestsInput.value = maxGuests;
+      guests = maxGuests;
     }
     
     if(guests < 1) {
       guestsInput.value = 1;
+      guests = 1;
+    }
+    
+    // Проверка на компанию от 5 человек (кальянное предупреждение)
+    if(guests >= 5) {
+      hookahWarning.style.display = "block";
+    } else {
+      hookahWarning.style.display = "none";
     }
   }
 });
@@ -670,7 +699,15 @@ document.querySelectorAll(".table").forEach(el => {
     let currentGuests = parseInt(guestsInput.value) || 0;
     if(currentGuests > maxGuests) {
       guestsInput.value = maxGuests;
+      currentGuests = maxGuests;
       showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ МАКСИМУМ ${maxGuests} ГОСТЕЙ`, guestsInput);
+    }
+    
+    // Проверка на компанию от 5 человек
+    if(currentGuests >= 5) {
+      hookahWarning.style.display = "block";
+    } else {
+      hookahWarning.style.display = "none";
     }
     
     // Загружаем доступные времена для выбранного стола
@@ -679,6 +716,7 @@ document.querySelectorAll(".table").forEach(el => {
     } else {
       timeSelect.innerHTML = '<option value="">⏰ VIP ПО ТЕЛЕФОНУ</option>';
       guestsInput.placeholder = "👥 КОЛИЧЕСТВО ГОСТЕЙ (УТОЧНИТЕ ПО ТЕЛЕФОНУ)";
+      hookahWarning.style.display = "none";
     }
     
     suggestionBox.style.display = "none";
@@ -719,11 +757,20 @@ bookBtn.onclick = async () => {
   if(phoneVal.length !== 12) { showError("НЕВЕРНЫЙ НОМЕР (+7XXXXXXXXXX)", phoneInput); return; }
   if(guestsVal < 1) { showError("УКАЖИТЕ КОЛИЧЕСТВО ГОСТЕЙ", guestsInput); return; }
   
-  // 🔥 ОСНОВНАЯ ПРОВЕРКА КОЛИЧЕСТВА ГОСТЕЙ
+  // Проверка количества гостей
   if(guestsVal > maxGuests) {
     showError(`❌ СТОЛ ${selectedTable} ВМЕЩАЕТ МАКСИМУМ ${maxGuests} ГОСТЕЙ!\nВы указали ${guestsVal} гостей.\n\nПожалуйста, уменьшите количество гостей или выберите другой стол`, guestsInput);
     guestsInput.value = maxGuests;
     return;
+  }
+  
+  // Проверка на компанию от 5 человек - показываем предупреждение но не блокируем
+  if(guestsVal >= 5) {
+    let confirmHookah = confirm(`💨 ВНИМАНИЕ!\n\nДля компании из ${guestsVal} человек обязательно бронирование 2 кальянов.\n\nВы подтверждаете, что согласны с этим условием?`);
+    if(!confirmHookah) {
+      showError("Для бронирования компаний от 5 человек требуется согласие на заказ кальянов");
+      return;
+    }
   }
   
   // Проверка времени работы
@@ -771,7 +818,11 @@ bookBtn.onclick = async () => {
     
     if(result.ok || result.id) {
       if(tg) tg.sendData(JSON.stringify(data));
-      showSuccess(`БРОНЬ СОЗДАНА!\n🪑 Стол ${selectedTable}\n⏰ ${selectedTime}\n👥 ${guestsVal} гостей\n👤 ${nameVal}\n\n🏠 Режим работы: ${workingHours.text}`);
+      let hookahMessage = "";
+      if(guestsVal >= 5) {
+        hookahMessage = "\n\n💨 Напоминание: для компании из 5+ человек обязательны 2 кальяна";
+      }
+      showSuccess(`БРОНЬ СОЗДАНА!\n🪑 Стол ${selectedTable}\n⏰ ${selectedTime}\n👥 ${guestsVal} гостей\n👤 ${nameVal}\n\n🏠 Режим работы: ${workingHours.text}${hookahMessage}`);
       
       nameInput.value = "";
       guestsInput.value = "";
@@ -781,6 +832,7 @@ bookBtn.onclick = async () => {
       tableInfo.innerText = "✨ ВЫБЕРИТЕ СТОЛ ДЛЯ БРОНИРОВАНИЯ";
       guestsInput.placeholder = "👥 КОЛИЧЕСТВО ГОСТЕЙ";
       guestsInput.max = 20;
+      hookahWarning.style.display = "none";
       await loadTimes();
     } else {
       showError("ОШИБКА: " + (result.detail || "НЕИЗВЕСТНАЯ ОШИБКА"));
