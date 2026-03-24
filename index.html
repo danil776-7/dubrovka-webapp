@@ -700,17 +700,29 @@ function showSuccess(message) {
   setTimeout(() => successDiv.remove(), 3500);
 }
 
-// Исправленная функция для количества гостей
+// Исправленная функция для количества гостей с ограничением
 guestsInput.addEventListener("input", (e) => {
   let guests = parseInt(e.target.value) || 1;
+  
+  // Ограничение снизу
+  if (guests < 1) {
+    e.target.value = 1;
+    guests = 1;
+  }
+  
+  // Ограничение сверху (максимум 20 человек)
+  if (guests > 20) {
+    e.target.value = 20;
+    guests = 20;
+    showError("Максимальное количество гостей - 20 человек", guestsInput);
+  }
   
   if (selectedTable) {
     let maxGuests = TABLE_CAPACITY[selectedTable];
     
-    // Если гостей больше максимума - показываем ошибку, но НЕ сбрасываем значение
+    // Проверка лимита стола
     if (guests > maxGuests) {
-      showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ ${maxGuests} ГОСТЕЙ`, guestsInput);
-      // Не сбрасываем значение, только показываем ошибку
+      showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ ${maxGuests} ГОСТЕЙ!`, guestsInput);
     }
     
     // Показываем предупреждение о кальянах
@@ -719,11 +731,6 @@ guestsInput.addEventListener("input", (e) => {
     } else {
       hookahWarning.style.display = "none";
     }
-  }
-  
-  // Ограничиваем только при отправке, но не блокируем ввод
-  if (guests < 1) {
-    e.target.value = 1;
   }
 });
 
@@ -739,6 +746,9 @@ document.querySelectorAll(".table").forEach(el => {
     
     // Проверяем текущее количество гостей
     let currentGuests = parseInt(guestsInput.value) || 1;
+    if (currentGuests > maxGuests) {
+      showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ ${maxGuests} ГОСТЕЙ!`, guestsInput);
+    }
     if (currentGuests >= 5) {
       hookahWarning.style.display = "block";
     } else {
@@ -783,6 +793,7 @@ bookBtn.onclick = async () => {
   if(!nameVal) { showError("ВВЕДИТЕ ИМЯ", nameInput); return; }
   if(phoneVal.length !== 12) { showError("НЕВЕРНЫЙ НОМЕР (+7XXXXXXXXXX)", phoneInput); return; }
   if(guestsVal < 1) { showError("УКАЖИТЕ КОЛИЧЕСТВО ГОСТЕЙ", guestsInput); return; }
+  if(guestsVal > 20) { showError("МАКСИМУМ 20 ГОСТЕЙ", guestsInput); return; }
   
   // Проверка лимита гостей при отправке
   if(guestsVal > maxGuests) {
