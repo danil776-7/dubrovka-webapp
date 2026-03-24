@@ -415,7 +415,7 @@ button:hover {
     
     <div id="warningMessage" class="warning-message"></div>
     
-    <input id="guests" type="number" placeholder="👥 КОЛИЧЕСТВО ГОСТЕЙ" min="1" max="20" step="1" autocomplete="off">
+    <input id="guests" type="number" placeholder="👥 КОЛИЧЕСТВО ГОСТЕЙ" min="1" max="20" step="1" autocomplete="off" value="1">
     <input id="name" placeholder="👤 ВАШЕ ИМЯ" autocomplete="name">
     <input id="phone" placeholder="📞 ТЕЛЕФОН (+7XXXXXXXXXX)" maxlength="12" autocomplete="tel">
 
@@ -434,7 +434,7 @@ button:hover {
 </div>
 
 <script>
-// Описания столов (без упоминания времени)
+// Описания столов
 const tableDescriptions = {
   "1": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 7 ГОСТЕЙ",
   "2": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ",
@@ -700,18 +700,30 @@ function showSuccess(message) {
   setTimeout(() => successDiv.remove(), 3500);
 }
 
-guestsInput.addEventListener("input", () => {
-  if(selectedTable) {
-    let guests = parseInt(guestsInput.value) || 0;
+// Исправленная функция для количества гостей
+guestsInput.addEventListener("input", (e) => {
+  let guests = parseInt(e.target.value) || 1;
+  
+  if (selectedTable) {
     let maxGuests = TABLE_CAPACITY[selectedTable];
-    if(guests > maxGuests) {
+    
+    // Если гостей больше максимума - показываем ошибку, но НЕ сбрасываем значение
+    if (guests > maxGuests) {
       showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ ${maxGuests} ГОСТЕЙ`, guestsInput);
-      guestsInput.value = maxGuests;
-      guests = maxGuests;
+      // Не сбрасываем значение, только показываем ошибку
     }
-    if(guests < 1) { guestsInput.value = 1; guests = 1; }
-    if(guests >= 5) { hookahWarning.style.display = "block"; }
-    else { hookahWarning.style.display = "none"; }
+    
+    // Показываем предупреждение о кальянах
+    if (guests >= 5) {
+      hookahWarning.style.display = "block";
+    } else {
+      hookahWarning.style.display = "none";
+    }
+  }
+  
+  // Ограничиваем только при отправке, но не блокируем ввод
+  if (guests < 1) {
+    e.target.value = 1;
   }
 });
 
@@ -723,14 +735,16 @@ document.querySelectorAll(".table").forEach(el => {
     selectedTable = el.dataset.table;
     tableInfo.innerText = tableDescriptions[selectedTable];
     let maxGuests = TABLE_CAPACITY[selectedTable];
-    guestsInput.max = maxGuests;
     guestsInput.placeholder = `👥 ГОСТЕЙ (МАКС. ${maxGuests})`;
-    let currentGuests = parseInt(guestsInput.value) || 0;
-    if(currentGuests > maxGuests) {
-      guestsInput.value = maxGuests;
+    
+    // Проверяем текущее количество гостей
+    let currentGuests = parseInt(guestsInput.value) || 1;
+    if (currentGuests >= 5) {
+      hookahWarning.style.display = "block";
+    } else {
+      hookahWarning.style.display = "none";
     }
-    if(currentGuests >= 5) { hookahWarning.style.display = "block"; }
-    else { hookahWarning.style.display = "none"; }
+    
     await loadBusyTimes();
     selectedTime = null;
     warningMessage.style.display = "none";
@@ -769,9 +783,10 @@ bookBtn.onclick = async () => {
   if(!nameVal) { showError("ВВЕДИТЕ ИМЯ", nameInput); return; }
   if(phoneVal.length !== 12) { showError("НЕВЕРНЫЙ НОМЕР (+7XXXXXXXXXX)", phoneInput); return; }
   if(guestsVal < 1) { showError("УКАЖИТЕ КОЛИЧЕСТВО ГОСТЕЙ", guestsInput); return; }
+  
+  // Проверка лимита гостей при отправке
   if(guestsVal > maxGuests) {
-    showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ ${maxGuests} ГОСТЕЙ`, guestsInput);
-    guestsInput.value = maxGuests;
+    showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ ${maxGuests} ГОСТЕЙ!\nПожалуйста, уменьшите количество гостей или выберите другой стол`, guestsInput);
     return;
   }
   
@@ -827,7 +842,7 @@ bookBtn.onclick = async () => {
       showSuccess(`БРОНЬ СОЗДАНА!\n🪑 Стол ${selectedTable}\n⏰ ${selectedTime}\n👥 ${guestsVal} гостей\n👤 ${nameVal}\n\nМы отправили вам подтверждение в Telegram!${hookahMsg}`);
       
       nameInput.value = "";
-      guestsInput.value = "";
+      guestsInput.value = "1";
       selectedTime = null;
       warningMessage.style.display = "none";
       document.querySelectorAll(".time-slot").forEach(t => t.classList.remove("selected"));
@@ -835,7 +850,6 @@ bookBtn.onclick = async () => {
       selectedTable = null;
       tableInfo.innerText = "✨ ВЫБЕРИТЕ СТОЛ ДЛЯ БРОНИРОВАНИЯ";
       guestsInput.placeholder = "👥 КОЛИЧЕСТВО ГОСТЕЙ";
-      guestsInput.max = 20;
       hookahWarning.style.display = "none";
       await loadBusyTimes();
     } else {
