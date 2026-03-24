@@ -9,8 +9,8 @@
 body{
 margin:0;
 font-family:Arial;
-background:#0b0b0b;
-color:#fff;
+background:#faf9f7;
+color:#4a4a4a;
 }
 
 .container{display:flex;height:100vh;}
@@ -18,25 +18,28 @@ color:#fff;
 /* sidebar */
 .sidebar{
 width:230px;
-background:#111;
+background:#ffffff;
 padding:20px;
+border-right:1px solid #efe8df;
 }
 
 .logo{
-color:#ff2a2a;
+color:#b89a4b;
 font-size:20px;
 margin-bottom:20px;
+font-weight:500;
 }
 
 .menu div{
 padding:10px;
 margin-bottom:8px;
-border-radius:8px;
+border-radius:12px;
 cursor:pointer;
+transition:all 0.2s;
 }
 
-.menu div:hover{background:#1a1a1a;}
-.active{background:#ff2a2a;}
+.menu div:hover{background:#f5f2ed;}
+.active{background:#e8dbbc;color:#6b5a3a;}
 
 /* content */
 .content{
@@ -53,11 +56,32 @@ margin-bottom:15px;
 }
 
 input, select{
-padding:10px;
-border-radius:8px;
+padding:10px 12px;
+border-radius:12px;
+border:1px solid #efe8df;
+background:#ffffff;
+color:#4a4a4a;
+font-size:14px;
+}
+
+input:focus, select:focus{
+outline:none;
+border-color:#e8dbbc;
+}
+
+button{
+padding:10px 16px;
+border-radius:12px;
 border:none;
-background:#111;
-color:#fff;
+background:#e8dbbc;
+color:#6b5a3a;
+cursor:pointer;
+font-weight:500;
+transition:all 0.2s;
+}
+
+button:hover{
+background:#e2d4b0;
 }
 
 /* grid */
@@ -69,61 +93,79 @@ gap:12px;
 
 /* card */
 .card{
-background:#151515;
+background:#ffffff;
 padding:15px;
-border-radius:12px;
-border:1px solid #222;
-transition:0.3s;
+border-radius:16px;
+border:1px solid #efe8df;
+transition:0.2s;
 }
 
 .card.new{
-border:1px solid #ff2a2a;
-box-shadow:0 0 10px #ff2a2a55;
+border:1px solid #e8dbbc;
+box-shadow:0 2px 8px rgba(184,154,75,0.1);
 }
 
 .time{
 font-size:22px;
-color:#ff2a2a;
-font-weight:bold;
+color:#b89a4b;
+font-weight:500;
 }
 
-.name{font-size:18px;font-weight:bold;margin:8px 0 4px;}
-.phone{color:#ccc;margin-bottom:8px;}
+.name{font-size:18px;font-weight:500;margin:8px 0 4px;}
+.phone{color:#bcb2a4;margin-bottom:8px;font-size:13px;}
 
 .status{
-font-size:12px;
-padding:3px 6px;
-border-radius:6px;
+font-size:11px;
+padding:4px 8px;
+border-radius:20px;
 display:inline-block;
 margin-bottom:6px;
+font-weight:500;
 }
 
-.active{background:#2a7f2a;color:#fff;}
-.completed{background:#0a7d3b;color:#fff;}
-.cancelled{background:#666;color:#fff;}
-.pending{background:#444;color:#fff;}
+.active{background:#e8dbbc;color:#6b5a3a;}
+.completed{background:#d4e0d4;color:#4a6b4a;}
+.cancelled{background:#f0e4dc;color:#b87a5a;}
+.pending{background:#f0ede8;color:#8a7a6a;}
 
-button{
+button.done-btn{
 padding:8px 12px;
 border:none;
-border-radius:8px;
-background:#ff2a2a;
-color:#fff;
+border-radius:12px;
+background:#e8dbbc;
+color:#6b5a3a;
 cursor:pointer;
 margin-top:10px;
 width:100%;
-font-size:14px;
+font-size:13px;
+font-weight:500;
 }
 
-button:hover{
-background:#ff5555;
+button.done-btn:hover{
+background:#e2d4b0;
 }
 
 .date-title{
 margin:20px 0 10px;
-font-size:18px;
-color:#ff2a2a;
-font-weight:bold;
+font-size:16px;
+color:#b89a4b;
+font-weight:500;
+}
+
+.error-message{
+background:#fef5f0;
+padding:15px;
+border-radius:12px;
+color:#c97e5a;
+text-align:center;
+margin:20px;
+border:1px solid #fae5d6;
+}
+
+.loading{
+text-align:center;
+padding:40px;
+color:#bcb2a4;
 }
 </style>
 </head>
@@ -156,7 +198,7 @@ font-weight:bold;
 <option>VIP</option>
 </select>
 <input type="date" id="dateInput" style="display:none;">
-<button onclick="refresh()" style="background:#333; width:auto;">🔄 Обновить</button>
+<button onclick="refresh()" style="background:#f5f2ed;">🔄 Обновить</button>
 </div>
 
 <div id="list"></div>
@@ -166,6 +208,7 @@ font-weight:bold;
 </div>
 
 <script>
+// ПРЯМАЯ ССЫЛКА НА API (без переменных окружения)
 const API = "https://dubrovka-webapp-production-a00c.up.railway.app";
 const list = document.getElementById("list");
 
@@ -180,20 +223,26 @@ let tz=now.getTimezoneOffset()*60000;
 return new Date(now-tz).toISOString().split("T")[0];
 }
 
-/* загрузка */
+/* загрузка с обработкой ошибок */
 async function load(date){
 if(!date) return;
 try {
+console.log(`🔄 Загрузка броней на ${date}...`);
 let res = await fetch(`${API}/bookings_by_date?date=${date}`);
-if(!res.ok) throw new Error(`HTTP ${res.status}`);
+console.log(`📡 Статус ответа: ${res.status}`);
+if(!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
 let data = await res.json();
-console.log("Loaded bookings:", data);
+console.log(`✅ Загружено броней: ${data.length}`, data);
 handleNew(data);
 currentData = data;
 render();
 } catch(e) {
-console.error("Load error:", e);
-list.innerHTML = `<div style="color:red;">❌ Ошибка загрузки: ${e.message}</div>`;
+console.error("❌ Ошибка загрузки:", e);
+list.innerHTML = `<div class="error-message">
+❌ Ошибка загрузки данных<br>
+<small>${e.message}</small><br><br>
+<button onclick="refresh()" style="background:#e8dbbc;">Повторить</button>
+</div>`;
 }
 }
 
@@ -205,12 +254,13 @@ let hasNew = false;
 newIds.forEach(id=>{
 if(!previousIds.has(id)){
 hasNew = true;
-console.log("🔔 New booking detected:", id);
+console.log("🔔 Новая бронь:", id);
 }
 });
 
 if(hasNew){
-document.getElementById("notifySound").play();
+let sound = document.getElementById("notifySound");
+if(sound) sound.play().catch(e=>console.log("Звук не воспроизведен"));
 }
 
 previousIds = new Set(newIds);
@@ -235,7 +285,7 @@ function render(){
 let data = applyFilters(currentData);
 
 if(data.length === 0){
-list.innerHTML = "<div style='text-align:center;padding:40px;color:#666;'>📭 Нет броней</div>";
+list.innerHTML = "<div style='text-align:center;padding:40px;color:#bcb2a4;'>📭 Нет броней на этот день</div>";
 return;
 }
 
@@ -268,9 +318,7 @@ html += `
 `;
 
 if(b.status === "active"){
-html += `<button onclick="done(${b.id})">✅ Гость ушёл</button>`;
-} else if(b.status === "active"){
-html += `<button onclick="cancel(${b.id})" style="background:#666;">❌ Отменить</button>`;
+html += `<button class="done-btn" onclick="done(${b.id})">✅ Гость ушёл</button>`;
 }
 
 html += `</div>`;
@@ -286,30 +334,17 @@ list.innerHTML = html;
 async function done(id){
 if(!confirm("Отметить что гость ушел?")) return;
 try {
-let res = await fetch(`${API}/done/${id}`,{method:"POST"});
+console.log(`📤 Отправка запроса на завершение брони ${id}...`);
+let res = await fetch(`${API}/done/${id}`, {method:"POST"});
 if(res.ok){
 currentData = currentData.map(b=> b.id===id ? {...b,status:"completed"} : b);
 render();
-console.log("✅ Booking marked as completed");
+console.log(`✅ Бронь ${id} завершена`);
+} else {
+throw new Error(`HTTP ${res.status}`);
 }
 } catch(e) {
-console.error("Error:", e);
-alert("Ошибка: " + e.message);
-}
-}
-
-/* cancel */
-async function cancel(id){
-if(!confirm("Отменить бронь?")) return;
-try {
-let res = await fetch(`${API}/cancel/${id}`,{method:"POST"});
-if(res.ok){
-currentData = currentData.map(b=> b.id===id ? {...b,status:"cancelled"} : b);
-render();
-console.log("❌ Booking cancelled");
-}
-} catch(e) {
-console.error("Error:", e);
+console.error("❌ Ошибка:", e);
 alert("Ошибка: " + e.message);
 }
 }
@@ -317,7 +352,10 @@ alert("Ошибка: " + e.message);
 /* refresh */
 function refresh(){
 let date = currentMode === "today" ? getLocalDate() : dateInput.value;
-if(date) load(date);
+if(date) {
+list.innerHTML = '<div class="loading">🔄 Загрузка...</div>';
+load(date);
+}
 }
 
 /* табы */
@@ -355,7 +393,8 @@ if(date) load(date);
 },5000);
 
 /* старт */
-console.log("Admin panel started, API:", API);
+console.log("🚀 Админ панель запущена");
+console.log(`📡 API URL: ${API}`);
 load(getLocalDate());
 </script>
 
