@@ -18,9 +18,9 @@ body {
   background: #000;
   color: #e7d9c0;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
-/* Видео фон */
 .video-background {
   position: fixed;
   top: 0;
@@ -49,14 +49,12 @@ body {
   z-index: 1;
 }
 
-/* Логотип */
 .logo-container {
   text-align: center;
   margin-bottom: 20px;
   animation: fadeInDown 0.8s ease-out;
 }
 
-/* Ваш логотип */
 .logo-img {
   width: 120px;
   height: 120px;
@@ -82,7 +80,6 @@ body {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   margin-bottom: 5px;
-  text-shadow: 0 0 10px rgba(139, 0, 0, 0.3);
 }
 
 .logo-subtitle {
@@ -92,7 +89,6 @@ body {
   text-transform: uppercase;
 }
 
-/* Карточка */
 .card {
   background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(15px);
@@ -101,6 +97,22 @@ body {
   border: 1px solid rgba(139, 0, 0, 0.4);
   box-shadow: 0 8px 32px rgba(139, 0, 0, 0.2);
   animation: fadeInUp 0.8s ease-out;
+}
+
+.working-hours {
+  background: rgba(139, 0, 0, 0.2);
+  padding: 8px;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 15px;
+  font-size: 12px;
+  color: #d6b36a;
+  border: 1px solid rgba(139, 0, 0, 0.3);
+}
+
+.working-hours span {
+  color: #8B0000;
+  font-weight: bold;
 }
 
 h2 {
@@ -113,7 +125,6 @@ h2 {
   font-weight: bold;
 }
 
-/* Столы */
 .tables {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -155,7 +166,6 @@ h2 {
   background: rgba(139, 0, 0, 0.2);
   transform: translateY(-2px);
   border-color: #8B0000;
-  box-shadow: 0 0 15px rgba(139, 0, 0, 0.3);
 }
 
 .table.selected {
@@ -168,15 +178,8 @@ h2 {
 .table.disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  background: rgba(51, 51, 51, 0.8);
 }
 
-.table.disabled:hover {
-  transform: none;
-  background: rgba(51, 51, 51, 0.8);
-}
-
-/* VIP особый стиль */
 .table[data-table="VIP"] {
   background: linear-gradient(135deg, rgba(139, 0, 0, 0.2), rgba(74, 0, 0, 0.2));
   border-color: #8B0000;
@@ -193,8 +196,8 @@ h2 {
 }
 
 @keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.2); opacity: 0.8; }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
 }
 
 .desc {
@@ -204,12 +207,9 @@ h2 {
   margin: 15px 0;
   white-space: pre-line;
   font-size: 14px;
-  line-height: 1.5;
   border-left: 3px solid #8B0000;
-  color: #ccc;
 }
 
-/* Форма */
 input, select {
   width: 100%;
   padding: 12px 15px;
@@ -225,12 +225,7 @@ input, select {
 input:focus, select:focus {
   outline: none;
   border-color: #8B0000;
-  background: rgba(20, 20, 20, 1);
   box-shadow: 0 0 10px rgba(139, 0, 0, 0.3);
-}
-
-input::placeholder {
-  color: #666;
 }
 
 button {
@@ -246,7 +241,6 @@ button {
   color: #fff;
   transition: all 0.3s ease;
   text-transform: uppercase;
-  letter-spacing: 1px;
   position: relative;
   overflow: hidden;
 }
@@ -269,20 +263,8 @@ button:hover::before {
 button:hover {
   transform: translateY(-2px);
   box-shadow: 0 5px 20px rgba(139, 0, 0, 0.5);
-  background: linear-gradient(135deg, #a00000 0%, #5a0000 100%);
 }
 
-button:active {
-  transform: translateY(0);
-}
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Блок предложений */
 .suggestion-box {
   background: rgba(20, 20, 20, 0.95);
   padding: 15px;
@@ -290,14 +272,12 @@ button:disabled {
   margin-top: 15px;
   display: none;
   border: 1px solid rgba(139, 0, 0, 0.5);
-  animation: slideDown 0.3s ease-out;
 }
 
 .suggestion-box h4 {
   margin: 0 0 10px 0;
   color: #8B0000;
   font-size: 16px;
-  text-transform: uppercase;
 }
 
 .suggestion-item {
@@ -316,20 +296,10 @@ button:disabled {
 .suggestion-item:hover {
   background: rgba(139, 0, 0, 0.2);
   transform: translateX(5px);
-  border-left: 3px solid #8B0000;
 }
 
 .suggestion-item.selected {
   background: #8B0000;
-  color: #fff;
-}
-
-.suggestion-time {
-  font-weight: bold;
-  color: #8B0000;
-}
-
-.suggestion-item.selected .suggestion-time {
   color: #fff;
 }
 
@@ -343,10 +313,8 @@ button:disabled {
   text-align: center;
   font-size: 14px;
   animation: shake 0.5s ease;
-  border: 1px solid #8B0000;
 }
 
-/* Футер */
 .footer {
   margin-top: 25px;
   text-align: center;
@@ -354,10 +322,6 @@ button:disabled {
   color: #888;
   border-top: 1px solid rgba(139, 0, 0, 0.3);
   padding-top: 20px;
-}
-
-.footer p {
-  margin: 5px 0;
 }
 
 .map-btn {
@@ -376,108 +340,40 @@ button:disabled {
 .map-btn:hover {
   background: #8B0000;
   color: #fff;
-  transform: translateY(-2px);
-  box-shadow: 0 0 10px rgba(139, 0, 0, 0.5);
 }
 
-/* Анимации */
 @keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-30px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Эффект встряски */
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-  20%, 40%, 60%, 80% { transform: translateX(5px); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
 }
 
-/* Класс для встряски */
 .shake-animation {
   animation: shake 0.5s ease-in-out;
 }
 
-/* Загрузка */
 .loading {
   text-align: center;
   padding: 20px;
   color: #8B0000;
 }
 
-/* Адаптивность */
 @media (max-width: 480px) {
-  .container {
-    padding: 15px;
-  }
-  
-  .card {
-    padding: 20px;
-  }
-  
-  .logo-img {
-    width: 100px;
-    height: 100px;
-  }
-  
-  .logo-text {
-    font-size: 24px;
-  }
-  
-  .tables {
-    gap: 8px;
-  }
-  
-  .table {
-    padding: 12px;
-    font-size: 16px;
-  }
-}
-
-/* Стиль для скролла */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #1a1a1a;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #8B0000;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #cc0000;
+  .container { padding: 15px; }
+  .card { padding: 20px; }
+  .logo-img { width: 100px; height: 100px; }
+  .logo-text { font-size: 24px; }
+  .table { padding: 12px; font-size: 16px; }
 }
 </style>
 </head>
@@ -485,20 +381,21 @@ button:disabled {
 <body>
 <video class="video-background" autoplay muted loop playsinline>
   <source src="bg.mp4" type="video/mp4">
-  Ваш браузер не поддерживает видео
 </video>
 <div class="overlay"></div>
 
 <div class="container">
   <div class="logo-container">
-    <!-- ВАШ ЛОГОТИП -->
-    <img src="logo.png" alt="Dubrovka Lounge & Bar" class="logo-img">
-    
+    <img src="logo.png" alt="Dubrovka Lounge & Bar" class="logo-img" onerror="this.style.display='none'">
     <div class="logo-text">DUBROVKA</div>
     <div class="logo-subtitle">LOUNGE & BAR</div>
   </div>
 
   <div class="card">
+    <div class="working-hours" id="workingHours">
+      🕐 Загрузка режима работы...
+    </div>
+    
     <h2>🍷 БРОНИРОВАНИЕ СТОЛОВ</h2>
 
     <div class="tables">
@@ -513,7 +410,7 @@ button:disabled {
 
     <div id="tableInfo" class="desc">✨ ВЫБЕРИТЕ СТОЛ ДЛЯ БРОНИРОВАНИЯ</div>
 
-    <input id="date" type="date" placeholder="📅 ДАТА">
+    <input id="date" type="date">
     <select id="time">
       <option value="">⏰ ВЫБЕРИТЕ ВРЕМЯ</option>
     </select>
@@ -523,11 +420,7 @@ button:disabled {
 
     <button id="bookBtn">ЗАБРОНИРОВАТЬ</button>
 
-    <div id="blockedWarning" class="blocked-warning">
-      ⚠️ ЭТО ВРЕМЯ ВРЕМЕННО НЕДОСТУПНО ДЛЯ БРОНИРОВАНИЯ<br>
-      <small>СТОЛ ЗАБРОНИРОВАН И ОЖИДАЕТ ГОСТЕЙ</small>
-    </div>
-
+    <div id="blockedWarning" class="blocked-warning"></div>
     <div id="suggestionBox" class="suggestion-box">
       <h4>💡 АЛЬТЕРНАТИВНЫЕ ВАРИАНТЫ</h4>
       <div id="suggestions"></div>
@@ -536,9 +429,7 @@ button:disabled {
     <div class="footer">
       <p>📍 Ермакова 11, Новокузнецк</p>
       <p>📞 +7‒913‒432‒01‒01</p>
-      <a class="map-btn" href="https://2gis.ru/novokuznetsk/geo/70000001067987554" target="_blank">
-        🗺 ОТКРЫТЬ В 2ГИС
-      </a>
+      <a class="map-btn" href="https://2gis.ru/novokuznetsk/geo/70000001067987554" target="_blank">🗺 ОТКРЫТЬ В 2ГИС</a>
     </div>
   </div>
 </div>
@@ -559,336 +450,310 @@ const bookBtn = document.getElementById("bookBtn");
 const suggestionBox = document.getElementById("suggestionBox");
 const suggestionsDiv = document.getElementById("suggestions");
 const blockedWarning = document.getElementById("blockedWarning");
+const workingHoursDiv = document.getElementById("workingHours");
 
 let selectedTable = null;
-let currentBusyTimes = {};
+let allBusyTimes = {};
 let suggestedOption = null;
-let blockedTimes = new Set();
 
-// Функция для добавления эффекта встряски
-function shakeElement(element) {
-  element.classList.add('shake-animation');
-  setTimeout(() => {
-    element.classList.remove('shake-animation');
-  }, 500);
+// Получить режим работы в зависимости от дня недели
+function getWorkingHours(date) {
+  const day = new Date(date).getDay();
+  // day: 0 - воскресенье, 5 - пятница, 6 - суббота
+  
+  if (day === 5 || day === 6) {
+    // Пятница и суббота: 12:00 до 00:00
+    return { start: 12, end: 24, text: "ПТ-СБ: 12:00 - 00:00" };
+  } else {
+    // Воскресенье - четверг: 12:00 до 23:00
+    return { start: 12, end: 23, text: "ВС-ЧТ: 12:00 - 23:00" };
+  }
 }
 
-// Функция для показа ошибки с встряской
-function showError(message, element = null) {
-  if (element) {
-    shakeElement(element);
-  } else {
-    shakeElement(bookBtn);
+// Обновить отображение режима работы
+function updateWorkingHoursDisplay(date) {
+  const hours = getWorkingHours(date);
+  const dayNames = ['ВС', 'ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ'];
+  const day = new Date(date).getDay();
+  
+  workingHoursDiv.innerHTML = `
+    🕐 РЕЖИМ РАБОТЫ: <span>${hours.text}</span><br>
+    📅 ${dayNames[day]}, ${date}
+  `;
+}
+
+// Функция для конвертации времени в минуты
+function timeToMinutes(timeStr) {
+  let [hours, minutes] = timeStr.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+// Проверка интервала между бронями (минимум 3 часа = 180 минут)
+function checkTimeInterval(existingTimes, newTime, minIntervalMinutes = 180) {
+  let newTimeMinutes = timeToMinutes(newTime);
+  
+  for (let existingTime of existingTimes) {
+    let existingMinutes = timeToMinutes(existingTime);
+    let diff = Math.abs(newTimeMinutes - existingMinutes);
+    
+    if (diff < minIntervalMinutes) {
+      return {
+        allowed: false,
+        conflictTime: existingTime,
+        diffMinutes: diff,
+        requiredGap: minIntervalMinutes
+      };
+    }
   }
   
-  const errorDiv = document.createElement('div');
-  errorDiv.style.cssText = `
+  return { allowed: true };
+}
+
+// Генерация времени с учетом режима работы и интервалов
+function generateTimesWithInterval(date, busyTimes, workingHours) {
+  let times = [];
+  let startHour = workingHours.start;
+  let endHour = workingHours.end;
+  
+  // Сортируем занятые времена
+  let sortedBusy = [...busyTimes].sort();
+  
+  for(let h = startHour; h < endHour; h++) {
+    let time1 = `${String(h).padStart(2,'0')}:00`;
+    let time2 = `${String(h).padStart(2,'0')}:30`;
+    
+    // Проверяем время с учетом интервала
+    let check1 = checkTimeInterval(sortedBusy, time1, 180);
+    let check2 = checkTimeInterval(sortedBusy, time2, 180);
+    
+    if(check1.allowed) times.push(time1);
+    if(check2.allowed) times.push(time2);
+  }
+  
+  return times;
+}
+
+function shakeElement(element) {
+  element.classList.add('shake-animation');
+  setTimeout(() => element.classList.remove('shake-animation'), 500);
+}
+
+function showError(message, element = null) {
+  if (element) shakeElement(element);
+  else shakeElement(bookBtn);
+  
+  blockedWarning.innerHTML = `❌ ${message}`;
+  blockedWarning.style.display = "block";
+  setTimeout(() => blockedWarning.style.display = "none", 5000);
+}
+
+function showSuccess(message) {
+  const successDiv = document.createElement('div');
+  successDiv.style.cssText = `
     position: fixed;
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.95);
-    color: #8B0000;
+    background: linear-gradient(135deg, #006600, #004400);
+    color: #fff;
     padding: 12px 20px;
     border-radius: 10px;
     z-index: 10000;
     font-size: 14px;
     font-weight: bold;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-    animation: slideDown 0.3s ease-out;
-    border-left: 3px solid #8B0000;
-    backdrop-filter: blur(10px);
+    animation: fadeInDown 0.3s ease-out;
+    border-left: 3px solid #00ff00;
   `;
-  errorDiv.innerHTML = `❌ ${message}`;
-  document.body.appendChild(errorDiv);
-  
-  setTimeout(() => {
-    errorDiv.style.animation = 'shake 0.3s ease-out reverse';
-    setTimeout(() => errorDiv.remove(), 500);
-  }, 3000);
+  successDiv.innerHTML = `✅ ${message}`;
+  document.body.appendChild(successDiv);
+  setTimeout(() => successDiv.remove(), 3000);
 }
 
 const tables = {
-"1": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 7 ГОСТЕЙ",
-"2": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ",
-"3": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ",
-"4": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ",
-"5": "✨ ОТКРЫТАЯ ЗОНА БЕЗ ШТОРОК\n👥 ДО 5 ГОСТЕЙ",
-"6": "🪑 КОМПАКТНЫЙ СТОЛ\n👥 ДО 3 ГОСТЕЙ",
-"VIP": "⭐ VIP КОМНАТА (ДЕПОЗИТНАЯ)\n👑 ОБСЛУЖИВАНИЕ ЧЕРЕЗ АДМИНИСТРАТОРА"
+"1": "🍷 ПРИВАТНАЯ ЗОНА\n👥 ДО 7 ГОСТЕЙ | ⏱ МИНИМУМ 2-3 ЧАСА",
+"2": "🍷 ПРИВАТНАЯ ЗОНА\n👥 ДО 5 ГОСТЕЙ | ⏱ МИНИМУМ 2-3 ЧАСА",
+"3": "🍷 ПРИВАТНАЯ ЗОНА\n👥 ДО 5 ГОСТЕЙ | ⏱ МИНИМУМ 2-3 ЧАСА",
+"4": "🍷 ПРИВАТНАЯ ЗОНА\n👥 ДО 5 ГОСТЕЙ | ⏱ МИНИМУМ 2-3 ЧАСА",
+"5": "✨ ОТКРЫТАЯ ЗОНА\n👥 ДО 5 ГОСТЕЙ | ⏱ МИНИМУМ 2-3 ЧАСА",
+"6": "🪑 КОМПАКТНЫЙ СТОЛ\n👥 ДО 3 ГОСТЕЙ | ⏱ МИНИМУМ 2-3 ЧАСА",
+"VIP": "⭐ VIP КОМНАТА\n👑 ЧЕРЕЗ АДМИНИСТРАТОРА | ⏱ МИНИМУМ 3-4 ЧАСА"
 };
 
-const TABLE_CAPACITY = {
-"1": 7, "2": 5, "3": 5, "4": 5, "5": 5, "6": 3, "VIP": 20
-};
+const TABLE_CAPACITY = {"1": 7, "2": 5, "3": 5, "4": 5, "5": 5, "6": 3, "VIP": 20};
 
 dateInput.min = new Date().toISOString().split("T")[0];
 dateInput.value = new Date().toISOString().split("T")[0];
 
-document.querySelectorAll(".table").forEach(el => {
-el.onclick = () => {
-if(el.classList.contains("disabled")) return;
-document.querySelectorAll(".table").forEach(t => t.classList.remove("selected"));
-el.classList.add("selected");
-selectedTable = el.dataset.table;
-tableInfo.innerText = tables[selectedTable];
-loadTimes();
-suggestionBox.style.display = "none";
-blockedWarning.style.display = "none";
-};
-});
+// Обновляем режим работы при загрузке
+updateWorkingHoursDisplay(dateInput.value);
 
-function generateTimes(date) {
-let times = [];
-let day = new Date(date).getDay();
-let end = (day === 5 || day === 6) ? 24 : 23;
-for(let h = 13; h < end; h++) {
-times.push(`${String(h).padStart(2,'0')}:00`);
-times.push(`${String(h).padStart(2,'0')}:30`);
+// Загрузка всех занятых времен для всех столов
+async function loadAllBusyTimes(date) {
+  try {
+    let allTables = ["1", "2", "3", "4", "5", "6"];
+    let busyData = {};
+    
+    for (let table of allTables) {
+      let res = await fetch(`${API}/busy_times?date=${date}&table=${table}`);
+      let busy = await res.json();
+      busyData[table] = Array.isArray(busy) ? busy : [];
+    }
+    
+    return busyData;
+  } catch(e) {
+    console.error(e);
+    return {};
+  }
 }
-return times;
-}
+
+document.querySelectorAll(".table").forEach(el => {
+  el.onclick = async () => {
+    if(el.classList.contains("disabled")) return;
+    document.querySelectorAll(".table").forEach(t => t.classList.remove("selected"));
+    el.classList.add("selected");
+    selectedTable = el.dataset.table;
+    tableInfo.innerText = tables[selectedTable];
+    
+    if(selectedTable !== "VIP") {
+      await loadTimes();
+    }
+    suggestionBox.style.display = "none";
+    blockedWarning.style.display = "none";
+  };
+});
 
 async function loadTimes() {
-if(!dateInput.value || !selectedTable) return;
-try {
-let res = await fetch(`${API}/busy_times?date=${dateInput.value}&table=${selectedTable}`);
-let busy = await res.json();
-if(!Array.isArray(busy)) busy = [];
-currentBusyTimes[selectedTable] = busy;
-let allTimes = generateTimes(dateInput.value);
-let now = new Date();
-timeSelect.innerHTML = '<option value="">⏰ ВЫБЕРИТЕ ВРЕМЯ</option>';
-blockedTimes.clear();
-allTimes.forEach(t => {
-let [h,m] = t.split(":");
-let slot = new Date(dateInput.value);
-slot.setHours(h, m);
-if(slot < now) return;
-let isAvailable = !busy.includes(t);
-if(!isAvailable) {
-blockedTimes.add(t);
+  if(!dateInput.value || !selectedTable || selectedTable === "VIP") return;
+  
+  try {
+    let allBusy = await loadAllBusyTimes(dateInput.value);
+    let busyForTable = allBusy[selectedTable] || [];
+    let workingHours = getWorkingHours(dateInput.value);
+    
+    let availableTimes = generateTimesWithInterval(dateInput.value, busyForTable, workingHours);
+    let now = new Date();
+    
+    timeSelect.innerHTML = '<option value="">⏰ ВЫБЕРИТЕ ВРЕМЯ</option>';
+    
+    availableTimes.forEach(time => {
+      let [h,m] = time.split(":");
+      let slot = new Date(dateInput.value);
+      slot.setHours(h, m);
+      
+      if(slot >= now) {
+        let option = document.createElement("option");
+        option.value = time;
+        option.innerText = time + " (свободно)";
+        timeSelect.appendChild(option);
+      }
+    });
+    
+    if(availableTimes.length === 0) {
+      timeSelect.innerHTML = '<option value="">❌ НЕТ СВОБОДНЫХ ВРЕМЕН</option>';
+      showError(`На ${dateInput.value} нет свободных времен с учетом режима работы (${workingHours.text}) и 3-часового интервала между бронями`);
+    }
+    
+  } catch(e) {
+    console.error(e);
+  }
 }
-if(isAvailable) {
-let option = document.createElement("option");
-option.value = t;
-option.innerText = t;
-timeSelect.appendChild(option);
-}
-});
-} catch(e) { console.error(e); }
-}
-
-async function checkAvailability(table, date, time) {
-try {
-let res = await fetch(`${API}/busy_times?date=${date}&table=${table}`);
-let busy = await res.json();
-return !busy.includes(time);
-} catch(e) { return false; }
-}
-
-async function findAlternatives() {
-if(!dateInput.value || !selectedTable || !timeSelect.value) return null;
-let guests = parseInt(guestsInput.value) || 1;
-let alternatives = [];
-let allTables = Object.keys(TABLE_CAPACITY).filter(t => t !== "VIP");
-let selectedTime = timeSelect.value;
-let currentTimeBlocked = blockedTimes.has(selectedTime);
-
-if(currentTimeBlocked) {
-for(let table of allTables) {
-if(table === selectedTable) continue;
-if(TABLE_CAPACITY[table] < guests) continue;
-let isAvailable = await checkAvailability(table, dateInput.value, selectedTime);
-if(isAvailable) {
-alternatives.push({ table: table, time: selectedTime, type: "same_time" });
-}
-}
-}
-
-if(alternatives.length === 0) {
-let allTimes = generateTimes(dateInput.value);
-let now = new Date();
-for(let table of allTables) {
-if(TABLE_CAPACITY[table] < guests) continue;
-for(let time of allTimes) {
-let [h,m] = time.split(":");
-let slot = new Date(dateInput.value);
-slot.setHours(h, m);
-if(slot < now) continue;
-let isAvailable = await checkAvailability(table, dateInput.value, time);
-if(isAvailable) {
-alternatives.push({ table: table, time: time, type: "different_time" });
-if(alternatives.length >= 5) break;
-}
-}
-if(alternatives.length >= 5) break;
-}
-}
-return alternatives;
-}
-
-async function showSuggestions() {
-if(!selectedTable || !dateInput.value || !timeSelect.value) return;
-suggestionsDiv.innerHTML = '<div class="loading">🔄 ПОИСК АЛЬТЕРНАТИВ...</div>';
-suggestionBox.style.display = "block";
-let alternatives = await findAlternatives();
-if(!alternatives || alternatives.length === 0) {
-suggestionsDiv.innerHTML = '<div style="text-align:center;color:#888;">😔 НЕТ СВОБОДНЫХ АЛЬТЕРНАТИВ</div>';
-return;
-}
-let html = '';
-alternatives.forEach((alt, index) => {
-let typeText = alt.type === "same_time" ? "🕐 ТО ЖЕ ВРЕМЯ" : "🕐 ДРУГОЕ ВРЕМЯ";
-html += `
-<div class="suggestion-item" onclick="selectAlternative(${index})">
-<div>
-<strong>СТОЛ ${alt.table}</strong><br>
-<small>${typeText}</small>
-</div>
-<div class="suggestion-time">${alt.time}</div>
-</div>
-`;
-});
-suggestionsDiv.innerHTML = html;
-window.selectAlternative = (index) => {
-let alt = alternatives[index];
-document.querySelectorAll(".suggestion-item").forEach(item => item.classList.remove("selected"));
-event.target.closest('.suggestion-item').classList.add("selected");
-suggestedOption = alt;
-};
-}
-
-function applyAlternative() {
-if(!suggestedOption) return false;
-document.querySelector(`.table[data-table="${suggestedOption.table}"]`).click();
-timeSelect.value = suggestedOption.time;
-suggestionBox.style.display = "none";
-blockedWarning.style.display = "none";
-suggestedOption = null;
-return true;
-}
-
-phoneInput.addEventListener("input", () => {
-let v = phoneInput.value.replace(/\D/g,"");
-if(!v.startsWith("7")) v = "7" + v;
-v = v.slice(0,11);
-phoneInput.value = "+" + v;
-});
 
 dateInput.addEventListener("change", () => {
-loadTimes();
-suggestionBox.style.display = "none";
-blockedWarning.style.display = "none";
+  updateWorkingHoursDisplay(dateInput.value);
+  if(selectedTable && selectedTable !== "VIP") loadTimes();
+  suggestionBox.style.display = "none";
+  blockedWarning.style.display = "none";
 });
 
-timeSelect.addEventListener("change", () => {
-if(timeSelect.value) {
-if(blockedTimes.has(timeSelect.value)) {
-blockedWarning.style.display = "block";
-showSuggestions();
-} else {
-blockedWarning.style.display = "none";
-suggestionBox.style.display = "none";
-}
-} else {
-blockedWarning.style.display = "none";
-suggestionBox.style.display = "none";
-}
-});
-
-guestsInput.addEventListener("change", () => {
-if(selectedTable) {
-let guests = parseInt(guestsInput.value) || 1;
-if(guests > TABLE_CAPACITY[selectedTable]) {
-showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ МАКСИМУМ ${TABLE_CAPACITY[selectedTable]} ГОСТЕЙ`, guestsInput);
-}
-}
+phoneInput.addEventListener("input", () => {
+  let v = phoneInput.value.replace(/\D/g,"");
+  if(!v.startsWith("7")) v = "7" + v;
+  v = v.slice(0,11);
+  phoneInput.value = "+" + v;
 });
 
 bookBtn.onclick = async () => {
-if(!selectedTable) { showError("ВЫБЕРИТЕ СТОЛ", document.querySelector('.tables')); return; }
-if(selectedTable === "VIP") { showError("VIP БРОНИРУЕТСЯ ЧЕРЕЗ АДМИНИСТРАТОРА\n📞 ПОЗВОНИТЕ: +7‒913‒432‒01‒01", bookBtn); return; }
-if(!dateInput.value) { showError("ВЫБЕРИТЕ ДАТУ", dateInput); return; }
-if(!timeSelect.value) { showError("ВЫБЕРИТЕ ВРЕМЯ", timeSelect); return; }
-let nameVal = nameInput.value.trim();
-let phoneVal = phoneInput.value;
-let guestsVal = parseInt(guestsInput.value || 0);
-if(!nameVal) { showError("ВВЕДИТЕ ВАШЕ ИМЯ", nameInput); return; }
-if(phoneVal.length !== 12) { showError("ВВЕДИТЕ КОРРЕКТНЫЙ НОМЕР (+7XXXXXXXXXX)", phoneInput); return; }
-if(guestsVal < 1) { showError("УКАЖИТЕ КОЛИЧЕСТВО ГОСТЕЙ", guestsInput); return; }
-if(guestsVal > TABLE_CAPACITY[selectedTable]) {
-showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ МАКСИМУМ ${TABLE_CAPACITY[selectedTable]} ГОСТЕЙ`, guestsInput);
-return;
-}
-if(blockedTimes.has(timeSelect.value)) {
-showError("ЭТО ВРЕМЯ УЖЕ ЗАБРОНИРОВАНО И ОЖИДАЕТ ГОСТЕЙ!\n💡 ВЫБЕРИТЕ ДРУГОЕ ВРЕМЯ ИЛИ СТОЛ", bookBtn);
-showSuggestions();
-return;
-}
-let data = {
-name: nameVal,
-phone: phoneVal,
-guests: guestsVal,
-table: selectedTable,
-date: dateInput.value,
-time: timeSelect.value,
-user_id: tg.initDataUnsafe?.user?.id || 0
+  if(!selectedTable) { showError("ВЫБЕРИТЕ СТОЛ"); return; }
+  if(selectedTable === "VIP") { showError("VIP бронируется через администратора\n📞 +7‒913‒432‒01‒01"); return; }
+  if(!dateInput.value) { showError("ВЫБЕРИТЕ ДАТУ"); return; }
+  if(!timeSelect.value) { showError("ВЫБЕРИТЕ ВРЕМЯ"); return; }
+  
+  let nameVal = nameInput.value.trim();
+  let phoneVal = phoneInput.value;
+  let guestsVal = parseInt(guestsInput.value || 0);
+  let selectedTime = timeSelect.value;
+  let workingHours = getWorkingHours(dateInput.value);
+  
+  if(!nameVal) { showError("ВВЕДИТЕ ИМЯ", nameInput); return; }
+  if(phoneVal.length !== 12) { showError("НЕВЕРНЫЙ НОМЕР (+7XXXXXXXXXX)", phoneInput); return; }
+  if(guestsVal < 1) { showError("УКАЖИТЕ КОЛИЧЕСТВО ГОСТЕЙ", guestsInput); return; }
+  if(guestsVal > TABLE_CAPACITY[selectedTable]) {
+    showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ ${TABLE_CAPACITY[selectedTable]} ГОСТЕЙ`, guestsInput);
+    return;
+  }
+  
+  // Проверка времени работы
+  let [hours, minutes] = selectedTime.split(':').map(Number);
+  if (hours < workingHours.start || hours >= workingHours.end) {
+    showError(`⏰ РЕСТОРАН РАБОТАЕТ: ${workingHours.text}\nВыберите время в рабочие часы`);
+    return;
+  }
+  
+  // Проверяем интервал с существующими бронями
+  let allBusy = await loadAllBusyTimes(dateInput.value);
+  let busyForTable = allBusy[selectedTable] || [];
+  
+  let intervalCheck = checkTimeInterval(busyForTable, selectedTime, 180);
+  
+  if(!intervalCheck.allowed) {
+    showError(`${intervalCheck.reason}\n\n💡 Выберите другое время (минимум через 3 часа после предыдущей брони)`);
+    await loadTimes();
+    return;
+  }
+  
+  let data = {
+    name: nameVal,
+    phone: phoneVal,
+    guests: guestsVal,
+    table: selectedTable,
+    date: dateInput.value,
+    time: selectedTime,
+    user_id: tg.initDataUnsafe?.user?.id || 0
+  };
+  
+  try {
+    let res = await fetch(API + "/booking", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(data)
+    });
+    let result = await res.json();
+    
+    if(result.error === "busy" || result.detail === "Time slot already booked") {
+      showError("СТОЛ УЖЕ ЗАНЯТ В ЭТО ВРЕМЯ");
+      await loadTimes();
+      return;
+    }
+    
+    if(result.ok || result.id) {
+      tg.sendData(JSON.stringify(data));
+      showSuccess(`БРОНЬ СОЗДАНА!\n🪑 Стол ${selectedTable}\n⏰ ${selectedTime}\n👤 ${nameVal}\n\n⏱ Минимальное время посещения: 2-3 часа\n🏠 Ресторан работает: ${workingHours.text}`);
+      
+      nameInput.value = "";
+      guestsInput.value = "";
+      timeSelect.value = "";
+      document.querySelectorAll(".table").forEach(t => t.classList.remove("selected"));
+      selectedTable = null;
+      tableInfo.innerText = "✨ ВЫБЕРИТЕ СТОЛ ДЛЯ БРОНИРОВАНИЯ";
+      await loadTimes();
+    } else {
+      showError("ОШИБКА: " + (result.detail || "НЕИЗВЕСТНАЯ ОШИБКА"));
+    }
+  } catch(e) {
+    console.error(e);
+    showError("ОШИБКА СОЕДИНЕНИЯ С СЕРВЕРОМ");
+  }
 };
-try {
-let res = await fetch(API + "/booking", {
-method: "POST",
-headers: {"Content-Type": "application/json"},
-body: JSON.stringify(data)
-});
-let result = await res.json();
-if(result.error === "busy" || result.detail === "Time slot already booked") {
-showError("СТОЛ УЖЕ ЗАНЯТ В ЭТО ВРЕМЯ", bookBtn);
-blockedWarning.style.display = "block";
-await showSuggestions();
-return;
-}
-if(result.ok || result.id) {
-tg.sendData(JSON.stringify(data));
-const successDiv = document.createElement('div');
-successDiv.style.cssText = `
-position: fixed;
-top: 20px;
-left: 50%;
-transform: translateX(-50%);
-background: rgba(0, 0, 0, 0.95);
-color: #8B0000;
-padding: 12px 20px;
-border-radius: 10px;
-z-index: 10000;
-font-size: 14px;
-font-weight: bold;
-box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-animation: slideDown 0.3s ease-out;
-border-left: 3px solid #8B0000;
-backdrop-filter: blur(10px);
-`;
-successDiv.innerHTML = `✅ БРОНЬ УСПЕШНО СОЗДАНА!\n📱 ВЫ ПОЛУЧИТЕ УВЕДОМЛЕНИЕ В TELEGRAM`;
-document.body.appendChild(successDiv);
-setTimeout(() => successDiv.remove(), 3000);
-nameInput.value = "";
-guestsInput.value = "";
-timeSelect.value = "";
-suggestionBox.style.display = "none";
-blockedWarning.style.display = "none";
-document.querySelectorAll(".table").forEach(t => t.classList.remove("selected"));
-selectedTable = null;
-tableInfo.innerText = "✨ ВЫБЕРИТЕ СТОЛ ДЛЯ БРОНИРОВАНИЯ";
-await loadTimes();
-} else {
-showError("ОШИБКА: " + (result.detail || "НЕИЗВЕСТНАЯ ОШИБКА"), bookBtn);
-}
-} catch(e) {
-console.error(e);
-showError("ОШИБКА СОЕДИНЕНИЯ С СЕРВЕРОМ", bookBtn);
-}
-};
-});
 </script>
 </body>
 </html>
