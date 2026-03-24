@@ -42,7 +42,7 @@ class Booking(Base):
     date = Column(String)
     time = Column(String)
     status = Column(String, default="active")
-    chat_id = Column(String, nullable=True)  # Telegram chat_id гостя
+    chat_id = Column(String, nullable=True)
 
 # Создаем таблицы
 try:
@@ -58,20 +58,25 @@ except Exception as e:
 
 app = FastAPI()
 
-# CORS настройки
+# 🔥 ПРАВИЛЬНАЯ НАСТРОЙКА CORS - ДОБАВЛЕН ВАШ ДОМЕН
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://dani1776-7.github.io",
+        "https://danil776-7.github.io",      # ваш GitHub Pages
+        "https://dani1776-7.github.io",      # альтернативный вариант
         "http://localhost:5500",
         "http://127.0.0.1:5500",
-        "*"
+        "*"  # временно для теста
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
     expose_headers=["*"],
 )
+
+# =====================
+# OPTIONS обработчик для всех маршрутов
+# =====================
 
 @app.options("/{path:path}")
 async def options_handler(path: str):
@@ -301,11 +306,13 @@ def health():
 def bookings_by_date(date: str):
     db = SessionLocal()
     try:
+        print(f"📅 Запрос броней на дату: {date}")
         date = normalize_date(date)
         data = db.query(Booking).filter(
             Booking.date == date,
             Booking.status == "active"
         ).all()
+        print(f"✅ Найдено броней: {len(data)}")
         return [
             {
                 "id": b.id,
@@ -319,6 +326,9 @@ def bookings_by_date(date: str):
             }
             for b in data
         ]
+    except Exception as e:
+        print(f"❌ Ошибка: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
 
