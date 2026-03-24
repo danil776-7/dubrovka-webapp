@@ -46,10 +46,8 @@ class Booking(Base):
 
 # Создаем таблицы и проверяем наличие колонки chat_id
 try:
-    # Проверяем и добавляем колонку chat_id если её нет
     with engine.connect() as conn:
         try:
-            # Проверяем существует ли колонка chat_id
             result = conn.execute(text("""
                 SELECT column_name 
                 FROM information_schema.columns 
@@ -141,7 +139,7 @@ completion_timers = {}
 
 def send_telegram_to_user(chat_id, text):
     """Отправка сообщения пользователю (гостю)"""
-    if not chat_id or chat_id == "" or chat_id == "None":
+    if not chat_id or chat_id == "" or chat_id == "0" or chat_id == "None":
         print(f"⚠️ Нет chat_id, сообщение не отправлено")
         return False
     try:
@@ -158,7 +156,7 @@ def send_telegram_to_user(chat_id, text):
             print(f"✅ Сообщение отправлено гостю {chat_id}")
             return True
         else:
-            print(f"❌ Ошибка отправки гостю: {response.status_code} - {response.text}")
+            print(f"❌ Ошибка отправки гостю: {response.status_code}")
             return False
     except Exception as e:
         print(f"❌ Ошибка: {e}")
@@ -178,8 +176,6 @@ def send_telegram_to_admin(text):
         )
         if response.status_code == 200:
             print("✅ Уведомление отправлено админу")
-        else:
-            print(f"❌ Ошибка админу: {response.status_code}")
     except Exception as e:
         print("❌ Ошибка:", e)
 
@@ -198,8 +194,9 @@ def send_booking_confirmation(booking):
         f"📞 <b>Телефон:</b> +7‒913‒432‒01‒01\n\n"
         f"❤️ Ждем вас в Dubrovka!"
     )
-    if booking.chat_id and booking.chat_id != "" and booking.chat_id != "None":
+    if booking.chat_id and booking.chat_id != "" and booking.chat_id != "0" and booking.chat_id != "None":
         send_telegram_to_user(booking.chat_id, message)
+        print(f"📱 Подтверждение отправлено гостю {booking.name}")
     else:
         print(f"⚠️ У гостя {booking.name} нет chat_id, подтверждение не отправлено")
 
@@ -216,9 +213,9 @@ def send_reminder_to_guest(booking):
         f"📞 <b>По вопросам:</b> +7‒913‒432‒01‒01\n\n"
         f"🌟 Пожалуйста, не опаздывайте!"
     )
-    if booking.chat_id and booking.chat_id != "" and booking.chat_id != "None":
+    if booking.chat_id and booking.chat_id != "" and booking.chat_id != "0" and booking.chat_id != "None":
         send_telegram_to_user(booking.chat_id, message)
-        print(f"⏰ Напоминание отправлено гостю для брони {booking.id}")
+        print(f"⏰ Напоминание отправлено гостю {booking.name} для брони {booking.id}")
     else:
         # Если нет chat_id, отправляем админу напоминание что нужно позвонить
         send_telegram_to_admin(
@@ -240,7 +237,7 @@ def send_thank_you_to_guest(booking):
         f"🔗 <a href='{TWO_GIS_REVIEW_URL}'>Написать отзыв в 2ГИС</a>\n\n"
         f"❤️ Ждем вас снова в Dubrovka!"
     )
-    if booking.chat_id and booking.chat_id != "" and booking.chat_id != "None":
+    if booking.chat_id and booking.chat_id != "" and booking.chat_id != "0" and booking.chat_id != "None":
         send_telegram_to_user(booking.chat_id, message)
         print(f"📱 Благодарность отправлена гостю {booking.name}")
     else:
@@ -268,7 +265,7 @@ def schedule_reminder(booking):
             timer.daemon = True
             timer.start()
             reminder_timers[booking.id] = timer
-            print(f"⏰ Напоминание запланировано на {reminder_time}")
+            print(f"⏰ Напоминание запланировано на {reminder_time} для брони {booking.id}")
         else:
             print(f"⚠️ Время напоминания уже прошло для брони {booking.id}")
     except Exception as e:
@@ -445,10 +442,10 @@ def create_booking(data: dict):
         db.commit()
         db.refresh(booking)
 
-        # Отправляем подтверждение брони гостю
+        # 🔥 Отправляем подтверждение брони гостю
         send_booking_confirmation(booking)
         
-        # Планируем напоминание за 30 минут
+        # 🔥 Планируем напоминание за 30 минут
         schedule_reminder(booking)
         
         # Планируем авто-завершение через 4 часа
@@ -517,7 +514,7 @@ def done(id: int):
             f"⏰ <b>Время:</b> {booking.time}"
         )
         
-        # Отправляем благодарность гостю
+        # 🔥 Отправляем благодарность гостю со ссылкой на отзыв
         send_thank_you_to_guest(booking)
 
         return {"ok": True, "message": "Booking completed"}
@@ -561,7 +558,7 @@ def cancel(id: int):
         )
         
         # Уведомляем гостя об отмене
-        if booking.chat_id and booking.chat_id != "" and booking.chat_id != "None":
+        if booking.chat_id and booking.chat_id != "" and booking.chat_id != "0" and booking.chat_id != "None":
             cancel_message = (
                 f"❌ <b>Бронь отменена</b>\n\n"
                 f"Уважаемый(ая) {booking.name},\n\n"
