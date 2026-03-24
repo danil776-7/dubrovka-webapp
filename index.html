@@ -3,9 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Dubrovka Lounge</title>
-
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
@@ -34,9 +32,12 @@ background:#222;
 border-radius:10px;
 text-align:center;
 cursor:pointer;
+transition:all 0.3s;
 }
 
 .table.selected{background:#d6b36a;color:black;}
+.table.suggested{background:#d6b36a44;border:1px solid #d6b36a;}
+.table.disabled{opacity:0.5;cursor:not-allowed;background:#333;}
 
 .desc{
 background:#111;
@@ -52,6 +53,8 @@ padding:12px;
 margin:6px 0;
 border-radius:10px;
 border:none;
+background:#222;
+color:#fff;
 }
 
 button{
@@ -61,6 +64,47 @@ background:#d6b36a;
 border:none;
 border-radius:10px;
 cursor:pointer;
+font-weight:bold;
+margin-top:10px;
+}
+
+button:hover{background:#c4a25a;}
+button:disabled{opacity:0.5;cursor:not-allowed;}
+
+.suggestion-box{
+background:#1a1a1a;
+padding:15px;
+border-radius:10px;
+margin-top:15px;
+display:none;
+}
+
+.suggestion-box h4{margin:0 0 10px 0;color:#d6b36a;}
+.suggestion-item{
+padding:12px;
+margin:8px 0;
+background:#222;
+border-radius:8px;
+cursor:pointer;
+transition:all 0.2s;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.suggestion-item:hover{background:#333;}
+.suggestion-item.selected{background:#d6b36a;color:black;}
+.suggestion-time{font-weight:bold;color:#d6b36a;}
+.suggestion-table{background:#333;padding:2px 8px;border-radius:12px;}
+
+.blocked-warning{
+background:#8b0000;
+padding:10px;
+border-radius:8px;
+margin-top:10px;
+display:none;
+color:#fff;
+text-align:center;
 }
 
 .footer{
@@ -78,21 +122,25 @@ background:#222;
 border-radius:8px;
 text-decoration:none;
 color:white;
+text-align:center;
+}
+
+.loading{
+text-align:center;
+padding:10px;
+color:#d6b36a;
 }
 </style>
 </head>
 
 <body>
-
 <video autoplay muted loop playsinline>
 <source src="bg.mp4" type="video/mp4">
 </video>
-
 <div class="overlay"></div>
 
 <div class="container">
 <div class="card">
-
 <h2>🍽 Dubrovka Lounge</h2>
 
 <div class="tables">
@@ -108,38 +156,41 @@ color:white;
 <div id="tableInfo" class="desc">Выберите стол</div>
 
 <input id="date" type="date">
-
 <select id="time">
 <option value="">Выберите время</option>
 </select>
-
-<input id="guests" placeholder="Количество гостей">
+<input id="guests" type="number" placeholder="Количество гостей" min="1" max="20">
 <input id="name" placeholder="Имя">
 <input id="phone" placeholder="+7999" maxlength="12">
 
 <button id="bookBtn">Забронировать</button>
 
+<div id="blockedWarning" class="blocked-warning">
+⚠️ Это время временно недоступно для бронирования<br>
+<small>Стол забронирован и ожидает гостей</small>
+</div>
+
+<div id="suggestionBox" class="suggestion-box">
+<h4>💡 Альтернативные варианты</h4>
+<div id="suggestions"></div>
+</div>
+
 <div class="footer">
 📍 Ермакова 11<br>
 📞 +7‒913‒432‒01‒01
-
 <a class="map-btn" href="https://2gis.ru/novokuznetsk/geo/70000001067987554" target="_blank">
-Открыть в 2ГИС
+🗺 Открыть в 2ГИС
 </a>
 </div>
-
 </div>
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-
 const API = "https://dubrovka-webapp-production-a00c.up.railway.app";
-
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-/* элементы */
 const phoneInput = document.getElementById("phone");
 const nameInput = document.getElementById("name");
 const guestsInput = document.getElementById("guests");
@@ -147,10 +198,15 @@ const dateInput = document.getElementById("date");
 const timeSelect = document.getElementById("time");
 const tableInfo = document.getElementById("tableInfo");
 const bookBtn = document.getElementById("bookBtn");
+const suggestionBox = document.getElementById("suggestionBox");
+const suggestionsDiv = document.getElementById("suggestions");
+const blockedWarning = document.getElementById("blockedWarning");
 
 let selectedTable = null;
+let currentBusyTimes = {};
+let suggestedOption = null;
+let blockedTimes = new Set();
 
-/* описание столов */
 const tables = {
 "1": "Приватная зона со шторками и PlayStation\nДо 7 гостей",
 "2": "Приватная зона со шторками и PlayStation\nДо 5 гостей",
@@ -161,164 +217,256 @@ const tables = {
 "VIP": "VIP комната (депозитная)\nЧерез администратора"
 };
 
-/* дата */
+const TABLE_CAPACITY = {
+"1": 7, "2": 5, "3": 5, "4": 5, "5": 5, "6": 3, "VIP": 20
+};
+
 dateInput.min = new Date().toISOString().split("T")[0];
 
-/* выбор стола */
-document.querySelectorAll(".table").forEach(el=>{
-el.onclick=()=>{
-document.querySelectorAll(".table").forEach(t=>t.classList.remove("selected"));
+document.querySelectorAll(".table").forEach(el => {
+el.onclick = () => {
+if(el.classList.contains("disabled")) return;
+document.querySelectorAll(".table").forEach(t => t.classList.remove("selected"));
 el.classList.add("selected");
-
-selectedTable=el.dataset.table;
-tableInfo.innerText=tables[selectedTable];
-
+selectedTable = el.dataset.table;
+tableInfo.innerText = tables[selectedTable];
 loadTimes();
+suggestionBox.style.display = "none";
+blockedWarning.style.display = "none";
 };
 });
 
-/* генерация времени */
-function generateTimes(date){
-let times=[];
-let day=new Date(date).getDay();
-
-let end=23;
-if(day===5||day===6) end=24;
-
-for(let h=13;h<end;h++){
+function generateTimes(date) {
+let times = [];
+let day = new Date(date).getDay();
+let end = (day === 5 || day === 6) ? 24 : 23;
+for(let h = 13; h < end; h++) {
 times.push(`${String(h).padStart(2,'0')}:00`);
 times.push(`${String(h).padStart(2,'0')}:30`);
 }
-
 return times;
 }
 
-/* загрузка времени */
-async function loadTimes(){
-
-if(!dateInput.value||!selectedTable) return;
-
-try{
-
-let res=await fetch(`${API}/busy_times?date=${dateInput.value}&table=${selectedTable}`);
-let busy=await res.json();
-
-if(!Array.isArray(busy)) busy=[];
-
-let allTimes=generateTimes(dateInput.value);
-
-timeSelect.innerHTML='<option value="">Выберите время</option>';
-
-let now=new Date();
-
-allTimes.forEach(t=>{
-let [h,m]=t.split(":");
-
-let slot=new Date(dateInput.value);
-slot.setHours(h,m);
-
-if(slot<now) return;
-
-if(!busy.includes(t)){
-let option=document.createElement("option");
-option.value=t;
-option.innerText=t;
+async function loadTimes() {
+if(!dateInput.value || !selectedTable) return;
+try {
+let res = await fetch(`${API}/busy_times?date=${dateInput.value}&table=${selectedTable}`);
+let busy = await res.json();
+if(!Array.isArray(busy)) busy = [];
+currentBusyTimes[selectedTable] = busy;
+let allTimes = generateTimes(dateInput.value);
+let now = new Date();
+timeSelect.innerHTML = '<option value="">Выберите время</option>';
+blockedTimes.clear();
+allTimes.forEach(t => {
+let [h,m] = t.split(":");
+let slot = new Date(dateInput.value);
+slot.setHours(h, m);
+if(slot < now) return;
+let isAvailable = !busy.includes(t);
+if(!isAvailable) {
+blockedTimes.add(t);
+}
+if(isAvailable) {
+let option = document.createElement("option");
+option.value = t;
+option.innerText = t;
 timeSelect.appendChild(option);
 }
 });
-
-}catch(e){
-console.error(e);
-}
+} catch(e) { console.error(e); }
 }
 
-dateInput.addEventListener("change", loadTimes);
+async function checkAvailability(table, date, time) {
+try {
+let res = await fetch(`${API}/busy_times?date=${date}&table=${table}`);
+let busy = await res.json();
+return !busy.includes(time);
+} catch(e) { return false; }
+}
 
-/* телефон */
-phoneInput.addEventListener("input",()=>{
-let v=phoneInput.value.replace(/\D/g,"");
-if(!v.startsWith("7")) v="7"+v;
-v=v.slice(0,11);
-phoneInput.value="+"+v;
+async function findAlternatives() {
+if(!dateInput.value || !selectedTable || !timeSelect.value) return null;
+let guests = parseInt(guestsInput.value) || 1;
+let alternatives = [];
+let allTables = Object.keys(TABLE_CAPACITY).filter(t => t !== "VIP");
+let selectedTime = timeSelect.value;
+let currentTimeBlocked = blockedTimes.has(selectedTime);
+
+if(currentTimeBlocked) {
+for(let table of allTables) {
+if(table === selectedTable) continue;
+if(TABLE_CAPACITY[table] < guests) continue;
+let isAvailable = await checkAvailability(table, dateInput.value, selectedTime);
+if(isAvailable) {
+alternatives.push({ table: table, time: selectedTime, type: "same_time" });
+}
+}
+}
+
+if(alternatives.length === 0) {
+let allTimes = generateTimes(dateInput.value);
+let now = new Date();
+for(let table of allTables) {
+if(TABLE_CAPACITY[table] < guests) continue;
+for(let time of allTimes) {
+let [h,m] = time.split(":");
+let slot = new Date(dateInput.value);
+slot.setHours(h, m);
+if(slot < now) continue;
+let isAvailable = await checkAvailability(table, dateInput.value, time);
+if(isAvailable) {
+alternatives.push({ table: table, time: time, type: "different_time" });
+if(alternatives.length >= 5) break;
+}
+}
+if(alternatives.length >= 5) break;
+}
+}
+return alternatives;
+}
+
+async function showSuggestions() {
+if(!selectedTable || !dateInput.value || !timeSelect.value) return;
+suggestionsDiv.innerHTML = '<div class="loading">🔄 Поиск альтернатив...</div>';
+suggestionBox.style.display = "block";
+let alternatives = await findAlternatives();
+if(!alternatives || alternatives.length === 0) {
+suggestionsDiv.innerHTML = '<div style="text-align:center;color:#888;">😔 Нет свободных альтернатив</div>';
+return;
+}
+let html = '';
+alternatives.forEach((alt, index) => {
+let typeText = alt.type === "same_time" ? "🕐 То же время" : "🕐 Другое время";
+html += `
+<div class="suggestion-item" onclick="selectAlternative(${index})">
+<div>
+<strong>Стол ${alt.table}</strong><br>
+<small>${typeText}</small>
+</div>
+<div class="suggestion-time">${alt.time}</div>
+</div>
+`;
 });
-
-/* кнопка */
-bookBtn.onclick = async ()=>{
-
-console.log("КНОПКА НАЖАТА");
-
-if(!selectedTable){
-alert("Выберите стол");
-return;
-}
-
-if(selectedTable==="VIP"){
-alert("VIP бронируется через администратора");
-return;
-}
-
-if(!dateInput.value){
-alert("Выберите дату");
-return;
-}
-
-if(!timeSelect.value){
-alert("Выберите время");
-return;
-}
-
-let nameVal=nameInput.value.trim();
-let phoneVal=phoneInput.value;
-let guestsVal=parseInt(guestsInput.value||0);
-
-if(!nameVal){
-alert("Введите имя");
-return;
-}
-
-if(phoneVal.length!==12){
-alert("Введите корректный номер");
-return;
-}
-
-let data={
-name:nameVal,
-phone:phoneVal,
-guests:guestsVal,
-table:selectedTable,
-date:dateInput.value,
-time:timeSelect.value,
-user_id: tg.initDataUnsafe?.user?.id||0
+suggestionsDiv.innerHTML = html;
+window.selectAlternative = (index) => {
+let alt = alternatives[index];
+document.querySelectorAll(".suggestion-item").forEach(item => item.classList.remove("selected"));
+event.target.closest('.suggestion-item').classList.add("selected");
+suggestedOption = alt;
 };
-
-try{
-
-let res=await fetch(API+"/booking",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify(data)
-});
-
-let result=await res.json();
-
-if(result.error){
-alert("❌ Стол уже занят");
-return;
 }
 
+function applyAlternative() {
+if(!suggestedOption) return false;
+document.querySelector(`.table[data-table="${suggestedOption.table}"]`).click();
+timeSelect.value = suggestedOption.time;
+suggestionBox.style.display = "none";
+blockedWarning.style.display = "none";
+suggestedOption = null;
+return true;
+}
+
+phoneInput.addEventListener("input", () => {
+let v = phoneInput.value.replace(/\D/g,"");
+if(!v.startsWith("7")) v = "7" + v;
+v = v.slice(0,11);
+phoneInput.value = "+" + v;
+});
+
+dateInput.addEventListener("change", () => {
+loadTimes();
+suggestionBox.style.display = "none";
+blockedWarning.style.display = "none";
+});
+
+timeSelect.addEventListener("change", () => {
+if(timeSelect.value) {
+if(blockedTimes.has(timeSelect.value)) {
+blockedWarning.style.display = "block";
+showSuggestions();
+} else {
+blockedWarning.style.display = "none";
+suggestionBox.style.display = "none";
+}
+} else {
+blockedWarning.style.display = "none";
+suggestionBox.style.display = "none";
+}
+});
+
+guestsInput.addEventListener("change", () => {
+if(selectedTable) {
+let guests = parseInt(guestsInput.value) || 1;
+if(guests > TABLE_CAPACITY[selectedTable]) {
+alert(`⚠️ Стол ${selectedTable} вмещает максимум ${TABLE_CAPACITY[selectedTable]} гостей`);
+}
+}
+});
+
+bookBtn.onclick = async () => {
+if(!selectedTable) { alert("Выберите стол"); return; }
+if(selectedTable === "VIP") { alert("VIP бронируется через администратора"); return; }
+if(!dateInput.value) { alert("Выберите дату"); return; }
+if(!timeSelect.value) { alert("Выберите время"); return; }
+let nameVal = nameInput.value.trim();
+let phoneVal = phoneInput.value;
+let guestsVal = parseInt(guestsInput.value || 0);
+if(!nameVal) { alert("Введите имя"); return; }
+if(phoneVal.length !== 12) { alert("Введите корректный номер (+7XXXXXXXXXX)"); return; }
+if(guestsVal < 1) { alert("Укажите количество гостей"); return; }
+if(guestsVal > TABLE_CAPACITY[selectedTable]) {
+alert(`⚠️ Стол ${selectedTable} вмещает максимум ${TABLE_CAPACITY[selectedTable]} гостей`);
+return;
+}
+if(blockedTimes.has(timeSelect.value)) {
+alert("❌ Это время уже забронировано и ожидает гостей!\n\nВыберите другое время или стол");
+showSuggestions();
+return;
+}
+let data = {
+name: nameVal,
+phone: phoneVal,
+guests: guestsVal,
+table: selectedTable,
+date: dateInput.value,
+time: timeSelect.value,
+user_id: tg.initDataUnsafe?.user?.id || 0
+};
+try {
+let res = await fetch(API + "/booking", {
+method: "POST",
+headers: {"Content-Type": "application/json"},
+body: JSON.stringify(data)
+});
+let result = await res.json();
+if(result.error === "busy" || result.detail === "Time slot already booked") {
+alert("❌ Стол уже занят в это время");
+blockedWarning.style.display = "block";
+await showSuggestions();
+return;
+}
+if(result.ok || result.id) {
 tg.sendData(JSON.stringify(data));
-
-alert("✅ Бронь отправлена");
-
-}catch(e){
-console.error(e);
-alert("Ошибка соединения с сервером");
+alert("✅ Бронь успешно создана!\n\nВы получите уведомление в Telegram");
+nameInput.value = "";
+guestsInput.value = "";
+timeSelect.value = "";
+suggestionBox.style.display = "none";
+blockedWarning.style.display = "none";
+document.querySelectorAll(".table").forEach(t => t.classList.remove("selected"));
+selectedTable = null;
+tableInfo.innerText = "Выберите стол";
+await loadTimes();
+} else {
+alert("❌ Ошибка: " + (result.detail || "Неизвестная ошибка"));
 }
-
+} catch(e) {
+console.error(e);
+alert("❌ Ошибка соединения с сервером");
+}
 };
-
 });
 </script>
-
 </body>
 </html>
