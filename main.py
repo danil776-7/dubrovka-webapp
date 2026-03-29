@@ -1,12 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import create_engine, Column, Integer, String, text
+from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
-from datetime import datetime, timedelta
+from datetime import datetime
 import requests
 import os
-import threading
-import time
 
 # =====================
 # DATABASE
@@ -14,13 +12,10 @@ import time
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-engine = create_engine(
-    DATABASE_URL,
-    pool_pre_ping=True,
-    pool_size=5,
-    max_overflow=10
-)
+if not DATABASE_URL:
+    raise Exception("❌ DATABASE_URL не задан")
 
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
@@ -39,9 +34,7 @@ class Booking(Base):
     date = Column(String)
     time = Column(String)
     status = Column(String, default="active")
-    chat_id = Column(String, nullable=True)
 
-# создаем таблицы
 Base.metadata.create_all(bind=engine)
 
 # =====================
@@ -50,63 +43,30 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-# ✅ ПРАВИЛЬНЫЙ CORS
+# 🔥 ЖЁСТКИЙ CORS FIX (гарантирует работу)
+@app.middleware("http")
+async def cors_fix(request, call_next):
+    response = await call_next(request)
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    return response
+
+# дополнительный CORS (нормальный)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://danil776-7.github.io",
-        "http://localhost:5500",
-        "http://127.0.0.1:5500"
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # =====================
-# CONFIG (БЕЗОПАСНО)
+# CONFIG
 # =====================
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
-
-if not TELEGRAM_BOT_TOKEN:
-    raise Exception("❌ TELEGRAM_BOT_TOKEN не задан")
-
-if not ADMIN_CHAT_ID:
-    raise Exception("❌ ADMIN_CHAT_ID не задан")
-
-# =====================
-# LIMITS
-# =====================
-
-TABLE_LIMITS = {
-    "1": 7,
-    "2": 5,
-    "3": 5,
-    "4": 5,
-    "5": 5,
-    "6": 3,
-    "VIP": 20
-}
-
-# =====================
-# TELEGRAM
-# =====================
-
-def send_telegram(text):
-    try:
-        requests.post(
-            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
-            json={
-                "chat_id": ADMIN_CHAT_ID,
-                "text": text,
-                "parse_mode": "HTML"
-            },
-            timeout=5
-        )
-    except Exception as e:
-        print("Telegram error:", e)
 
 # =====================
 # HELPERS
@@ -118,24 +78,61 @@ def normalize_date(date_str):
     except:
         raise HTTPException(status_code=400, detail="Invalid date")
 
+def send_telegram(text):
+    if not TELEGRAM_BOT_TOKEN or not ADMIN_CHAT_ID:
+        print("⚠️ Telegram не настроен")
+        return
+
+    try:
+        requests.post(
+            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
+            json={
+                "chat_id": ADMIN_CHAT_ID,
+                "text": text
+            },
+            timeout=5
+        )
+    except Exception as e:
+        print("Telegram error:", e)
+
 # =====================
-# ENDPOINTS
+# TEST
+# =====================
+
+@app.get("/test")
+def test():
+    return {"status": "ok"}
+
+# =====================
+# ROOT
 # =====================
 
 @app.get("/")
 def root():
-    return {"status": "ok"}
+    return {"status": "running"}
+
+# =====================
+# BOOKINGS BY DATE
+# =====================
 
 @app.get("/bookings_by_date")
 def bookings_by_date(date: str):
     db = SessionLocal()
     try:
-        date = normalize_date(date)
+        print("👉 DATE:", date)
+
+        try:
+            date = normalize_date(date)
+        except Exception as e:
+            print("❌ DATE ERROR:", e)
+            return {"error": "invalid date"}
 
         data = db.query(Booking).filter(
             Booking.date == date,
             Booking.status == "active"
         ).all()
+
+        print("✅ FOUND:", len(data))
 
         return [
             {
@@ -150,8 +147,17 @@ def bookings_by_date(date: str):
             }
             for b in data
         ]
+
+    except Exception as e:
+        print("❌ SERVER ERROR:", e)
+        return {"error": str(e)}
+
     finally:
         db.close()
+
+# =====================
+# CREATE BOOKING
+# =====================
 
 @app.post("/booking")
 def create_booking(data: dict):
@@ -168,9 +174,6 @@ def create_booking(data: dict):
         time_ = data["time"]
         guests = int(data["guests"])
 
-        if guests > TABLE_LIMITS.get(table, 0):
-            raise HTTPException(status_code=400, detail="Too many guests")
-
         exists = db.query(Booking).filter(
             Booking.date == date,
             Booking.time == time_,
@@ -179,7 +182,7 @@ def create_booking(data: dict):
         ).first()
 
         if exists:
-            raise HTTPException(status_code=409, detail="Busy")
+            return {"error": True}
 
         booking = Booking(
             name=data["name"],
@@ -195,21 +198,22 @@ def create_booking(data: dict):
         db.refresh(booking)
 
         send_telegram(
-            f"🔥 Новая бронь\n"
-            f"{booking.name} | {booking.phone}\n"
-            f"{booking.date} {booking.time}\n"
-            f"Стол {booking.table}"
+            f"🔥 Новая бронь\n{booking.name} | {booking.phone}\n{booking.date} {booking.time}"
         )
 
         return {"ok": True, "id": booking.id}
 
-    except HTTPException:
-        raise
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        print("❌ ERROR:", e)
+        return {"error": str(e)}
+
     finally:
         db.close()
+
+# =====================
+# CANCEL
+# =====================
 
 @app.post("/cancel/{id}")
 def cancel(id: int):
@@ -221,11 +225,12 @@ def cancel(id: int):
         ).first()
 
         if not booking:
-            raise HTTPException(status_code=404, detail="Not found")
+            return {"error": True}
 
         booking.status = "cancelled"
         db.commit()
 
         return {"ok": True}
+
     finally:
         db.close()
