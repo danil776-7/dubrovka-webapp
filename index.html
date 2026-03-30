@@ -429,7 +429,7 @@ button:active {
 
   <div class="card">
     <div class="working-hours">
-      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 01:00 | ПТ-СБ: 12:00 - 02:00</span>
+      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 23:00 | ПТ-СБ: 12:00 - 00:00</span>
     </div>
     
     <h2>🍷 БРОНИРОВАНИЕ СТОЛОВ</h2>
@@ -518,26 +518,20 @@ if(tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
   if(user.last_name && nameInput.value) nameInput.value += " " + user.last_name;
 }
 
-// 🔥 РЕЖИМ РАБОТЫ: ВС-ЧТ: 12:00 - 01:00, ПТ-СБ: 12:00 - 02:00
+// 🔥 РЕЖИМ РАБОТЫ: ВС-ЧТ: 12:00 - 23:00, ПТ-СБ: 12:00 - 00:00
 function getWorkingHours(date) {
   const day = new Date(date).getDay();
   // 5 - пятница, 6 - суббота
   if (day === 5 || day === 6) {
-    return { start: 12, end: 26, text: "ПТ-СБ: 12:00 - 02:00" }; // 26 = 2 часа ночи (24 + 2)
+    return { start: 12, end: 24, text: "ПТ-СБ: 12:00 - 00:00" };
   } else {
-    return { start: 12, end: 25, text: "ВС-ЧТ: 12:00 - 01:00" }; // 25 = 1 час ночи (24 + 1)
+    return { start: 12, end: 23, text: "ВС-ЧТ: 12:00 - 23:00" };
   }
 }
 
 function timeToMinutes(timeStr) {
   let [hours, minutes] = timeStr.split(':').map(Number);
   return hours * 60 + minutes;
-}
-
-function minutesToTime(minutes) {
-  let hours = Math.floor(minutes / 60);
-  let mins = minutes % 60;
-  return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
 }
 
 // 🔥 ОСНОВНАЯ ЛОГИКА: блокировка времени с учетом 2 часов брони + 30 минут зазора перед следующей
@@ -549,7 +543,7 @@ function isTimeAvailable(existingTimes, newTime, sessionHours = 2, bufferBefore 
     let existingStart = timeToMinutes(existingTime);
     let existingEnd = existingStart + (sessionHours * 60);
     
-    // Если время пересекается или есть зазор меньше bufferBefore
+    // Если время пересекается
     if (newStart < existingEnd && newEnd > existingStart) {
       return { available: false, conflictTime: existingTime };
     }
@@ -566,10 +560,8 @@ function generateTimes(date) {
   let times = [];
   let workingHours = getWorkingHours(date);
   for(let h = workingHours.start; h < workingHours.end; h++) {
-    // Для времени после 24:00 показываем как 00:xx, 01:xx
-    let displayHour = h >= 24 ? h - 24 : h;
-    times.push(`${String(displayHour).padStart(2,'0')}:00`);
-    times.push(`${String(displayHour).padStart(2,'0')}:30`);
+    times.push(`${String(h).padStart(2,'0')}:00`);
+    times.push(`${String(h).padStart(2,'0')}:30`);
   }
   return times;
 }
@@ -587,11 +579,14 @@ function renderTimeSlots(allTimes, busyTimes, date) {
   allTimes.forEach(time => {
     let [h,m] = time.split(":");
     let slot = new Date(date);
-    // Для времени после полуночи (например 00:30) нужно правильно установить час
-    let hour = parseInt(h);
-    slot.setHours(hour, m);
+    slot.setHours(parseInt(h), m);
     let isPast = slot < now;
     let isBusy = busyTimes.includes(time);
+    
+    // Не показываем прошедшее время
+    if (isPast) {
+      return;
+    }
     
     // Проверяем доступность с учетом 2 часов брони + 30 минут зазора
     let availability = isTimeAvailable(sortedBusy, time, 2, 30);
@@ -601,10 +596,7 @@ function renderTimeSlots(allTimes, busyTimes, date) {
     let statusText = '';
     let onclick = '';
     
-    if (isPast) {
-      statusClass = 'busy';
-      statusText = ' (прошло)';
-    } else if (isBusy) {
+    if (isBusy) {
       statusClass = 'busy';
       statusText = ' (занято)';
     } else if (!isAvailable) {
@@ -619,7 +611,11 @@ function renderTimeSlots(allTimes, busyTimes, date) {
     html += `<div class="time-slot ${statusClass}" onclick="${onclick}">${time}${statusText}</div>`;
   });
   
-  timeSlotsContainer.innerHTML = html;
+  if (html === '') {
+    timeSlotsContainer.innerHTML = '<div style="text-align:center;padding:20px;color:#888;">Нет доступных времен</div>';
+  } else {
+    timeSlotsContainer.innerHTML = html;
+  }
 }
 
 window.selectTimeSlot = (time) => {
@@ -756,7 +752,7 @@ bookBtn.onclick = async () => {
   }
   
   let [hours, minutes] = selectedTime.split(':').map(Number);
-  if (hours < workingHours.start && hours + 24 < workingHours.start) {
+  if (hours < workingHours.start || hours >= workingHours.end) {
     showError(`⏰ РЕСТОРАН РАБОТАЕТ: ${workingHours.text}`);
     return;
   }
