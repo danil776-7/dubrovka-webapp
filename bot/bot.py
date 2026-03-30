@@ -1,14 +1,22 @@
-from aiogram import Bot, Dispatcher, types, executor
 import json
-import requests
 import os
+import sys
+from aiogram import Bot, Dispatcher, types, executor
+import requests
 
-# 🔥 ПРАВИЛЬНОЕ ПОЛУЧЕНИЕ ТОКЕНА ИЗ ПЕРЕМЕННЫХ ОКРУЖЕНИЯ
-TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8769949339:AAFwvdkPFgj7l4BQwGfmcljauMWXRx7qves")
+# Токен из переменных окружения
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_CHAT_ID", "7545540622"))
 
-# 🔥 ПРАВИЛЬНЫЙ URL БЭКЕНДА (ВАШ НОВЫЙ РАБОЧИЙ)
+if not TOKEN:
+    print("❌ TELEGRAM_BOT_TOKEN not set!")
+    sys.exit(1)
+
+# URL вашего бэкенда на Railway
 API_URL = "https://dubrovka-webapp-production.up.railway.app"
+
+print(f"🤖 Бот запускается...")
+print(f"📡 API URL: {API_URL}")
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
@@ -36,9 +44,9 @@ async def start(message: types.Message):
 async def web_app(message: types.Message):
     try:
         data = json.loads(message.web_app_data.data)
-        
-        # Добавляем chat_id для отправки уведомлений
         data["chat_id"] = message.chat.id
+        
+        print(f"📝 Получены данные: {data}")
         
         res = requests.post(
             f"{API_URL}/booking",
@@ -48,7 +56,7 @@ async def web_app(message: types.Message):
         
         result = res.json()
         
-        if result.get("error"):
+        if result.get("error") or result.get("detail") == "Time slot already booked":
             await message.answer("❌ Этот стол уже занят")
             return
         
@@ -86,10 +94,10 @@ async def web_app(message: types.Message):
         )
         
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"❌ Ошибка: {e}")
         await message.answer("❌ Ошибка при бронировании")
 
-@dp.callback_query_handler(lambda c: c.data and c.data.startswith("cancel"))
+@dp.callback_query_handler(lambda c: c.data.startswith("cancel"))
 async def cancel_booking(call: types.CallbackQuery):
     try:
         _, booking_id = call.data.split("|")
@@ -99,18 +107,16 @@ async def cancel_booking(call: types.CallbackQuery):
             timeout=10
         )
         
-        result = res.json()
-        
-        if result.get("ok"):
+        if res.status_code == 200:
             await call.message.edit_text("❌ Бронь отменена")
             await call.answer("Бронь отменена")
         else:
             await call.answer("Ошибка отмены", show_alert=True)
             
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"❌ Ошибка: {e}")
         await call.answer("Ошибка", show_alert=True)
 
 if __name__ == "__main__":
-    print("🤖 Бот запущен...")
+    print("🤖 Бот запущен и готов к работе!")
     executor.start_polling(dp, skip_updates=True)
