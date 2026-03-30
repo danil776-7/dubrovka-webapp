@@ -506,4 +506,7 @@ def all_bookings():
             for b in data
         ]
     finally:
+        @app.get("/test")
+def test():
+    return {"message": "API is working"}
         db.close()
