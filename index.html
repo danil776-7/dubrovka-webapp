@@ -281,6 +281,24 @@ h2 {
   text-decoration: line-through;
 }
 
+.time-slot.warning {
+  background: rgba(255, 193, 7, 0.2);
+  border-color: rgba(255, 193, 7, 0.3);
+  color: #ffc107;
+}
+
+.warning-message {
+  background: rgba(255, 193, 7, 0.15);
+  padding: 12px;
+  border-radius: 12px;
+  margin: 10px 0;
+  display: none;
+  color: #ffc107;
+  text-align: center;
+  font-size: 12px;
+  border-left: 3px solid #ffc107;
+}
+
 input, select {
   width: 100%;
   padding: 14px 15px;
@@ -429,7 +447,7 @@ button:active {
 
   <div class="card">
     <div class="working-hours">
-      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 01:00 | ПТ-СБ: 12:00 - 02:00</span>
+      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 23:00 | ПТ-СБ: 12:00 - 00:00</span>
     </div>
     
     <h2>🍷 БРОНИРОВАНИЕ СТОЛОВ</h2>
@@ -451,6 +469,7 @@ button:active {
 
     <input id="date" type="date">
     <div id="timeSlotsContainer" class="time-slots"></div>
+    <div id="warningMessage" class="warning-message"></div>
     
     <input id="guests" type="number" placeholder="👥 КОЛИЧЕСТВО ГОСТЕЙ" min="1" max="20" step="1" autocomplete="off" value="1">
     <input id="name" placeholder="👤 ВАШЕ ИМЯ" autocomplete="name">
@@ -495,6 +514,7 @@ const nameInput = document.getElementById("name");
 const guestsInput = document.getElementById("guests");
 const dateInput = document.getElementById("date");
 const timeSlotsContainer = document.getElementById("timeSlotsContainer");
+const warningMessage = document.getElementById("warningMessage");
 const tableInfo = document.getElementById("tableInfo");
 const bookBtn = document.getElementById("bookBtn");
 const hookahWarning = document.getElementById("hookahWarning");
@@ -518,10 +538,8 @@ if(tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
   if(user.last_name && nameInput.value) nameInput.value += " " + user.last_name;
 }
 
-// 🔥 РЕЖИМ РАБОТЫ: ВС-ЧТ: 12:00 - 23:00, ПТ-СБ: 12:00 - 00:00
 function getWorkingHours(date) {
   const day = new Date(date).getDay();
-  // 5 - пятница, 6 - суббота
   if (day === 5 || day === 6) {
     return { start: 12, end: 24, text: "ПТ-СБ: 12:00 - 00:00" };
   } else {
@@ -534,8 +552,14 @@ function timeToMinutes(timeStr) {
   return hours * 60 + minutes;
 }
 
-// 🔥 ОСНОВНАЯ ЛОГИКА: блокировка времени с учетом 2 часов брони + 30 минут зазора перед следующей
-function isTimeAvailable(existingTimes, newTime, sessionHours = 2, bufferBefore = 30) {
+function minutesToTime(minutes) {
+  let hours = Math.floor(minutes / 60);
+  let mins = minutes % 60;
+  return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+}
+
+// 🔥 НОВАЯ ЛОГИКА: проверка времени
+function isTimeAvailable(existingTimes, newTime, sessionHours = 2) {
   let newStart = timeToMinutes(newTime);
   let newEnd = newStart + (sessionHours * 60);
   
@@ -543,17 +567,17 @@ function isTimeAvailable(existingTimes, newTime, sessionHours = 2, bufferBefore 
     let existingStart = timeToMinutes(existingTime);
     let existingEnd = existingStart + (sessionHours * 60);
     
-    // Если время пересекается
+    // Если время пересекается (блокировка)
     if (newStart < existingEnd && newEnd > existingStart) {
-      return { available: false, conflictTime: existingTime };
+      return { available: false, type: 'blocked', conflictTime: existingTime };
     }
     
-    // Проверка зазора перед следующей броней (нельзя забронировать за bufferBefore минут до)
-    if (newEnd > existingStart - bufferBefore && newEnd <= existingStart) {
-      return { available: false, conflictTime: existingTime };
+    // Если время заканчивается до следующей брони (предупреждение)
+    if (newEnd > existingStart && newEnd <= existingStart + 30) {
+      return { available: true, type: 'warning', needToLeaveBy: existingTime };
     }
   }
-  return { available: true };
+  return { available: true, type: 'free' };
 }
 
 function generateTimes(date) {
@@ -581,16 +605,14 @@ function renderTimeSlots(allTimes, busyTimes, date) {
     let slot = new Date(date);
     slot.setHours(parseInt(h), m);
     let isPast = slot < now;
-    let isBusy = busyTimes.includes(time);
     
     // Не показываем прошедшее время
     if (isPast) {
       return;
     }
     
-    // Проверяем доступность с учетом 2 часов брони + 30 минут зазора
-    let availability = isTimeAvailable(sortedBusy, time, 2, 30);
-    let isAvailable = availability.available;
+    let isBusy = busyTimes.includes(time);
+    let availability = isTimeAvailable(sortedBusy, time, 2);
     
     let statusClass = '';
     let statusText = '';
@@ -599,13 +621,17 @@ function renderTimeSlots(allTimes, busyTimes, date) {
     if (isBusy) {
       statusClass = 'busy';
       statusText = ' (занято)';
-    } else if (!isAvailable) {
+    } else if (!availability.available) {
       statusClass = 'busy';
       statusText = ' (занято)';
+    } else if (availability.type === 'warning') {
+      statusClass = 'warning';
+      statusText = ` ⚠️ (до ${availability.needToLeaveBy})`;
+      onclick = `selectTimeSlot('${time}', '${availability.needToLeaveBy}')`;
     } else {
       statusClass = '';
       statusText = '';
-      onclick = `selectTimeSlot('${time}')`;
+      onclick = `selectTimeSlot('${time}', null)`;
     }
     
     html += `<div class="time-slot ${statusClass}" onclick="${onclick}">${time}${statusText}</div>`;
@@ -618,7 +644,7 @@ function renderTimeSlots(allTimes, busyTimes, date) {
   }
 }
 
-window.selectTimeSlot = (time) => {
+window.selectTimeSlot = (time, needToLeaveBy) => {
   selectedTime = time;
   document.querySelectorAll('.time-slot').forEach(slot => slot.classList.remove('selected'));
   const slots = document.querySelectorAll('.time-slot');
@@ -627,6 +653,13 @@ window.selectTimeSlot = (time) => {
       slot.classList.add('selected');
       break;
     }
+  }
+  
+  if (needToLeaveBy) {
+    warningMessage.innerHTML = `⚠️ <b>Важное предупреждение!</b><br>Следующая бронь в ${needToLeaveBy}. Пожалуйста, освободите стол до этого времени.`;
+    warningMessage.style.display = "block";
+  } else {
+    warningMessage.style.display = "none";
   }
 };
 
@@ -714,13 +747,14 @@ document.querySelectorAll(".table").forEach(el => {
     else hookahWarning.style.display = "none";
     await loadBusyTimes();
     selectedTime = null;
+    warningMessage.style.display = "none";
   };
 });
 
 dateInput.min = new Date().toISOString().split("T")[0];
 dateInput.value = new Date().toISOString().split("T")[0];
 dateInput.addEventListener("change", () => {
-  if(selectedTable) { loadBusyTimes(); selectedTime = null; }
+  if(selectedTable) { loadBusyTimes(); selectedTime = null; warningMessage.style.display = "none"; }
 });
 
 phoneInput.addEventListener("input", () => {
@@ -757,8 +791,8 @@ bookBtn.onclick = async () => {
     return;
   }
   
-  // Проверяем доступность с учетом 2 часов брони + 30 минут зазора
-  let availability = isTimeAvailable(busyTimes, selectedTime, 2, 30);
+  // Проверяем доступность с учетом 2 часов брони
+  let availability = isTimeAvailable(busyTimes, selectedTime, 2);
   if(!availability.available) {
     showError(`⚠️ Этот стол уже забронирован на это время\n💡 Пожалуйста, выберите другое время`);
     return;
@@ -798,6 +832,7 @@ bookBtn.onclick = async () => {
       nameInput.value = "";
       guestsInput.value = "1";
       selectedTime = null;
+      warningMessage.style.display = "none";
       document.querySelectorAll(".time-slot").forEach(t => t.classList.remove("selected"));
       document.querySelectorAll(".table").forEach(t => t.classList.remove("selected"));
       selectedTable = null;
