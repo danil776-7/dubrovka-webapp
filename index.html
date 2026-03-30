@@ -817,7 +817,8 @@ bookBtn.onclick = async () => {
     });
     let result = await res.json();
     
-    if(result.error === "busy" || result.detail === "Time slot already booked") {
+    // 🔥 ИСПРАВЛЕННАЯ ПРОВЕРКА — ЛЮБАЯ ОШИБКА ОЗНАЧАЕТ, ЧТО СТОЛ ЗАНЯТ
+    if (result.error || result.detail) {
       showError("❌ Этот стол уже занят в выбранное время");
       await loadBusyTimes();
       return;
