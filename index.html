@@ -21,7 +21,6 @@ body {
   min-height: 100vh;
 }
 
-/* Видео фон */
 .video-background {
   position: fixed;
   top: 0;
@@ -41,67 +40,46 @@ body {
   z-index: 1;
 }
 
-/* Десктопная версия */
 @media (min-width: 768px) {
   .container {
     max-width: 700px;
     padding: 40px;
   }
-  
   .card {
     padding: 35px;
   }
-  
   .tables {
     grid-template-columns: repeat(3, 1fr);
     gap: 15px;
   }
-  
   .table {
     padding: 18px;
     font-size: 18px;
   }
-  
   .time-slots {
     gap: 12px;
   }
-  
   .time-slot {
     padding: 12px 16px;
     font-size: 16px;
     min-width: 85px;
   }
-  
   input, select, button {
     padding: 16px 18px;
     font-size: 16px;
   }
-  
   h2 {
     font-size: 26px;
   }
-  
   .logo-img {
     width: 120px;
     height: 120px;
   }
-  
   .logo-text {
     font-size: 32px;
   }
-  
   .logo-subtitle {
     font-size: 14px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .container {
-    max-width: 800px;
-  }
-  
-  .tables {
-    grid-template-columns: repeat(3, 1fr);
   }
 }
 
@@ -220,7 +198,6 @@ h2 {
   cursor: not-allowed;
 }
 
-/* VIP кнопка */
 .vip-button-container {
   margin-top: 20px;
   margin-bottom: 20px;
@@ -440,7 +417,6 @@ button:active {
   input, select, button { font-size: 14px; padding: 12px; }
 }
 
-/* Стили для скролла */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -453,10 +429,6 @@ button:active {
 ::-webkit-scrollbar-thumb {
   background: #d4af37;
   border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #b88d2a;
 }
 </style>
 </head>
@@ -489,19 +461,14 @@ button:active {
       <div class="table" data-table="6">СТОЛ 6</div>
     </div>
 
-    <!-- VIP кнопка -->
     <div class="vip-button-container">
-      <div class="vip-btn" id="vipBtn">
-        VIP ЗАЛ
-      </div>
+      <div class="vip-btn" id="vipBtn">VIP ЗАЛ</div>
     </div>
 
     <div id="tableInfo" class="desc">✨ ВЫБЕРИТЕ СТОЛ ДЛЯ БРОНИРОВАНИЯ</div>
 
     <input id="date" type="date">
-    
     <div id="timeSlotsContainer" class="time-slots"></div>
-    
     <div id="warningMessage" class="warning-message"></div>
     
     <input id="guests" type="number" placeholder="👥 КОЛИЧЕСТВО ГОСТЕЙ" min="1" max="20" step="1" autocomplete="off" value="1">
@@ -523,12 +490,8 @@ button:active {
 </div>
 
 <script>
-// =====================================================
-// 🔥 ССЫЛКА НА БЭКЕНД (RAILWAY)
-// =====================================================
 const API = "https://dubrovka-webapp-production.up.railway.app";
 
-// Описания столов
 const tableDescriptions = {
   "1": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 7 ГОСТЕЙ",
   "2": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 5 ГОСТЕЙ",
@@ -562,34 +525,23 @@ let selectedTime = null;
 let userChatId = null;
 let busyTimes = [];
 
-// VIP кнопка
 if (vipBtn) {
   vipBtn.onclick = () => {
-    alert("⭐ VIP ЗАЛ ⭐\n\nБронирование VIP зала осуществляется только через администратора.\n\n📞 Позвоните нам: +7‒913‒432‒01‒01\n\nИли напишите в Telegram: @dubrovka_admin");
+    alert("⭐ VIP ЗАЛ ⭐\n\nБронирование VIP зала осуществляется только через администратора.\n\n📞 Позвоните нам: +7‒913‒432‒01‒01");
   };
 }
 
-// Получаем chat_id из Telegram WebApp
 if(tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
   const user = tg.initDataUnsafe.user;
   userChatId = user.id;
-  console.log("📱 User ID:", userChatId);
-  
-  if(user.first_name) {
-    nameInput.value = user.first_name;
-  }
-  if(user.last_name && nameInput.value) {
-    nameInput.value += " " + user.last_name;
-  }
+  if(user.first_name) nameInput.value = user.first_name;
+  if(user.last_name && nameInput.value) nameInput.value += " " + user.last_name;
 }
 
 function getWorkingHours(date) {
   const day = new Date(date).getDay();
-  if (day === 5 || day === 6) {
-    return { start: 12, end: 24, text: "ПТ-СБ: 12:00 - 00:00" };
-  } else {
-    return { start: 12, end: 23, text: "ВС-ЧТ: 12:00 - 23:00" };
-  }
+  if (day === 5 || day === 6) return { start: 12, end: 24, text: "ПТ-СБ: 12:00 - 00:00" };
+  return { start: 12, end: 23, text: "ВС-ЧТ: 12:00 - 23:00" };
 }
 
 function timeToMinutes(timeStr) {
@@ -603,44 +555,24 @@ function minutesToTime(minutes) {
   return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
 }
 
-// Проверка интервала между бронями (1.5 часа = 90 минут)
 function checkTimeInterval(existingTimes, newTime, minIntervalMinutes = 90) {
   let newTimeMinutes = timeToMinutes(newTime);
-  let nextTime = null;
-  
   for (let existingTime of existingTimes) {
     let existingMinutes = timeToMinutes(existingTime);
     let diff = Math.abs(newTimeMinutes - existingMinutes);
-    
     if (diff < minIntervalMinutes) {
-      return { 
-        allowed: false, 
-        conflictTime: existingTime,
-        needToLeaveBy: minutesToTime(existingMinutes - minIntervalMinutes)
-      };
-    }
-    
-    if (existingMinutes > newTimeMinutes) {
-      if (!nextTime || existingMinutes < timeToMinutes(nextTime)) {
-        nextTime = existingTime;
-      }
+      return { allowed: false, conflictTime: existingTime, needToLeaveBy: minutesToTime(existingMinutes - minIntervalMinutes) };
     }
   }
-  
-  return { allowed: true, nextBookingTime: nextTime };
+  return { allowed: true };
 }
 
-function generateTimes(date, busyTimes) {
+function generateTimes(date) {
   let times = [];
   let workingHours = getWorkingHours(date);
-  let startHour = workingHours.start;
-  let endHour = workingHours.end;
-  
-  for(let h = startHour; h < endHour; h++) {
-    let time1 = `${String(h).padStart(2,'0')}:00`;
-    let time2 = `${String(h).padStart(2,'0')}:30`;
-    times.push(time1);
-    times.push(time2);
+  for(let h = workingHours.start; h < workingHours.end; h++) {
+    times.push(`${String(h).padStart(2,'0')}:00`);
+    times.push(`${String(h).padStart(2,'0')}:30`);
   }
   return times;
 }
@@ -658,14 +590,11 @@ function renderTimeSlots(allTimes, busyTimes, date) {
     let [h,m] = time.split(":");
     let slot = new Date(date);
     slot.setHours(h, m);
-    
     let isPast = slot < now;
     let isBusy = busyTimes.includes(time);
-    
     let intervalCheck = checkTimeInterval(busyTimes, time, 90);
     let isTooClose = !intervalCheck.allowed;
     let needToLeaveBy = intervalCheck.needToLeaveBy;
-    let nextBooking = intervalCheck.nextBookingTime;
     
     let statusClass = '';
     let statusText = '';
@@ -681,22 +610,13 @@ function renderTimeSlots(allTimes, busyTimes, date) {
       statusClass = 'warning';
       statusText = `⚠️ (до ${needToLeaveBy})`;
       onclick = `selectTimeSlot('${time}', '${needToLeaveBy}')`;
-    } else if (nextBooking) {
-      let leaveTime = minutesToTime(timeToMinutes(nextBooking) - 90);
-      statusClass = 'warning';
-      statusText = `⚠️ (до ${leaveTime})`;
-      onclick = `selectTimeSlot('${time}', '${leaveTime}')`;
     } else {
       statusClass = '';
       statusText = '';
       onclick = `selectTimeSlot('${time}', null)`;
     }
     
-    html += `
-      <div class="time-slot ${statusClass}" onclick="${onclick}">
-        ${time}${statusText}
-      </div>
-    `;
+    html += `<div class="time-slot ${statusClass}" onclick="${onclick}">${time}${statusText}</div>`;
   });
   
   timeSlotsContainer.innerHTML = html;
@@ -704,11 +624,7 @@ function renderTimeSlots(allTimes, busyTimes, date) {
 
 window.selectTimeSlot = (time, needToLeaveBy) => {
   selectedTime = time;
-  
-  document.querySelectorAll('.time-slot').forEach(slot => {
-    slot.classList.remove('selected');
-  });
-  
+  document.querySelectorAll('.time-slot').forEach(slot => slot.classList.remove('selected'));
   const slots = document.querySelectorAll('.time-slot');
   for (let slot of slots) {
     if (slot.innerText.includes(time)) {
@@ -716,7 +632,6 @@ window.selectTimeSlot = (time, needToLeaveBy) => {
       break;
     }
   }
-  
   if (needToLeaveBy) {
     warningMessage.innerHTML = `⚠️ <b>Важное предупреждение!</b><br>Следующая бронь в ${needToLeaveBy}. Пожалуйста, освободите стол до этого времени.`;
     warningMessage.style.display = "block";
@@ -727,48 +642,37 @@ window.selectTimeSlot = (time, needToLeaveBy) => {
 
 async function loadBusyTimes() {
   if(!dateInput.value || !selectedTable) return;
-  
   try {
     let res = await fetch(`${API}/busy_times?date=${dateInput.value}&table=${selectedTable}`);
     busyTimes = await res.json();
     busyTimes = Array.isArray(busyTimes) ? busyTimes : [];
-    
-    let allTimes = generateTimes(dateInput.value, busyTimes);
+    let allTimes = generateTimes(dateInput.value);
     renderTimeSlots(allTimes, busyTimes, dateInput.value);
-  } catch(e) {
-    console.error(e);
-  }
+  } catch(e) { console.error(e); }
 }
 
-function shakeElement(element) {
-  element.classList.add('shake-animation');
-  setTimeout(() => element.classList.remove('shake-animation'), 500);
-}
-
-function showError(message, element = null) {
-  if (element) shakeElement(element);
-  else shakeElement(bookBtn);
-  
+function showError(message) {
   const errorDiv = document.createElement('div');
   errorDiv.style.cssText = `
     position: fixed;
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(220, 53, 69, 0.9);
+    background: rgba(220, 53, 69, 0.95);
     color: white;
-    padding: 12px 20px;
-    border-radius: 20px;
+    padding: 14px 24px;
+    border-radius: 12px;
     z-index: 10000;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     animation: fadeInDown 0.3s ease-out;
     max-width: 90%;
     text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
   `;
   errorDiv.innerHTML = `❌ ${message}`;
   document.body.appendChild(errorDiv);
-  setTimeout(() => errorDiv.remove(), 3500);
+  setTimeout(() => errorDiv.remove(), 4000);
 }
 
 function showSuccess(message) {
@@ -778,198 +682,151 @@ function showSuccess(message) {
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: #d4af37;
-    color: #0a0a0f;
-    padding: 12px 20px;
-    border-radius: 20px;
+    background: #2ecc71;
+    color: white;
+    padding: 14px 24px;
+    border-radius: 12px;
     z-index: 10000;
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 500;
     animation: fadeInDown 0.3s ease-out;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     max-width: 90%;
     text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
   `;
   successDiv.innerHTML = `✅ ${message}`;
   document.body.appendChild(successDiv);
-  setTimeout(() => successDiv.remove(), 3500);
+  setTimeout(() => successDiv.remove(), 4000);
 }
 
-// Функция для количества гостей
-if (guestsInput) {
-  guestsInput.addEventListener("input", (e) => {
-    let guests = parseInt(e.target.value) || 1;
-    
-    if (guests < 1) {
-      e.target.value = 1;
-      guests = 1;
-    }
-    
-    if (guests > 20) {
-      e.target.value = 20;
-      guests = 20;
-      showError("Максимальное количество гостей - 20 человек", guestsInput);
-    }
-    
-    if (selectedTable) {
-      let maxGuests = TABLE_CAPACITY[selectedTable];
-      
-      if (guests > maxGuests) {
-        showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ ${maxGuests} ГОСТЕЙ!`, guestsInput);
-      }
-      
-      if (guests >= 5) {
-        hookahWarning.style.display = "block";
-      } else {
-        hookahWarning.style.display = "none";
-      }
-    }
-  });
-}
+guestsInput.addEventListener("input", (e) => {
+  let guests = parseInt(e.target.value) || 1;
+  if (guests < 1) e.target.value = 1;
+  if (guests > 20) { e.target.value = 20; showError("Максимум 20 гостей"); }
+  if (selectedTable && guests > TABLE_CAPACITY[selectedTable]) {
+    showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ ${TABLE_CAPACITY[selectedTable]} ГОСТЕЙ!`);
+  }
+  if (selectedTable && guests >= 5) hookahWarning.style.display = "block";
+  else hookahWarning.style.display = "none";
+});
 
-// Обработчики кнопок столов
 document.querySelectorAll(".table").forEach(el => {
   el.onclick = async () => {
-    if(el.classList.contains("disabled")) return;
     document.querySelectorAll(".table").forEach(t => t.classList.remove("selected"));
     el.classList.add("selected");
     selectedTable = el.dataset.table;
     tableInfo.innerText = tableDescriptions[selectedTable];
     let maxGuests = TABLE_CAPACITY[selectedTable];
     guestsInput.placeholder = `👥 ГОСТЕЙ (МАКС. ${maxGuests})`;
-    
     let currentGuests = parseInt(guestsInput.value) || 1;
-    if (currentGuests > maxGuests) {
-      showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ ${maxGuests} ГОСТЕЙ!`, guestsInput);
-    }
-    if (currentGuests >= 5) {
-      hookahWarning.style.display = "block";
-    } else {
-      hookahWarning.style.display = "none";
-    }
-    
+    if (currentGuests > maxGuests) showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ ${maxGuests} ГОСТЕЙ!`);
+    if (currentGuests >= 5) hookahWarning.style.display = "block";
+    else hookahWarning.style.display = "none";
     await loadBusyTimes();
     selectedTime = null;
     warningMessage.style.display = "none";
   };
 });
 
-if (dateInput) {
-  dateInput.min = new Date().toISOString().split("T")[0];
-  dateInput.value = new Date().toISOString().split("T")[0];
+dateInput.min = new Date().toISOString().split("T")[0];
+dateInput.value = new Date().toISOString().split("T")[0];
+dateInput.addEventListener("change", () => {
+  if(selectedTable) { loadBusyTimes(); selectedTime = null; warningMessage.style.display = "none"; }
+});
 
-  dateInput.addEventListener("change", () => {
-    if(selectedTable) {
-      loadBusyTimes();
+phoneInput.addEventListener("input", () => {
+  let v = phoneInput.value.replace(/\D/g,"");
+  if(!v.startsWith("7")) v = "7" + v;
+  v = v.slice(0,11);
+  phoneInput.value = "+" + v;
+});
+
+bookBtn.onclick = async () => {
+  if(!selectedTable) { showError("ВЫБЕРИТЕ СТОЛ"); return; }
+  if(!dateInput.value) { showError("ВЫБЕРИТЕ ДАТУ"); return; }
+  if(!selectedTime) { showError("ВЫБЕРИТЕ ВРЕМЯ"); return; }
+  
+  let nameVal = nameInput.value.trim();
+  let phoneVal = phoneInput.value;
+  let guestsVal = parseInt(guestsInput.value || 0);
+  let workingHours = getWorkingHours(dateInput.value);
+  let maxGuests = TABLE_CAPACITY[selectedTable];
+  
+  if(!nameVal) { showError("ВВЕДИТЕ ИМЯ"); return; }
+  if(phoneVal.length !== 12) { showError("НЕВЕРНЫЙ НОМЕР (+7XXXXXXXXXX)"); return; }
+  if(guestsVal < 1) { showError("УКАЖИТЕ КОЛИЧЕСТВО ГОСТЕЙ"); return; }
+  if(guestsVal > maxGuests) { showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ ${maxGuests} ГОСТЕЙ!`); return; }
+  
+  if(guestsVal >= 5) {
+    let confirmHookah = confirm(`💨 ВНИМАНИЕ!\n\nДля компании из ${guestsVal} человек обязательно бронирование 2 кальянов.\n\nВы подтверждаете, что согласны с этим условием?`);
+    if(!confirmHookah) { showError("Требуется согласие на заказ кальянов"); return; }
+  }
+  
+  let [hours, minutes] = selectedTime.split(':').map(Number);
+  if (hours < workingHours.start || hours >= workingHours.end) {
+    showError(`⏰ РЕСТОРАН РАБОТАЕТ: ${workingHours.text}`);
+    return;
+  }
+  
+  let intervalCheck = checkTimeInterval(busyTimes, selectedTime, 90);
+  if(!intervalCheck.allowed) {
+    showError(`⚠️ Слишком близко к брони на ${intervalCheck.conflictTime}\n💡 Вам нужно освободить стол до ${intervalCheck.needToLeaveBy}`);
+    return;
+  }
+  
+  let data = {
+    name: nameVal,
+    phone: phoneVal,
+    guests: guestsVal,
+    table: selectedTable,
+    date: dateInput.value,
+    time: selectedTime,
+    chat_id: userChatId
+  };
+  
+  try {
+    bookBtn.disabled = true;
+    bookBtn.textContent = "ОТПРАВКА...";
+    
+    let res = await fetch(API + "/booking", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(data)
+    });
+    let result = await res.json();
+    
+    if(result.error === "busy" || result.detail === "Time slot already booked") {
+      showError("❌ Этот стол уже занят в выбранное время");
+      await loadBusyTimes();
+      return;
+    }
+    
+    if(result.ok || result.id) {
+      if(tg) tg.sendData(JSON.stringify(data));
+      showSuccess(`🎉 БРОНЬ СОЗДАНА!\n\n🪑 Стол ${selectedTable}\n⏰ ${selectedTime}\n👥 ${guestsVal} гостей\n👤 ${nameVal}\n\nПодтверждение отправлено в Telegram!`);
+      
+      nameInput.value = "";
+      guestsInput.value = "1";
       selectedTime = null;
       warningMessage.style.display = "none";
+      document.querySelectorAll(".time-slot").forEach(t => t.classList.remove("selected"));
+      document.querySelectorAll(".table").forEach(t => t.classList.remove("selected"));
+      selectedTable = null;
+      tableInfo.innerText = "✨ ВЫБЕРИТЕ СТОЛ ДЛЯ БРОНИРОВАНИЯ";
+      guestsInput.placeholder = "👥 КОЛИЧЕСТВО ГОСТЕЙ";
+      hookahWarning.style.display = "none";
+      await loadBusyTimes();
+    } else {
+      showError("ОШИБКА: " + (result.detail || "НЕИЗВЕСТНАЯ ОШИБКА"));
     }
-  });
-}
-
-if (phoneInput) {
-  phoneInput.addEventListener("input", () => {
-    let v = phoneInput.value.replace(/\D/g,"");
-    if(!v.startsWith("7")) v = "7" + v;
-    v = v.slice(0,11);
-    phoneInput.value = "+" + v;
-  });
-}
-
-// Кнопка бронирования
-if (bookBtn) {
-  bookBtn.onclick = async () => {
-    if(!selectedTable) { showError("ВЫБЕРИТЕ СТОЛ"); return; }
-    if(!dateInput.value) { showError("ВЫБЕРИТЕ ДАТУ"); return; }
-    if(!selectedTime) { showError("ВЫБЕРИТЕ ВРЕМЯ"); return; }
-    
-    let nameVal = nameInput.value.trim();
-    let phoneVal = phoneInput.value;
-    let guestsVal = parseInt(guestsInput.value || 0);
-    let workingHours = getWorkingHours(dateInput.value);
-    let maxGuests = TABLE_CAPACITY[selectedTable];
-    
-    if(!nameVal) { showError("ВВЕДИТЕ ИМЯ", nameInput); return; }
-    if(phoneVal.length !== 12) { showError("НЕВЕРНЫЙ НОМЕР (+7XXXXXXXXXX)", phoneInput); return; }
-    if(guestsVal < 1) { showError("УКАЖИТЕ КОЛИЧЕСТВО ГОСТЕЙ", guestsInput); return; }
-    if(guestsVal > 20) { showError("МАКСИМУМ 20 ГОСТЕЙ", guestsInput); return; }
-    
-    if(guestsVal > maxGuests) {
-      showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ ${maxGuests} ГОСТЕЙ!\nПожалуйста, уменьшите количество гостей или выберите другой стол`, guestsInput);
-      return;
-    }
-    
-    if(guestsVal >= 5) {
-      let confirmHookah = confirm(`💨 ВНИМАНИЕ!\n\nДля компании из ${guestsVal} человек обязательно бронирование 2 кальянов.\n\nВы подтверждаете, что согласны с этим условием?`);
-      if(!confirmHookah) {
-        showError("Для бронирования компаний от 5 человек требуется согласие на заказ кальянов");
-        return;
-      }
-    }
-    
-    let [hours, minutes] = selectedTime.split(':').map(Number);
-    if (hours < workingHours.start || hours >= workingHours.end) {
-      showError(`⏰ РЕСТОРАН РАБОТАЕТ: ${workingHours.text}`);
-      return;
-    }
-    
-    let intervalCheck = checkTimeInterval(busyTimes, selectedTime, 90);
-    
-    if(!intervalCheck.allowed) {
-      showError(`⚠️ Слишком близко к брони на ${intervalCheck.conflictTime}\n💡 Вам нужно освободить стол до ${intervalCheck.needToLeaveBy}`);
-      return;
-    }
-    
-    let data = {
-      name: nameVal,
-      phone: phoneVal,
-      guests: guestsVal,
-      table: selectedTable,
-      date: dateInput.value,
-      time: selectedTime,
-      chat_id: userChatId
-    };
-    
-    try {
-      let res = await fetch(API + "/booking", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(data)
-      });
-      let result = await res.json();
-      
-      if(result.error === "busy" || result.detail === "Time slot already booked") {
-        showError("СТОЛ УЖЕ ЗАНЯТ В ЭТО ВРЕМЯ");
-        await loadBusyTimes();
-        return;
-      }
-      
-      if(result.ok || result.id) {
-        if(tg) tg.sendData(JSON.stringify(data));
-        
-        let hookahMsg = guestsVal >= 5 ? "\n\n💨 Напоминание: для компании из 5+ человек обязательны 2 кальяна" : "";
-        showSuccess(`БРОНЬ СОЗДАНА!\n🪑 Стол ${selectedTable}\n⏰ ${selectedTime}\n👥 ${guestsVal} гостей\n👤 ${nameVal}\n\nМы отправили вам подтверждение в Telegram!${hookahMsg}`);
-        
-        nameInput.value = "";
-        guestsInput.value = "1";
-        selectedTime = null;
-        warningMessage.style.display = "none";
-        document.querySelectorAll(".time-slot").forEach(t => t.classList.remove("selected"));
-        document.querySelectorAll(".table").forEach(t => t.classList.remove("selected"));
-        selectedTable = null;
-        tableInfo.innerText = "✨ ВЫБЕРИТЕ СТОЛ ДЛЯ БРОНИРОВАНИЯ";
-        guestsInput.placeholder = "👥 КОЛИЧЕСТВО ГОСТЕЙ";
-        hookahWarning.style.display = "none";
-        await loadBusyTimes();
-      } else {
-        showError("ОШИБКА: " + (result.detail || "НЕИЗВЕСТНАЯ ОШИБКА"));
-      }
-    } catch(e) {
-      console.error(e);
-      showError("ОШИБКА СОЕДИНЕНИЯ С СЕРВЕРОМ");
-    }
-  };
-}
+  } catch(e) {
+    console.error(e);
+    showError("❌ ОШИБКА СОЕДИНЕНИЯ С СЕРВЕРОМ");
+  } finally {
+    bookBtn.disabled = false;
+    bookBtn.textContent = "ЗАБРОНИРОВАТЬ";
+  }
+};
 });
 </script>
 </body>
