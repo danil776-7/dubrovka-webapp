@@ -447,7 +447,7 @@ button:active {
 
   <div class="card">
     <div class="working-hours">
-      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 01:00 | ПТ-СБ: 12:00 - 02:00</span>
+      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 23:00 | ПТ-СБ: 12:00 - 00:00</span>
     </div>
     
     <h2>🍷 БРОНИРОВАНИЕ СТОЛОВ</h2>
@@ -555,13 +555,21 @@ function minutesToTime(minutes) {
   return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
 }
 
-function checkTimeInterval(existingTimes, newTime, minIntervalMinutes = 90) {
+// 🔥 ОСНОВНАЯ ЛОГИКА: проверка интервала 30 минут до следующей брони
+function checkTimeInterval(existingTimes, newTime, minIntervalMinutes = 30) {
   let newTimeMinutes = timeToMinutes(newTime);
+  
   for (let existingTime of existingTimes) {
     let existingMinutes = timeToMinutes(existingTime);
-    let diff = Math.abs(newTimeMinutes - existingMinutes);
-    if (diff < minIntervalMinutes) {
-      return { allowed: false, conflictTime: existingTime, needToLeaveBy: minutesToTime(existingMinutes - minIntervalMinutes) };
+    let diff = existingMinutes - newTimeMinutes;
+    
+    // Если новая бронь заканчивается позже начала существующей (меньше 30 минут до следующей)
+    if (diff > 0 && diff < minIntervalMinutes) {
+      return { 
+        allowed: false, 
+        conflictTime: existingTime,
+        needToLeaveBy: minutesToTime(existingMinutes)
+      };
     }
   }
   return { allowed: true };
@@ -585,6 +593,7 @@ function renderTimeSlots(allTimes, busyTimes, date) {
   
   let now = new Date();
   let html = '';
+  let sortedBusy = [...busyTimes].sort();
   
   allTimes.forEach(time => {
     let [h,m] = time.split(":");
@@ -592,7 +601,9 @@ function renderTimeSlots(allTimes, busyTimes, date) {
     slot.setHours(h, m);
     let isPast = slot < now;
     let isBusy = busyTimes.includes(time);
-    let intervalCheck = checkTimeInterval(busyTimes, time, 90);
+    
+    // Проверяем, можно ли забронировать это время (не слишком ли близко к следующей броне)
+    let intervalCheck = checkTimeInterval(sortedBusy, time, 30);
     let isTooClose = !intervalCheck.allowed;
     let needToLeaveBy = intervalCheck.needToLeaveBy;
     
@@ -607,13 +618,12 @@ function renderTimeSlots(allTimes, busyTimes, date) {
       statusClass = 'busy';
       statusText = ' (занято)';
     } else if (isTooClose) {
-      statusClass = 'warning';
-      statusText = `⚠️ (до ${needToLeaveBy})`;
-      onclick = `selectTimeSlot('${time}', '${needToLeaveBy}')`;
+      statusClass = 'busy';
+      statusText = ` (занято - до ${needToLeaveBy})`;
     } else {
       statusClass = '';
       statusText = '';
-      onclick = `selectTimeSlot('${time}', null)`;
+      onclick = `selectTimeSlot('${time}')`;
     }
     
     html += `<div class="time-slot ${statusClass}" onclick="${onclick}">${time}${statusText}</div>`;
@@ -622,7 +632,7 @@ function renderTimeSlots(allTimes, busyTimes, date) {
   timeSlotsContainer.innerHTML = html;
 }
 
-window.selectTimeSlot = (time, needToLeaveBy) => {
+window.selectTimeSlot = (time) => {
   selectedTime = time;
   document.querySelectorAll('.time-slot').forEach(slot => slot.classList.remove('selected'));
   const slots = document.querySelectorAll('.time-slot');
@@ -632,12 +642,7 @@ window.selectTimeSlot = (time, needToLeaveBy) => {
       break;
     }
   }
-  if (needToLeaveBy) {
-    warningMessage.innerHTML = `⚠️ <b>Важное предупреждение!</b><br>Следующая бронь в ${needToLeaveBy}. Пожалуйста, освободите стол до этого времени.`;
-    warningMessage.style.display = "block";
-  } else {
-    warningMessage.style.display = "none";
-  }
+  warningMessage.style.display = "none";
 };
 
 async function loadBusyTimes() {
@@ -768,9 +773,9 @@ bookBtn.onclick = async () => {
     return;
   }
   
-  let intervalCheck = checkTimeInterval(busyTimes, selectedTime, 90);
+  let intervalCheck = checkTimeInterval(busyTimes, selectedTime, 30);
   if(!intervalCheck.allowed) {
-    showError(`⚠️ Слишком близко к брони на ${intervalCheck.conflictTime}\n💡 Вам нужно освободить стол до ${intervalCheck.needToLeaveBy}`);
+    showError(`⚠️ Это время слишком близко к следующей броне в ${intervalCheck.conflictTime}\n💡 Пожалуйста, выберите другое время`);
     return;
   }
   
