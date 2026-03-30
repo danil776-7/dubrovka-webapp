@@ -558,7 +558,7 @@ function minutesToTime(minutes) {
   return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
 }
 
-// 🔥 НОВАЯ ЛОГИКА: проверка времени
+// 🔥 ЛОГИКА ПРОВЕРКИ ВРЕМЕНИ
 function isTimeAvailable(existingTimes, newTime, sessionHours = 2) {
   let newStart = timeToMinutes(newTime);
   let newEnd = newStart + (sessionHours * 60);
@@ -567,12 +567,12 @@ function isTimeAvailable(existingTimes, newTime, sessionHours = 2) {
     let existingStart = timeToMinutes(existingTime);
     let existingEnd = existingStart + (sessionHours * 60);
     
-    // Если время пересекается (блокировка)
+    // Если время пересекается — блокируем
     if (newStart < existingEnd && newEnd > existingStart) {
-      return { available: false, type: 'blocked', conflictTime: existingTime };
+      return { available: false, type: 'blocked' };
     }
     
-    // Если время заканчивается до следующей брони (предупреждение)
+    // Если время заканчивается до следующей брони (менее 30 минут)
     if (newEnd > existingStart && newEnd <= existingStart + 30) {
       return { available: true, type: 'warning', needToLeaveBy: existingTime };
     }
@@ -791,7 +791,6 @@ bookBtn.onclick = async () => {
     return;
   }
   
-  // Проверяем доступность с учетом 2 часов брони
   let availability = isTimeAvailable(busyTimes, selectedTime, 2);
   if(!availability.available) {
     showError(`⚠️ Этот стол уже забронирован на это время\n💡 Пожалуйста, выберите другое время`);
