@@ -238,6 +238,49 @@ h2 {
   line-height: 1.4;
 }
 
+.date-refresh-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  align-items: center;
+}
+
+.date-input {
+  flex: 1;
+  padding: 14px 15px;
+  border-radius: 16px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: rgba(20, 20, 30, 0.9);
+  color: #ffffff;
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #d4af37;
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+}
+
+.refresh-btn {
+  width: 50px;
+  padding: 14px 0;
+  background: rgba(20, 20, 30, 0.9);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 18px;
+  color: #d4af37;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.refresh-btn:hover {
+  background: rgba(212, 175, 55, 0.2);
+  transform: scale(1.02);
+  border-color: #d4af37;
+}
+
 .time-slots {
   display: flex;
   flex-wrap: wrap;
@@ -414,6 +457,7 @@ button:active {
   .logo-text { font-size: 22px; }
   .table, .vip-btn { padding: 12px; font-size: 13px; }
   .time-slot { padding: 8px 10px; font-size: 12px; min-width: 60px; }
+  .refresh-btn { width: 45px; padding: 12px 0; font-size: 16px; }
   input, select, button { font-size: 14px; padding: 12px; }
 }
 
@@ -467,9 +511,9 @@ button:active {
 
     <div id="tableInfo" class="desc">✨ ВЫБЕРИТЕ СТОЛ ДЛЯ БРОНИРОВАНИЯ</div>
 
-    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-      <input id="date" type="date" style="flex: 1;">
-      <button id="refreshBtn" style="width: auto; padding: 14px 20px; margin-top: 0;">🔄</button>
+    <div class="date-refresh-container">
+      <input id="date" type="date" class="date-input">
+      <button id="refreshBtn" class="refresh-btn" title="Обновить">🔄</button>
     </div>
     <div id="timeSlotsContainer" class="time-slots"></div>
     <div id="warningMessage" class="warning-message"></div>
