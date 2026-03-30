@@ -558,7 +558,7 @@ function minutesToTime(minutes) {
   return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
 }
 
-// 🔥 ЛОГИКА ПРОВЕРКИ ВРЕМЕНИ
+// Проверка доступности времени
 function isTimeAvailable(existingTimes, newTime, sessionHours = 2) {
   let newStart = timeToMinutes(newTime);
   let newEnd = newStart + (sessionHours * 60);
@@ -567,12 +567,12 @@ function isTimeAvailable(existingTimes, newTime, sessionHours = 2) {
     let existingStart = timeToMinutes(existingTime);
     let existingEnd = existingStart + (sessionHours * 60);
     
-    // Если время пересекается — блокируем
+    // Если время пересекается
     if (newStart < existingEnd && newEnd > existingStart) {
       return { available: false, type: 'blocked' };
     }
     
-    // Если время заканчивается до следующей брони (менее 30 минут)
+    // Если время заканчивается до следующей брони (предупреждение)
     if (newEnd > existingStart && newEnd <= existingStart + 30) {
       return { available: true, type: 'warning', needToLeaveBy: existingTime };
     }
@@ -606,7 +606,6 @@ function renderTimeSlots(allTimes, busyTimes, date) {
     slot.setHours(parseInt(h), m);
     let isPast = slot < now;
     
-    // Не показываем прошедшее время
     if (isPast) {
       return;
     }
