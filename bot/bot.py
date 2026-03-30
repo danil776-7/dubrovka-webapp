@@ -105,8 +105,7 @@ async def web_app(message: types.Message):
         # Удаляем сообщение "Проверка..."
         await processing_msg.delete()
         
-        # Проверяем ответ сервера по разным условиям
-        # Если есть поле error или detail с занятостью
+        # Проверяем ответ сервера
         is_busy = False
         if result.get("error") == "busy":
             is_busy = True
@@ -117,13 +116,11 @@ async def web_app(message: types.Message):
         if result.get("error") and "busy" in str(result.get("error")):
             is_busy = True
         
-        # Если есть ID брони — успех
         booking_id = result.get("id")
         if booking_id:
             is_busy = False
         
         if is_busy:
-            # Стол занят
             await message.answer(
                 f"❌ <b>Извините, этот стол уже занят!</b>\n\n"
                 f"📅 {data['date']} {data['time']}\n"
@@ -133,11 +130,9 @@ async def web_app(message: types.Message):
             )
             return
         
-        # Успешная бронь
         if result.get("ok") or booking_id:
             booking_id = booking_id or result.get("id")
             
-            # Формируем сообщение об успехе
             success_text = (
                 f"✅ <b>БРОНЬ ПОДТВЕРЖДЕНА!</b>\n\n"
                 f"🆔 <b>ID брони:</b> {booking_id}\n"
@@ -151,7 +146,6 @@ async def web_app(message: types.Message):
                 f"❤️ Ждем вас в Dubrovka!"
             )
             
-            # Кнопка отмены
             kb = types.InlineKeyboardMarkup()
             kb.add(
                 types.InlineKeyboardButton(
@@ -162,7 +156,6 @@ async def web_app(message: types.Message):
             
             await message.answer(success_text, reply_markup=kb, parse_mode="HTML")
             
-            # Планируем напоминание за 30 минут
             schedule_reminder(
                 message.chat.id,
                 booking_id,
@@ -172,7 +165,6 @@ async def web_app(message: types.Message):
                 data['name']
             )
             
-            # Отправляем уведомление админу
             await bot.send_message(
                 ADMIN_ID,
                 f"🔥 <b>НОВАЯ БРОНЬ!</b>\n\n"
@@ -185,9 +177,7 @@ async def web_app(message: types.Message):
                 f"🔔 Напоминание гостю запланировано за 30 минут",
                 parse_mode="HTML"
             )
-            
         else:
-            # Неизвестная ошибка
             await message.answer(
                 f"❌ Ошибка при бронировании: {result}\n\n"
                 f"Пожалуйста, попробуйте позже или свяжитесь с администратором.",
@@ -215,7 +205,6 @@ async def cancel_booking(call: types.CallbackQuery):
             timeout=10
         )
         
-        # Отменяем запланированное напоминание
         if int(booking_id) in reminders:
             reminders[int(booking_id)].cancel()
             del reminders[int(booking_id)]
