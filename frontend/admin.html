@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<meta name="google" content="notranslate">
 <title>Dubrovka PRO Admin</title>
 
 <style>
@@ -16,7 +16,6 @@ color:#fff;
 
 .container{display:flex;height:100vh;}
 
-/* sidebar */
 .sidebar{
 width:230px;
 background:#111;
@@ -39,7 +38,6 @@ cursor:pointer;
 .menu div:hover{background:#1a1a1a;}
 .active{background:#ff2a2a;}
 
-/* content */
 .content{
 flex:1;
 padding:20px;
@@ -74,14 +72,12 @@ button:hover{
 background:#ff4444;
 }
 
-/* grid */
 .grid{
 display:grid;
 grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
 gap:12px;
 }
 
-/* card */
 .card{
 background:#151515;
 padding:15px;
@@ -192,7 +188,11 @@ color:#888;
 </div>
 
 <script>
-const API = "https://dubrovka-webapp-production-a00c.up.railway.app";
+// =====================================================
+// 🔥 ССЫЛКА НА БЭКЕНД (RAILWAY)
+// =====================================================
+const API = "https://dubrovka-webapp-production.up.railway.app";
+
 const list = document.getElementById("list");
 
 let currentData = [];
