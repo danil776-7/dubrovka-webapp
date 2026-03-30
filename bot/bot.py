@@ -78,6 +78,10 @@ async def start(message: types.Message):
         reply_markup=keyboard
     )
 
+@dp.message_handler(commands=["test"])
+async def test(message: types.Message):
+    await message.answer("✅ Бот работает!")
+
 @dp.message_handler(content_types=types.ContentType.WEB_APP_DATA)
 async def web_app(message: types.Message):
     try:
@@ -209,6 +213,3 @@ if __name__ == "__main__":
     print(f"📡 API URL: {API_URL}")
     print(f"👑 Admin ID: {ADMIN_ID}")
     executor.start_polling(dp, skip_updates=True)
-    @dp.message_handler(commands=["test"])
-async def test(message: types.Message):
-    await message.answer("✅ Бот работает!")
