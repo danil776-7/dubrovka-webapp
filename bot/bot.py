@@ -37,7 +37,6 @@ keyboard.add(
 def schedule_reminder(chat_id, booking_id, booking_time, booking_date, booking_table, booking_name):
     """Запланировать напоминание за 30 минут до брони"""
     try:
-        # Парсим дату и время брони
         booking_datetime = datetime.strptime(f"{booking_date} {booking_time}", "%Y-%m-%d %H:%M")
         reminder_time = booking_datetime - timedelta(minutes=30)
         now = datetime.now()
@@ -97,14 +96,33 @@ async def web_app(message: types.Message):
             timeout=10
         )
         
+        print(f"📡 Статус ответа: {res.status_code}")
+        print(f"📡 Текст ответа: {res.text}")
+        
         result = res.json()
-        print(f"📡 Ответ сервера: {result}")
+        print(f"📡 Распарсенный ответ: {result}")
         
         # Удаляем сообщение "Проверка..."
         await processing_msg.delete()
         
-        # Проверяем ответ сервера
-        if result.get("error") or result.get("detail") == "Time slot already booked":
+        # Проверяем ответ сервера по разным условиям
+        # Если есть поле error или detail с занятостью
+        is_busy = False
+        if result.get("error") == "busy":
+            is_busy = True
+        if result.get("detail") == "Time slot already booked":
+            is_busy = True
+        if result.get("detail") and "already booked" in str(result.get("detail")):
+            is_busy = True
+        if result.get("error") and "busy" in str(result.get("error")):
+            is_busy = True
+        
+        # Если есть ID брони — успех
+        booking_id = result.get("id")
+        if booking_id:
+            is_busy = False
+        
+        if is_busy:
             # Стол занят
             await message.answer(
                 f"❌ <b>Извините, этот стол уже занят!</b>\n\n"
@@ -116,8 +134,8 @@ async def web_app(message: types.Message):
             return
         
         # Успешная бронь
-        if result.get("ok") or result.get("id"):
-            booking_id = result.get("id")
+        if result.get("ok") or booking_id:
+            booking_id = booking_id or result.get("id")
             
             # Формируем сообщение об успехе
             success_text = (
@@ -171,13 +189,15 @@ async def web_app(message: types.Message):
         else:
             # Неизвестная ошибка
             await message.answer(
-                f"❌ Ошибка при бронировании: {result.get('detail', 'Неизвестная ошибка')}\n\n"
+                f"❌ Ошибка при бронировании: {result}\n\n"
                 f"Пожалуйста, попробуйте позже или свяжитесь с администратором.",
                 parse_mode="HTML"
             )
         
     except Exception as e:
         print(f"❌ Ошибка: {e}")
+        import traceback
+        traceback.print_exc()
         await message.answer(
             "❌ Произошла ошибка при бронировании.\n"
             "Пожалуйста, попробуйте позже или свяжитесь с администратором."
