@@ -2,9 +2,14 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# Копируем requirements.txt ПЕРВЫМ (для кэширования)
 COPY requirements.txt .
-RUN pip install -r requirements.txt
 
-COPY . .
+# Устанавливаем зависимости
+RUN pip install --no-cache-dir -r requirements.txt
 
-CMD ["python", "bot.py"]
+# Копируем код бота
+COPY bot.py .
+
+# Запускаем бота с выводом логов в реальном времени
+CMD ["python", "-u", "bot.py"]
