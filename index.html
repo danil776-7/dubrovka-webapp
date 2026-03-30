@@ -281,24 +281,6 @@ h2 {
   text-decoration: line-through;
 }
 
-.time-slot.warning {
-  background: rgba(255, 193, 7, 0.2);
-  border-color: rgba(255, 193, 7, 0.3);
-  color: #ffc107;
-}
-
-.warning-message {
-  background: rgba(255, 193, 7, 0.15);
-  padding: 12px;
-  border-radius: 12px;
-  margin: 10px 0;
-  display: none;
-  color: #ffc107;
-  text-align: center;
-  font-size: 12px;
-  border-left: 3px solid #ffc107;
-}
-
 input, select {
   width: 100%;
   padding: 14px 15px;
@@ -447,7 +429,7 @@ button:active {
 
   <div class="card">
     <div class="working-hours">
-      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 23:00 | ПТ-СБ: 12:00 - 00:00</span>
+      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 01:00 | ПТ-СБ: 12:00 - 02:00</span>
     </div>
     
     <h2>🍷 БРОНИРОВАНИЕ СТОЛОВ</h2>
@@ -469,7 +451,6 @@ button:active {
 
     <input id="date" type="date">
     <div id="timeSlotsContainer" class="time-slots"></div>
-    <div id="warningMessage" class="warning-message"></div>
     
     <input id="guests" type="number" placeholder="👥 КОЛИЧЕСТВО ГОСТЕЙ" min="1" max="20" step="1" autocomplete="off" value="1">
     <input id="name" placeholder="👤 ВАШЕ ИМЯ" autocomplete="name">
@@ -514,7 +495,6 @@ const nameInput = document.getElementById("name");
 const guestsInput = document.getElementById("guests");
 const dateInput = document.getElementById("date");
 const timeSlotsContainer = document.getElementById("timeSlotsContainer");
-const warningMessage = document.getElementById("warningMessage");
 const tableInfo = document.getElementById("tableInfo");
 const bookBtn = document.getElementById("bookBtn");
 const hookahWarning = document.getElementById("hookahWarning");
@@ -538,10 +518,15 @@ if(tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
   if(user.last_name && nameInput.value) nameInput.value += " " + user.last_name;
 }
 
+// 🔥 РЕЖИМ РАБОТЫ: ВС-ЧТ: 12:00 - 01:00, ПТ-СБ: 12:00 - 02:00
 function getWorkingHours(date) {
   const day = new Date(date).getDay();
-  if (day === 5 || day === 6) return { start: 12, end: 24, text: "ПТ-СБ: 12:00 - 00:00" };
-  return { start: 12, end: 23, text: "ВС-ЧТ: 12:00 - 23:00" };
+  // 5 - пятница, 6 - суббота
+  if (day === 5 || day === 6) {
+    return { start: 12, end: 26, text: "ПТ-СБ: 12:00 - 02:00" }; // 26 = 2 часа ночи (24 + 2)
+  } else {
+    return { start: 12, end: 25, text: "ВС-ЧТ: 12:00 - 01:00" }; // 25 = 1 час ночи (24 + 1)
+  }
 }
 
 function timeToMinutes(timeStr) {
@@ -555,22 +540,23 @@ function minutesToTime(minutes) {
   return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
 }
 
-// 🔥 ОСНОВНАЯ ЛОГИКА: проверка, что время окончания (начало + 2 часа) не пересекается со следующей броней
-function isTimeAvailable(existingTimes, newTime, minIntervalMinutes = 120) {
+// 🔥 ОСНОВНАЯ ЛОГИКА: блокировка времени с учетом 2 часов брони + 30 минут зазора перед следующей
+function isTimeAvailable(existingTimes, newTime, sessionHours = 2, bufferBefore = 30) {
   let newStart = timeToMinutes(newTime);
-  let newEnd = newStart + minIntervalMinutes; // конец брони через 2 часа
+  let newEnd = newStart + (sessionHours * 60);
   
   for (let existingTime of existingTimes) {
     let existingStart = timeToMinutes(existingTime);
-    let existingEnd = existingStart + minIntervalMinutes;
+    let existingEnd = existingStart + (sessionHours * 60);
     
-    // Если время пересекается
+    // Если время пересекается или есть зазор меньше bufferBefore
     if (newStart < existingEnd && newEnd > existingStart) {
-      return { 
-        available: false, 
-        conflictTime: existingTime,
-        needToLeaveBy: minutesToTime(existingStart)
-      };
+      return { available: false, conflictTime: existingTime };
+    }
+    
+    // Проверка зазора перед следующей броней (нельзя забронировать за bufferBefore минут до)
+    if (newEnd > existingStart - bufferBefore && newEnd <= existingStart) {
+      return { available: false, conflictTime: existingTime };
     }
   }
   return { available: true };
@@ -580,8 +566,10 @@ function generateTimes(date) {
   let times = [];
   let workingHours = getWorkingHours(date);
   for(let h = workingHours.start; h < workingHours.end; h++) {
-    times.push(`${String(h).padStart(2,'0')}:00`);
-    times.push(`${String(h).padStart(2,'0')}:30`);
+    // Для времени после 24:00 показываем как 00:xx, 01:xx
+    let displayHour = h >= 24 ? h - 24 : h;
+    times.push(`${String(displayHour).padStart(2,'0')}:00`);
+    times.push(`${String(displayHour).padStart(2,'0')}:30`);
   }
   return times;
 }
@@ -599,14 +587,15 @@ function renderTimeSlots(allTimes, busyTimes, date) {
   allTimes.forEach(time => {
     let [h,m] = time.split(":");
     let slot = new Date(date);
-    slot.setHours(h, m);
+    // Для времени после полуночи (например 00:30) нужно правильно установить час
+    let hour = parseInt(h);
+    slot.setHours(hour, m);
     let isPast = slot < now;
     let isBusy = busyTimes.includes(time);
     
-    // Проверяем доступность с учетом интервала 2 часа
-    let availability = isTimeAvailable(sortedBusy, time, 120);
+    // Проверяем доступность с учетом 2 часов брони + 30 минут зазора
+    let availability = isTimeAvailable(sortedBusy, time, 2, 30);
     let isAvailable = availability.available;
-    let needToLeaveBy = availability.needToLeaveBy;
     
     let statusClass = '';
     let statusText = '';
@@ -619,13 +608,12 @@ function renderTimeSlots(allTimes, busyTimes, date) {
       statusClass = 'busy';
       statusText = ' (занято)';
     } else if (!isAvailable) {
-      statusClass = 'warning';
-      statusText = ` ⚠️ (до ${needToLeaveBy})`;
-      onclick = `selectTimeSlot('${time}', '${needToLeaveBy}')`;
+      statusClass = 'busy';
+      statusText = ' (занято)';
     } else {
       statusClass = '';
       statusText = '';
-      onclick = `selectTimeSlot('${time}', null)`;
+      onclick = `selectTimeSlot('${time}')`;
     }
     
     html += `<div class="time-slot ${statusClass}" onclick="${onclick}">${time}${statusText}</div>`;
@@ -634,7 +622,7 @@ function renderTimeSlots(allTimes, busyTimes, date) {
   timeSlotsContainer.innerHTML = html;
 }
 
-window.selectTimeSlot = (time, needToLeaveBy) => {
+window.selectTimeSlot = (time) => {
   selectedTime = time;
   document.querySelectorAll('.time-slot').forEach(slot => slot.classList.remove('selected'));
   const slots = document.querySelectorAll('.time-slot');
@@ -643,13 +631,6 @@ window.selectTimeSlot = (time, needToLeaveBy) => {
       slot.classList.add('selected');
       break;
     }
-  }
-  
-  if (needToLeaveBy) {
-    warningMessage.innerHTML = `⚠️ <b>Внимание!</b><br>Следующая бронь в ${needToLeaveBy}. Пожалуйста, освободите стол до этого времени.`;
-    warningMessage.style.display = "block";
-  } else {
-    warningMessage.style.display = "none";
   }
 };
 
@@ -737,14 +718,13 @@ document.querySelectorAll(".table").forEach(el => {
     else hookahWarning.style.display = "none";
     await loadBusyTimes();
     selectedTime = null;
-    warningMessage.style.display = "none";
   };
 });
 
 dateInput.min = new Date().toISOString().split("T")[0];
 dateInput.value = new Date().toISOString().split("T")[0];
 dateInput.addEventListener("change", () => {
-  if(selectedTable) { loadBusyTimes(); selectedTime = null; warningMessage.style.display = "none"; }
+  if(selectedTable) { loadBusyTimes(); selectedTime = null; }
 });
 
 phoneInput.addEventListener("input", () => {
@@ -776,15 +756,15 @@ bookBtn.onclick = async () => {
   }
   
   let [hours, minutes] = selectedTime.split(':').map(Number);
-  if (hours < workingHours.start || hours >= workingHours.end) {
+  if (hours < workingHours.start && hours + 24 < workingHours.start) {
     showError(`⏰ РЕСТОРАН РАБОТАЕТ: ${workingHours.text}`);
     return;
   }
   
-  // Проверяем доступность с учетом интервала 2 часа
-  let availability = isTimeAvailable(busyTimes, selectedTime, 120);
+  // Проверяем доступность с учетом 2 часов брони + 30 минут зазора
+  let availability = isTimeAvailable(busyTimes, selectedTime, 2, 30);
   if(!availability.available) {
-    showError(`⚠️ Этот стол занят до ${availability.needToLeaveBy}\n💡 Пожалуйста, выберите другое время`);
+    showError(`⚠️ Этот стол уже забронирован на это время\n💡 Пожалуйста, выберите другое время`);
     return;
   }
   
@@ -822,7 +802,6 @@ bookBtn.onclick = async () => {
       nameInput.value = "";
       guestsInput.value = "1";
       selectedTime = null;
-      warningMessage.style.display = "none";
       document.querySelectorAll(".time-slot").forEach(t => t.classList.remove("selected"));
       document.querySelectorAll(".table").forEach(t => t.classList.remove("selected"));
       selectedTable = null;
