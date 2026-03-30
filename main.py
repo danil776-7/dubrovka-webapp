@@ -14,7 +14,7 @@ import time
 
 app = FastAPI()
 
-# 🔥 НАСТРОЙКА CORS (разрешаем все источники для GitHub Pages)
+# 🔥 НАСТРОЙКА CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -36,7 +36,7 @@ app.add_middleware(
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    print("❌ DATABASE_URL not found! Using fallback")
+    print("❌ DATABASE_URL not found!")
     DATABASE_URL = "postgresql://postgres:password@localhost:5432/railway"
 
 if DATABASE_URL.startswith("postgres://"):
@@ -55,7 +55,7 @@ SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
 # =====================
-# MODEL
+# MODEL (без created_at)
 # =====================
 
 class Booking(Base):
@@ -70,7 +70,6 @@ class Booking(Base):
     time = Column(String(5))
     status = Column(String(20), default="active")
     chat_id = Column(String(50), nullable=True)
-    created_at = Column(String(50), nullable=True)
 
 # Создаем таблицы
 try:
@@ -358,8 +357,7 @@ def create_booking(data: dict):
             date=date,
             time=time,
             status="active",
-            chat_id=chat_id if chat_id and chat_id != "0" and chat_id != "None" else None,
-            created_at=datetime.now().isoformat()
+            chat_id=chat_id if chat_id and chat_id != "0" and chat_id != "None" else None
         )
 
         db.add(booking)
