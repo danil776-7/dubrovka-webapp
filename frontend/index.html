@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<meta name="google" content="notranslate">
 <title>Dubrovka Lounge & Bar</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
@@ -374,19 +375,19 @@ button:hover {
 
 <body>
 <video class="video-background" autoplay muted loop playsinline>
-  <source src="bg.mp4" type="video/mp4">
+  <source src="media/bg.mp4" type="video/mp4">
 </video>
 
 <div class="container">
   <div class="logo-container">
-    <img src="logo.png" alt="Dubrovka Lounge & Bar" class="logo-img" onerror="this.style.display='none'">
+    <img src="img/logo.png.jpg" alt="Dubrovka Lounge & Bar" class="logo-img" onerror="this.style.display='none'">
     <div class="logo-text">DUBROVKA</div>
     <div class="logo-subtitle">LOUNGE & BAR</div>
   </div>
 
   <div class="card">
     <div class="working-hours">
-      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 01:00 | ПТ-СБ: 12:00 - 02:00</span>
+      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 23:00 | ПТ-СБ: 12:00 - 00:00</span>
     </div>
     
     <h2>🍷 БРОНИРОВАНИЕ СТОЛОВ</h2>
@@ -434,6 +435,11 @@ button:hover {
 </div>
 
 <script>
+// =====================================================
+// 🔥 ССЫЛКА НА БЭКЕНД (RAILWAY)
+// =====================================================
+const API = "https://dubrovka-webapp-production.up.railway.app";
+
 // Описания столов
 const tableDescriptions = {
   "1": "🍷 ПРИВАТНАЯ ЗОНА СО ШТОРКАМИ И PLAYSTATION\n👥 ДО 7 ГОСТЕЙ",
@@ -449,7 +455,6 @@ const TABLE_CAPACITY = {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-const API = "https://dubrovka-webapp-production-a00c.up.railway.app";
 const tg = window.Telegram.WebApp;
 if(tg) tg.expand();
 
@@ -700,17 +705,15 @@ function showSuccess(message) {
   setTimeout(() => successDiv.remove(), 3500);
 }
 
-// Исправленная функция для количества гостей с ограничением
+// Функция для количества гостей
 guestsInput.addEventListener("input", (e) => {
   let guests = parseInt(e.target.value) || 1;
   
-  // Ограничение снизу
   if (guests < 1) {
     e.target.value = 1;
     guests = 1;
   }
   
-  // Ограничение сверху (максимум 20 человек)
   if (guests > 20) {
     e.target.value = 20;
     guests = 20;
@@ -720,12 +723,10 @@ guestsInput.addEventListener("input", (e) => {
   if (selectedTable) {
     let maxGuests = TABLE_CAPACITY[selectedTable];
     
-    // Проверка лимита стола
     if (guests > maxGuests) {
       showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ ${maxGuests} ГОСТЕЙ!`, guestsInput);
     }
     
-    // Показываем предупреждение о кальянах
     if (guests >= 5) {
       hookahWarning.style.display = "block";
     } else {
@@ -744,7 +745,6 @@ document.querySelectorAll(".table").forEach(el => {
     let maxGuests = TABLE_CAPACITY[selectedTable];
     guestsInput.placeholder = `👥 ГОСТЕЙ (МАКС. ${maxGuests})`;
     
-    // Проверяем текущее количество гостей
     let currentGuests = parseInt(guestsInput.value) || 1;
     if (currentGuests > maxGuests) {
       showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ ${maxGuests} ГОСТЕЙ!`, guestsInput);
@@ -795,7 +795,6 @@ bookBtn.onclick = async () => {
   if(guestsVal < 1) { showError("УКАЖИТЕ КОЛИЧЕСТВО ГОСТЕЙ", guestsInput); return; }
   if(guestsVal > 20) { showError("МАКСИМУМ 20 ГОСТЕЙ", guestsInput); return; }
   
-  // Проверка лимита гостей при отправке
   if(guestsVal > maxGuests) {
     showError(`СТОЛ ${selectedTable} ВМЕЩАЕТ ${maxGuests} ГОСТЕЙ!\nПожалуйста, уменьшите количество гостей или выберите другой стол`, guestsInput);
     return;
