@@ -81,9 +81,6 @@ async def start(message: types.Message):
 @dp.message_handler(content_types=types.ContentType.WEB_APP_DATA)
 async def web_app(message: types.Message):
     try:
-        # Отправляем сообщение о проверке
-        processing_msg = await message.answer("⏳ Проверка доступности стола...")
-        
         data = json.loads(message.web_app_data.data)
         data["chat_id"] = message.chat.id
         
@@ -99,9 +96,6 @@ async def web_app(message: types.Message):
         print(f"📡 Статус ответа: {res.status_code}")
         print(f"📡 Текст ответа: {res.text}")
         
-        # Удаляем сообщение "Проверка..."
-        await processing_msg.delete()
-        
         # Парсим ответ
         try:
             result = res.json()
@@ -110,10 +104,10 @@ async def web_app(message: types.Message):
         
         print(f"📡 Распарсенный ответ: {result}")
         
-        # 🔥 ГЛАВНОЕ: проверяем наличие ID брони
+        # Проверяем наличие ID брони
         booking_id = result.get("id")
         
-        # Если есть ID - бронь создана успешно
+        # 🔥 ТОЛЬКО ПРИ УСПЕШНОЙ БРОНИ ОТПРАВЛЯЕМ СООБЩЕНИЕ
         if booking_id:
             success_text = (
                 f"✅ <b>БРОНЬ ПОДТВЕРЖДЕНА!</b>\n\n"
@@ -160,45 +154,11 @@ async def web_app(message: types.Message):
                 f"📅 {data['date']} {data['time']}",
                 parse_mode="HTML"
             )
-            return
-        
-        # Проверка на ошибку "стол занят"
-        error_msg = str(result.get("error") or result.get("detail") or "")
-        if "busy" in error_msg.lower() or "already booked" in error_msg.lower():
-            await message.answer(
-                f"❌ <b>Извините, этот стол уже занят!</b>\n\n"
-                f"📅 {data['date']} {data['time']}\n"
-                f"🪑 Стол {data['table']}\n\n"
-                f"Пожалуйста, выберите другое время или стол.",
-                parse_mode="HTML"
-            )
-            return
-        
-        # Если есть поле ok
-        if result.get("ok") == True:
-            await message.answer(
-                f"✅ <b>БРОНЬ ПОДТВЕРЖДЕНА!</b>\n\n"
-                f"👤 {data['name']}\n"
-                f"🪑 Стол {data['table']}\n"
-                f"👥 {data['guests']} чел.\n"
-                f"📅 {data['date']} {data['time']}\n\n"
-                f"📍 Ермакова 11\n"
-                f"❤️ Ждем вас!",
-                parse_mode="HTML"
-            )
-            return
-        
-        # Неизвестный ответ
-        await message.answer(
-            f"❌ Ошибка при бронировании. Попробуйте позже.",
-            parse_mode="HTML"
-        )
+        # 🔥 ЕСЛИ ОШИБКА — НИЧЕГО НЕ ОТПРАВЛЯЕМ В БОТ
         
     except Exception as e:
         print(f"❌ Ошибка: {e}")
-        await message.answer(
-            "❌ Ошибка при бронировании. Попробуйте позже."
-        )
+        # Ошибка логируется, но бот ничего не отправляет гостю
 
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith("cancel"))
 async def cancel_booking(call: types.CallbackQuery):
