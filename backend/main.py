@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import create_engine, Column, Integer, String, text
+from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
 from datetime import datetime, timedelta
 import requests
@@ -14,10 +14,16 @@ import time
 
 app = FastAPI()
 
-# CORS - разрешаем все источники для теста
+# 🔥 ПРАВИЛЬНЫЕ НАСТРОЙКИ CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://danil776-7.github.io",
+        "https://dani1776-7.github.io",
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+        "*"  # временно для теста
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -33,8 +39,7 @@ if not DATABASE_URL:
     print("❌ DATABASE_URL not found!")
     DATABASE_URL = "postgresql://postgres:password@localhost:5432/railway"
 
-# Фикс для Railway
-if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 print(f"✅ Connecting to database...")
@@ -171,6 +176,7 @@ def send_thank_you_to_guest(booking):
         f"👤 <b>{booking.name}</b>, мы благодарим вас за визит!\n\n"
         f"🍷 Надеемся, вам понравилась атмосфера, обслуживание и кухня.\n\n"
         f"📝 <b>Пожалуйста, оставьте отзыв о нашем заведении в 2ГИС</b>\n"
+        f"Ваше мнение очень важно для нас!\n\n"
         f"🔗 <a href='{TWO_GIS_REVIEW_URL}'>Написать отзыв в 2ГИС</a>\n\n"
         f"❤️ Ждем вас снова!"
     )
@@ -255,7 +261,7 @@ def root():
 def health():
     try:
         db = SessionLocal()
-        db.execute(text("SELECT 1"))
+        db.execute("SELECT 1")
         db.close()
         return {"status": "healthy"}
     except Exception as e:
