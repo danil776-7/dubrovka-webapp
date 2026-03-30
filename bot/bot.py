@@ -3,6 +3,10 @@ import os
 import sys
 from aiogram import Bot, Dispatcher, types, executor
 import requests
+import asyncio
+import threading
+import time
+from datetime import datetime, timedelta
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_CHAT_ID", "7545540622"))
@@ -16,6 +20,9 @@ API_URL = "https://dubrovka-webapp-production.up.railway.app"
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
+# Хранилище для запланированных напоминаний
+reminders = {}
+
 # Клавиатура с кнопкой бронирования
 keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
 keyboard.add(
@@ -26,6 +33,43 @@ keyboard.add(
         )
     )
 )
+
+def schedule_reminder(chat_id, booking_id, booking_time, booking_date, booking_table, booking_name):
+    """Запланировать напоминание за 30 минут до брони"""
+    try:
+        # Парсим дату и время брони
+        booking_datetime = datetime.strptime(f"{booking_date} {booking_time}", "%Y-%m-%d %H:%M")
+        reminder_time = booking_datetime - timedelta(minutes=30)
+        now = datetime.now()
+        
+        if reminder_time > now:
+            delay = (reminder_time - now).total_seconds()
+            
+            def send_reminder():
+                time.sleep(delay)
+                asyncio.run_coroutine_threadsafe(
+                    bot.send_message(
+                        chat_id,
+                        f"🔔 <b>НАПОМИНАНИЕ О БРОНИ!</b>\n\n"
+                        f"🪑 <b>Стол:</b> {booking_table}\n"
+                        f"📅 <b>Сегодня:</b> {booking_date}\n"
+                        f"⏰ <b>Через 30 минут:</b> {booking_time}\n\n"
+                        f"👤 <b>На имя:</b> {booking_name}\n\n"
+                        f"📍 <b>Ждем вас по адресу:</b> Ермакова 11\n"
+                        f"📞 <b>Телефон:</b> +7‒913‒432‒01‒01\n\n"
+                        f"🌟 Пожалуйста, не опаздывайте!"
+                    ),
+                    asyncio.get_event_loop()
+                )
+            
+            timer = threading.Timer(delay, send_reminder)
+            timer.daemon = True
+            timer.start()
+            reminders[booking_id] = timer
+            print(f"⏰ Напоминание запланировано для брони {booking_id} на {reminder_time}")
+            
+    except Exception as e:
+        print(f"❌ Ошибка планирования напоминания: {e}")
 
 @dp.message_handler(commands=["start"])
 async def start(message: types.Message):
@@ -38,7 +82,7 @@ async def start(message: types.Message):
 @dp.message_handler(content_types=types.ContentType.WEB_APP_DATA)
 async def web_app(message: types.Message):
     try:
-        # 🔥 ОТПРАВЛЯЕМ СООБЩЕНИЕ "Обработка..." СРАЗУ
+        # Отправляем сообщение о проверке
         processing_msg = await message.answer("⏳ Проверка доступности стола...")
         
         data = json.loads(message.web_app_data.data)
@@ -56,61 +100,81 @@ async def web_app(message: types.Message):
         result = res.json()
         print(f"📡 Ответ сервера: {result}")
         
+        # Удаляем сообщение "Проверка..."
+        await processing_msg.delete()
+        
         # Проверяем ответ сервера
         if result.get("error") or result.get("detail") == "Time slot already booked":
-            # 🔥 СТОЛ ЗАНЯТ - ПОКАЗЫВАЕМ ОШИБКУ
-            await processing_msg.delete()
+            # Стол занят
             await message.answer(
-                "❌ <b>Извините, этот стол уже занят!</b>\n\n"
+                f"❌ <b>Извините, этот стол уже занят!</b>\n\n"
                 f"📅 {data['date']} {data['time']}\n"
                 f"🪑 Стол {data['table']}\n\n"
-                "Пожалуйста, выберите другое время или стол.",
+                f"Пожалуйста, выберите другое время или стол.",
                 parse_mode="HTML"
             )
             return
         
         # Успешная бронь
-        booking_id = result.get("id")
-        
-        # Формируем сообщение об успехе
-        success_text = (
-            f"✅ <b>БРОНЬ ПОДТВЕРЖДЕНА!</b>\n\n"
-            f"🆔 <b>ID брони:</b> {booking_id}\n"
-            f"👤 <b>Имя:</b> {data['name']}\n"
-            f"🪑 <b>Стол:</b> {data['table']}\n"
-            f"👥 <b>Гостей:</b> {data['guests']}\n"
-            f"📅 <b>Дата:</b> {data['date']}\n"
-            f"⏰ <b>Время:</b> {data['time']}\n\n"
-            f"📍 <b>Адрес:</b> Ермакова 11, Новокузнецк\n"
-            f"📞 <b>Телефон:</b> +7‒913‒432‒01‒01\n\n"
-            f"❤️ Ждем вас в Dubrovka!"
-        )
-        
-        # Кнопка отмены
-        kb = types.InlineKeyboardMarkup()
-        kb.add(
-            types.InlineKeyboardButton(
-                "❌ Отменить бронь",
-                callback_data=f"cancel|{booking_id}"
+        if result.get("ok") or result.get("id"):
+            booking_id = result.get("id")
+            
+            # Формируем сообщение об успехе
+            success_text = (
+                f"✅ <b>БРОНЬ ПОДТВЕРЖДЕНА!</b>\n\n"
+                f"🆔 <b>ID брони:</b> {booking_id}\n"
+                f"👤 <b>Имя:</b> {data['name']}\n"
+                f"🪑 <b>Стол:</b> {data['table']}\n"
+                f"👥 <b>Гостей:</b> {data['guests']}\n"
+                f"📅 <b>Дата:</b> {data['date']}\n"
+                f"⏰ <b>Время:</b> {data['time']}\n\n"
+                f"📍 <b>Адрес:</b> Ермакова 11, Новокузнецк\n"
+                f"📞 <b>Телефон:</b> +7‒913‒432‒01‒01\n\n"
+                f"❤️ Ждем вас в Dubrovka!"
             )
-        )
-        
-        # Удаляем сообщение "Обработка..." и отправляем результат
-        await processing_msg.delete()
-        await message.answer(success_text, reply_markup=kb, parse_mode="HTML")
-        
-        # Отправляем уведомление админу
-        await bot.send_message(
-            ADMIN_ID,
-            f"🔥 <b>НОВАЯ БРОНЬ!</b>\n\n"
-            f"🆔 ID: {booking_id}\n"
-            f"👤 {data['name']}\n"
-            f"📞 {data['phone']}\n"
-            f"👥 {data['guests']} чел.\n"
-            f"🪑 Стол {data['table']}\n"
-            f"📅 {data['date']} {data['time']}",
-            parse_mode="HTML"
-        )
+            
+            # Кнопка отмены
+            kb = types.InlineKeyboardMarkup()
+            kb.add(
+                types.InlineKeyboardButton(
+                    "❌ Отменить бронь",
+                    callback_data=f"cancel|{booking_id}"
+                )
+            )
+            
+            await message.answer(success_text, reply_markup=kb, parse_mode="HTML")
+            
+            # Планируем напоминание за 30 минут
+            schedule_reminder(
+                message.chat.id,
+                booking_id,
+                data['time'],
+                data['date'],
+                data['table'],
+                data['name']
+            )
+            
+            # Отправляем уведомление админу
+            await bot.send_message(
+                ADMIN_ID,
+                f"🔥 <b>НОВАЯ БРОНЬ!</b>\n\n"
+                f"🆔 ID: {booking_id}\n"
+                f"👤 {data['name']}\n"
+                f"📞 {data['phone']}\n"
+                f"👥 {data['guests']} чел.\n"
+                f"🪑 Стол {data['table']}\n"
+                f"📅 {data['date']} {data['time']}\n\n"
+                f"🔔 Напоминание гостю запланировано за 30 минут",
+                parse_mode="HTML"
+            )
+            
+        else:
+            # Неизвестная ошибка
+            await message.answer(
+                f"❌ Ошибка при бронировании: {result.get('detail', 'Неизвестная ошибка')}\n\n"
+                f"Пожалуйста, попробуйте позже или свяжитесь с администратором.",
+                parse_mode="HTML"
+            )
         
     except Exception as e:
         print(f"❌ Ошибка: {e}")
@@ -131,11 +195,17 @@ async def cancel_booking(call: types.CallbackQuery):
             timeout=10
         )
         
+        # Отменяем запланированное напоминание
+        if int(booking_id) in reminders:
+            reminders[int(booking_id)].cancel()
+            del reminders[int(booking_id)]
+        
         if res.status_code == 200:
             await call.message.edit_text(
-                "❌ <b>Бронь отменена</b>\n\n"
+                f"❌ <b>Бронь отменена</b>\n\n"
                 f"Бронь #{booking_id} успешно отменена.\n\n"
-                "Если у вас есть вопросы, свяжитесь с администратором.",
+                f"Если у вас есть вопросы, свяжитесь с администратором:\n"
+                f"📞 +7‒913‒432‒01‒01",
                 parse_mode="HTML"
             )
             await call.answer("Бронь отменена")
@@ -148,4 +218,5 @@ async def cancel_booking(call: types.CallbackQuery):
 
 if __name__ == "__main__":
     print("🤖 Бот запущен и готов к работе!")
+    print(f"📡 API URL: {API_URL}")
     executor.start_polling(dp, skip_updates=True)
