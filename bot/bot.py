@@ -81,6 +81,9 @@ async def start(message: types.Message):
 @dp.message_handler(content_types=types.ContentType.WEB_APP_DATA)
 async def web_app(message: types.Message):
     try:
+        # Сразу отправляем сообщение "Обработка..."
+        processing_msg = await message.answer("⏳ Проверка доступности стола...")
+        
         data = json.loads(message.web_app_data.data)
         data["chat_id"] = message.chat.id
         
@@ -96,6 +99,9 @@ async def web_app(message: types.Message):
         print(f"📡 Статус ответа: {res.status_code}")
         print(f"📡 Текст ответа: {res.text}")
         
+        # Удаляем сообщение "Обработка..."
+        await processing_msg.delete()
+        
         # Парсим ответ
         try:
             result = res.json()
@@ -107,7 +113,7 @@ async def web_app(message: types.Message):
         # Проверяем наличие ID брони
         booking_id = result.get("id")
         
-        # 🔥 ТОЛЬКО ПРИ УСПЕШНОЙ БРОНИ ОТПРАВЛЯЕМ СООБЩЕНИЕ
+        # Если есть ID - бронь создана успешно
         if booking_id:
             success_text = (
                 f"✅ <b>БРОНЬ ПОДТВЕРЖДЕНА!</b>\n\n"
@@ -154,11 +160,17 @@ async def web_app(message: types.Message):
                 f"📅 {data['date']} {data['time']}",
                 parse_mode="HTML"
             )
-        # 🔥 ЕСЛИ ОШИБКА — НИЧЕГО НЕ ОТПРАВЛЯЕМ В БОТ
+            print(f"✅ Успешная бронь {booking_id}, уведомление отправлено")
+        else:
+            # Бронь не создалась — НЕ ОТПРАВЛЯЕМ СООБЩЕНИЕ ГОСТЮ
+            # Но логируем ошибку
+            print(f"❌ Ошибка бронирования: {result}")
         
     except Exception as e:
-        print(f"❌ Ошибка: {e}")
-        # Ошибка логируется, но бот ничего не отправляет гостю
+        print(f"❌ Ошибка в обработчике: {e}")
+        import traceback
+        traceback.print_exc()
+        # Ничего не отправляем гостю
 
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith("cancel"))
 async def cancel_booking(call: types.CallbackQuery):
@@ -194,4 +206,5 @@ async def cancel_booking(call: types.CallbackQuery):
 
 if __name__ == "__main__":
     print("🤖 Бот запущен!")
+    print(f"📡 API URL: {API_URL}")
     executor.start_polling(dp, skip_updates=True)
