@@ -137,6 +137,7 @@ async def web_app(message: types.Message):
             )
             
             await message.answer(success_text, reply_markup=kb, parse_mode="HTML")
+            print(f"✅ Отправлено подтверждение гостю {message.chat.id}")
             
             # Планируем напоминание
             schedule_reminder(
@@ -157,20 +158,19 @@ async def web_app(message: types.Message):
                 f"📞 {data['phone']}\n"
                 f"👥 {data['guests']} чел.\n"
                 f"🪑 Стол {data['table']}\n"
-                f"📅 {data['date']} {data['time']}",
+                f"📅 {data['date']} {data['time']}\n\n"
+                f"🔔 Напоминание гостю запланировано за 30 минут",
                 parse_mode="HTML"
             )
-            print(f"✅ Успешная бронь {booking_id}, уведомление отправлено")
+            print(f"✅ Отправлено уведомление админу {ADMIN_ID}")
         else:
             # Бронь не создалась — НЕ ОТПРАВЛЯЕМ СООБЩЕНИЕ ГОСТЮ
-            # Но логируем ошибку
             print(f"❌ Ошибка бронирования: {result}")
         
     except Exception as e:
         print(f"❌ Ошибка в обработчике: {e}")
         import traceback
         traceback.print_exc()
-        # Ничего не отправляем гостю
 
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith("cancel"))
 async def cancel_booking(call: types.CallbackQuery):
@@ -207,4 +207,5 @@ async def cancel_booking(call: types.CallbackQuery):
 if __name__ == "__main__":
     print("🤖 Бот запущен!")
     print(f"📡 API URL: {API_URL}")
+    print(f"👑 Admin ID: {ADMIN_ID}")
     executor.start_polling(dp, skip_updates=True)
