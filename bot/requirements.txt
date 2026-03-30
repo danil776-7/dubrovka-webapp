@@ -1,5 +1,7 @@
 fastapi
-uvicorn
+uvicorn[standard]
 sqlalchemy
 psycopg2-binary
 requests
+aiogram==2.25.1
+aiohttp==3.9.0
