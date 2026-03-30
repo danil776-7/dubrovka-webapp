@@ -467,7 +467,10 @@ button:active {
 
     <div id="tableInfo" class="desc">✨ ВЫБЕРИТЕ СТОЛ ДЛЯ БРОНИРОВАНИЯ</div>
 
-    <input id="date" type="date">
+    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+      <input id="date" type="date" style="flex: 1;">
+      <button id="refreshBtn" style="width: auto; padding: 14px 20px; margin-top: 0;">🔄</button>
+    </div>
     <div id="timeSlotsContainer" class="time-slots"></div>
     <div id="warningMessage" class="warning-message"></div>
     
@@ -513,6 +516,7 @@ const phoneInput = document.getElementById("phone");
 const nameInput = document.getElementById("name");
 const guestsInput = document.getElementById("guests");
 const dateInput = document.getElementById("date");
+const refreshBtn = document.getElementById("refreshBtn");
 const timeSlotsContainer = document.getElementById("timeSlotsContainer");
 const warningMessage = document.getElementById("warningMessage");
 const tableInfo = document.getElementById("tableInfo");
@@ -558,7 +562,6 @@ function minutesToTime(minutes) {
   return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
 }
 
-// Проверка доступности времени (используется только для отображения)
 function isTimeAvailable(existingTimes, newTime, sessionHours = 2) {
   let newStart = timeToMinutes(newTime);
   let newEnd = newStart + (sessionHours * 60);
@@ -761,6 +764,26 @@ phoneInput.addEventListener("input", () => {
   phoneInput.value = "+" + v;
 });
 
+// Кнопка обновления
+if (refreshBtn) {
+  refreshBtn.onclick = () => {
+    if (selectedTable && dateInput.value) {
+      loadBusyTimes();
+      showSuccess("✅ Список времен обновлен");
+    } else {
+      showError("❌ Выберите стол и дату");
+    }
+  };
+}
+
+// Автообновление каждые 10 секунд
+setInterval(() => {
+  if (selectedTable && dateInput.value) {
+    loadBusyTimes();
+    console.log("🔄 Автообновление списка времен");
+  }
+}, 10000);
+
 bookBtn.onclick = async () => {
   if(!selectedTable) { showError("ВЫБЕРИТЕ СТОЛ"); return; }
   if(!dateInput.value) { showError("ВЫБЕРИТЕ ДАТУ"); return; }
@@ -788,14 +811,6 @@ bookBtn.onclick = async () => {
     return;
   }
   
-  // 🔥 ВРЕМЕННО ОТКЛЮЧАЕМ ПРОВЕРКУ ДОСТУПНОСТИ ДЛЯ ОТЛАДКИ
-  // let availability = isTimeAvailable(busyTimes, selectedTime, 2);
-  // if(!availability.available) {
-  //   showError(`⚠️ Этот стол уже забронирован на это время\n💡 Пожалуйста, выберите другое время`);
-  //   return;
-  // }
-  console.log("🔧 Проверка времени отключена, отправляем запрос на сервер");
-  
   let data = {
     name: nameVal,
     phone: phoneVal,
@@ -817,7 +832,6 @@ bookBtn.onclick = async () => {
     });
     let result = await res.json();
     
-    // Любая ошибка означает, что стол занят
     if (result.error || result.detail) {
       showError("❌ Этот стол уже занят в выбранное время");
       await loadBusyTimes();
