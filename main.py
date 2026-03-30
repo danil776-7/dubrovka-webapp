@@ -14,6 +14,7 @@ import time
 
 app = FastAPI()
 
+# CORS настройки
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -54,7 +55,7 @@ SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
 # =====================
-# MODEL
+# MODEL (без created_at)
 # =====================
 
 class Booking(Base):
@@ -69,7 +70,6 @@ class Booking(Base):
     time = Column(String(5))
     status = Column(String(20), default="active")
     chat_id = Column(String(50), nullable=True)
-    created_at = Column(String(50), nullable=True)  # дата создания брони
 
 # Создаем таблицы
 try:
@@ -108,50 +108,6 @@ TABLE_LIMITS = {
 
 reminder_timers = {}
 completion_timers = {}
-
-# =====================
-# АВТОМАТИЧЕСКАЯ ОЧИСТКА БАЗЫ
-# =====================
-
-def clean_old_bookings():
-    """Удаляет завершенные брони старше 30 дней"""
-    db = SessionLocal()
-    try:
-        cutoff_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
-        
-        deleted = db.query(Booking).filter(
-            Booking.status.in_(["completed", "cancelled"]),
-            Booking.date < cutoff_date
-        ).delete()
-        
-        db.commit()
-        if deleted > 0:
-            print(f"🧹 Очистка базы: удалено {deleted} старых броней")
-        
-    except Exception as e:
-        print(f"❌ Ошибка очистки: {e}")
-        db.rollback()
-    finally:
-        db.close()
-
-def schedule_cleanup():
-    """Запускает очистку базы раз в сутки в 3:00"""
-    while True:
-        now = datetime.now()
-        next_run = now.replace(hour=3, minute=0, second=0, microsecond=0)
-        if now >= next_run:
-            next_run += timedelta(days=1)
-        
-        sleep_seconds = (next_run - now).total_seconds()
-        print(f"🧹 Следующая очистка базы в {next_run.strftime('%Y-%m-%d %H:%M:%S')}")
-        time.sleep(sleep_seconds)
-        
-        clean_old_bookings()
-
-# Запускаем очистку в отдельном потоке
-cleanup_thread = threading.Thread(target=schedule_cleanup, daemon=True)
-cleanup_thread.start()
-print("🧹 Автоматическая очистка базы запущена (раз в сутки в 3:00)")
 
 # =====================
 # ФУНКЦИИ ОТПРАВКИ СООБЩЕНИЙ
@@ -401,8 +357,7 @@ def create_booking(data: dict):
             date=date,
             time=time,
             status="active",
-            chat_id=chat_id if chat_id and chat_id != "0" and chat_id != "None" else None,
-            created_at=datetime.now().isoformat()
+            chat_id=chat_id if chat_id and chat_id != "0" and chat_id != "None" else None
         )
 
         db.add(booking)
