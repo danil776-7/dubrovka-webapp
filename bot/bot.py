@@ -109,7 +109,8 @@ async def web_app(message: types.Message):
         # Парсим ответ
         try:
             result = res.json()
-        except:
+        except Exception as e:
+            print(f"❌ Ошибка парсинга JSON: {e}")
             result = {}
         
         print(f"📡 Распарсенный ответ: {result}")
@@ -167,14 +168,48 @@ async def web_app(message: types.Message):
                 parse_mode="HTML"
             )
             print(f"✅ Отправлено уведомление админу {ADMIN_ID}")
+        elif result.get("ok") == True:
+            # Если есть ok, но нет id (старый формат)
+            success_text = (
+                f"✅ <b>БРОНЬ ПОДТВЕРЖДЕНА!</b>\n\n"
+                f"👤 <b>Имя:</b> {data['name']}\n"
+                f"🪑 <b>Стол:</b> {data['table']}\n"
+                f"👥 <b>Гостей:</b> {data['guests']}\n"
+                f"📅 <b>Дата:</b> {data['date']}\n"
+                f"⏰ <b>Время:</b> {data['time']}\n\n"
+                f"📍 <b>Адрес:</b> Ермакова 11, Новокузнецк\n"
+                f"📞 <b>Телефон:</b> +7‒913‒432‒01‒01\n\n"
+                f"❤️ Ждем вас в Dubrovka!"
+            )
+            
+            await message.answer(success_text, parse_mode="HTML")
+            print(f"✅ Отправлено подтверждение гостю {message.chat.id} (без ID)")
+            
+            # Уведомление админу без ID
+            await bot.send_message(
+                ADMIN_ID,
+                f"🔥 <b>НОВАЯ БРОНЬ!</b>\n\n"
+                f"👤 {data['name']}\n"
+                f"📞 {data['phone']}\n"
+                f"👥 {data['guests']} чел.\n"
+                f"🪑 Стол {data['table']}\n"
+                f"📅 {data['date']} {data['time']}",
+                parse_mode="HTML"
+            )
+            print(f"✅ Отправлено уведомление админу {ADMIN_ID}")
         else:
-            # Бронь не создалась — НЕ ОТПРАВЛЯЕМ СООБЩЕНИЕ ГОСТЮ
+            # Бронь не создалась
             print(f"❌ Ошибка бронирования: {result}")
-        
+            # Не отправляем сообщение гостю
+            
     except Exception as e:
         print(f"❌ Ошибка в обработчике: {e}")
         import traceback
         traceback.print_exc()
+        await message.answer(
+            "❌ Произошла ошибка при бронировании.\n"
+            "Пожалуйста, попробуйте позже."
+        )
 
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith("cancel"))
 async def cancel_booking(call: types.CallbackQuery):
