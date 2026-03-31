@@ -20,10 +20,8 @@ API_URL = "https://dubrovka-webapp-production.up.railway.app"
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
-# Хранилище для запланированных напоминаний
 reminders = {}
 
-# Клавиатура с кнопкой бронирования
 keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
 keyboard.add(
     types.KeyboardButton(
@@ -35,7 +33,6 @@ keyboard.add(
 )
 
 def schedule_reminder(chat_id, booking_id, booking_time, booking_date, booking_table, booking_name):
-    """Запланировать напоминание за 30 минут до брони"""
     try:
         booking_datetime = datetime.strptime(f"{booking_date} {booking_time}", "%Y-%m-%d %H:%M")
         reminder_time = booking_datetime - timedelta(minutes=30)
@@ -85,7 +82,15 @@ async def test(message: types.Message):
 @dp.message_handler(content_types=types.ContentType.WEB_APP_DATA)
 async def web_app(message: types.Message):
     try:
-        # Сразу отправляем сообщение "Обработка..."
+        # 🔥 ПРИНУДИТЕЛЬНАЯ ОТПРАВКА АДМИНУ ПРИ ЛЮБОМ ЗАПРОСЕ
+        await bot.send_message(
+            ADMIN_ID,
+            f"📨 <b>ПОЛУЧЕН ЗАПРОС ОТ БОТА</b>\n\n"
+            f"Chat ID: {message.chat.id}\n"
+            f"Данные: {message.web_app_data.data[:200]}",
+            parse_mode="HTML"
+        )
+        
         processing_msg = await message.answer("⏳ Проверка доступности стола...")
         
         data = json.loads(message.web_app_data.data)
@@ -93,7 +98,6 @@ async def web_app(message: types.Message):
         
         print(f"📝 Получены данные: {data}")
         
-        # Отправляем запрос на сервер
         res = requests.post(
             f"{API_URL}/booking",
             json=data,
@@ -103,32 +107,27 @@ async def web_app(message: types.Message):
         print(f"📡 Статус ответа: {res.status_code}")
         print(f"📡 Текст ответа: {res.text}")
         
-        # Удаляем сообщение "Обработка..."
         await processing_msg.delete()
         
-        # Парсим ответ
         try:
             result = res.json()
-        except Exception as e:
-            print(f"❌ Ошибка парсинга JSON: {e}")
+        except:
             result = {}
         
         print(f"📡 Распарсенный ответ: {result}")
         
-        # Проверяем наличие ID брони
         booking_id = result.get("id")
         
-        # 🔥 ПРИНУДИТЕЛЬНАЯ ОТПРАВКА ТЕСТОВОГО СООБЩЕНИЯ
+        # 🔥 ОТПРАВЛЯЕМ СООБЩЕНИЕ АДМИНУ С РЕЗУЛЬТАТОМ
         await bot.send_message(
             ADMIN_ID,
-            f"🔔 <b>ТЕСТОВОЕ УВЕДОМЛЕНИЕ</b>\n\n"
+            f"📊 <b>РЕЗУЛЬТАТ БРОНИРОВАНИЯ</b>\n\n"
             f"Статус: {res.status_code}\n"
-            f"Ответ: {res.text}\n"
-            f"ID брони: {booking_id}",
+            f"ID брони: {booking_id}\n"
+            f"Ответ: {res.text[:200]}",
             parse_mode="HTML"
         )
         
-        # Если есть ID - бронь создана успешно
         if booking_id:
             success_text = (
                 f"✅ <b>БРОНЬ ПОДТВЕРЖДЕНА!</b>\n\n"
@@ -154,7 +153,6 @@ async def web_app(message: types.Message):
             await message.answer(success_text, reply_markup=kb, parse_mode="HTML")
             print(f"✅ Отправлено подтверждение гостю {message.chat.id}")
             
-            # Планируем напоминание
             schedule_reminder(
                 message.chat.id,
                 booking_id,
@@ -164,39 +162,10 @@ async def web_app(message: types.Message):
                 data['name']
             )
             
-            # Уведомление админу
             await bot.send_message(
                 ADMIN_ID,
                 f"🔥 <b>НОВАЯ БРОНЬ!</b>\n\n"
                 f"🆔 ID: {booking_id}\n"
-                f"👤 {data['name']}\n"
-                f"📞 {data['phone']}\n"
-                f"👥 {data['guests']} чел.\n"
-                f"🪑 Стол {data['table']}\n"
-                f"📅 {data['date']} {data['time']}\n\n"
-                f"🔔 Напоминание гостю запланировано за 30 минут",
-                parse_mode="HTML"
-            )
-            print(f"✅ Отправлено уведомление админу {ADMIN_ID}")
-        elif result.get("ok") == True:
-            success_text = (
-                f"✅ <b>БРОНЬ ПОДТВЕРЖДЕНА!</b>\n\n"
-                f"👤 <b>Имя:</b> {data['name']}\n"
-                f"🪑 <b>Стол:</b> {data['table']}\n"
-                f"👥 <b>Гостей:</b> {data['guests']}\n"
-                f"📅 <b>Дата:</b> {data['date']}\n"
-                f"⏰ <b>Время:</b> {data['time']}\n\n"
-                f"📍 <b>Адрес:</b> Ермакова 11, Новокузнецк\n"
-                f"📞 <b>Телефон:</b> +7‒913‒432‒01‒01\n\n"
-                f"❤️ Ждем вас в Dubrovka!"
-            )
-            
-            await message.answer(success_text, parse_mode="HTML")
-            print(f"✅ Отправлено подтверждение гостю {message.chat.id} (без ID)")
-            
-            await bot.send_message(
-                ADMIN_ID,
-                f"🔥 <b>НОВАЯ БРОНЬ!</b>\n\n"
                 f"👤 {data['name']}\n"
                 f"📞 {data['phone']}\n"
                 f"👥 {data['guests']} чел.\n"
@@ -211,8 +180,7 @@ async def web_app(message: types.Message):
                 ADMIN_ID,
                 f"❌ <b>ОШИБКА БРОНИРОВАНИЯ</b>\n\n"
                 f"Статус: {res.status_code}\n"
-                f"Ответ: {res.text}\n"
-                f"Данные: {data}",
+                f"Ответ: {res.text}",
                 parse_mode="HTML"
             )
         
@@ -224,10 +192,6 @@ async def web_app(message: types.Message):
             ADMIN_ID,
             f"❌ <b>ИСКЛЮЧЕНИЕ В БОТЕ</b>\n\n{e}",
             parse_mode="HTML"
-        )
-        await message.answer(
-            "❌ Произошла ошибка при бронировании.\n"
-            "Пожалуйста, попробуйте позже."
         )
 
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith("cancel"))
@@ -250,7 +214,6 @@ async def cancel_booking(call: types.CallbackQuery):
             await call.message.edit_text(
                 f"❌ <b>Бронь отменена</b>\n\n"
                 f"Бронь #{booking_id} успешно отменена.\n\n"
-                f"Если у вас есть вопросы, свяжитесь с администратором:\n"
                 f"📞 +7‒913‒432‒01‒01",
                 parse_mode="HTML"
             )
