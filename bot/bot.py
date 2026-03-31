@@ -118,6 +118,16 @@ async def web_app(message: types.Message):
         # Проверяем наличие ID брони
         booking_id = result.get("id")
         
+        # 🔥 ПРИНУДИТЕЛЬНАЯ ОТПРАВКА ТЕСТОВОГО СООБЩЕНИЯ
+        await bot.send_message(
+            ADMIN_ID,
+            f"🔔 <b>ТЕСТОВОЕ УВЕДОМЛЕНИЕ</b>\n\n"
+            f"Статус: {res.status_code}\n"
+            f"Ответ: {res.text}\n"
+            f"ID брони: {booking_id}",
+            parse_mode="HTML"
+        )
+        
         # Если есть ID - бронь создана успешно
         if booking_id:
             success_text = (
@@ -169,7 +179,6 @@ async def web_app(message: types.Message):
             )
             print(f"✅ Отправлено уведомление админу {ADMIN_ID}")
         elif result.get("ok") == True:
-            # Если есть ok, но нет id (старый формат)
             success_text = (
                 f"✅ <b>БРОНЬ ПОДТВЕРЖДЕНА!</b>\n\n"
                 f"👤 <b>Имя:</b> {data['name']}\n"
@@ -185,7 +194,6 @@ async def web_app(message: types.Message):
             await message.answer(success_text, parse_mode="HTML")
             print(f"✅ Отправлено подтверждение гостю {message.chat.id} (без ID)")
             
-            # Уведомление админу без ID
             await bot.send_message(
                 ADMIN_ID,
                 f"🔥 <b>НОВАЯ БРОНЬ!</b>\n\n"
@@ -198,14 +206,25 @@ async def web_app(message: types.Message):
             )
             print(f"✅ Отправлено уведомление админу {ADMIN_ID}")
         else:
-            # Бронь не создалась
             print(f"❌ Ошибка бронирования: {result}")
-            # Не отправляем сообщение гостю
-            
+            await bot.send_message(
+                ADMIN_ID,
+                f"❌ <b>ОШИБКА БРОНИРОВАНИЯ</b>\n\n"
+                f"Статус: {res.status_code}\n"
+                f"Ответ: {res.text}\n"
+                f"Данные: {data}",
+                parse_mode="HTML"
+            )
+        
     except Exception as e:
         print(f"❌ Ошибка в обработчике: {e}")
         import traceback
         traceback.print_exc()
+        await bot.send_message(
+            ADMIN_ID,
+            f"❌ <b>ИСКЛЮЧЕНИЕ В БОТЕ</b>\n\n{e}",
+            parse_mode="HTML"
+        )
         await message.answer(
             "❌ Произошла ошибка при бронировании.\n"
             "Пожалуйста, попробуйте позже."
