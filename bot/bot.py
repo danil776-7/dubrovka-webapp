@@ -82,12 +82,12 @@ async def test(message: types.Message):
 @dp.message_handler(content_types=types.ContentType.WEB_APP_DATA)
 async def web_app(message: types.Message):
     try:
-        # 🔥 ПРИНУДИТЕЛЬНАЯ ОТПРАВКА АДМИНУ ПРИ ЛЮБОМ ЗАПРОСЕ
+        # 🔥 ОТПРАВЛЯЕМ СООБЩЕНИЕ АДМИНУ ПРИ ЛЮБОМ ЗАПРОСЕ
         await bot.send_message(
             ADMIN_ID,
-            f"📨 <b>ПОЛУЧЕН ЗАПРОС ОТ БОТА</b>\n\n"
+            f"📨 <b>ЗАПРОС ОТ БОТА</b>\n\n"
             f"Chat ID: {message.chat.id}\n"
-            f"Данные: {message.web_app_data.data[:200]}",
+            f"Данные: {message.web_app_data.data[:300]}",
             parse_mode="HTML"
         )
         
@@ -98,6 +98,7 @@ async def web_app(message: types.Message):
         
         print(f"📝 Получены данные: {data}")
         
+        # Отправляем запрос на сервер
         res = requests.post(
             f"{API_URL}/booking",
             json=data,
@@ -118,10 +119,10 @@ async def web_app(message: types.Message):
         
         booking_id = result.get("id")
         
-        # 🔥 ОТПРАВЛЯЕМ СООБЩЕНИЕ АДМИНУ С РЕЗУЛЬТАТОМ
+        # 🔥 ОТПРАВЛЯЕМ РЕЗУЛЬТАТ АДМИНУ
         await bot.send_message(
             ADMIN_ID,
-            f"📊 <b>РЕЗУЛЬТАТ БРОНИРОВАНИЯ</b>\n\n"
+            f"📊 <b>РЕЗУЛЬТАТ</b>\n\n"
             f"Статус: {res.status_code}\n"
             f"ID брони: {booking_id}\n"
             f"Ответ: {res.text[:200]}",
@@ -173,24 +174,37 @@ async def web_app(message: types.Message):
                 f"📅 {data['date']} {data['time']}",
                 parse_mode="HTML"
             )
-            print(f"✅ Отправлено уведомление админу {ADMIN_ID}")
-        else:
-            print(f"❌ Ошибка бронирования: {result}")
+        elif result.get("ok") == True:
+            success_text = (
+                f"✅ <b>БРОНЬ ПОДТВЕРЖДЕНА!</b>\n\n"
+                f"👤 {data['name']}\n"
+                f"🪑 Стол {data['table']}\n"
+                f"👥 {data['guests']} чел.\n"
+                f"📅 {data['date']} {data['time']}\n\n"
+                f"📍 Ермакова 11\n"
+                f"❤️ Ждем вас!"
+            )
+            await message.answer(success_text, parse_mode="HTML")
             await bot.send_message(
                 ADMIN_ID,
-                f"❌ <b>ОШИБКА БРОНИРОВАНИЯ</b>\n\n"
-                f"Статус: {res.status_code}\n"
-                f"Ответ: {res.text}",
+                f"🔥 <b>НОВАЯ БРОНЬ!</b>\n\n"
+                f"👤 {data['name']}\n"
+                f"📞 {data['phone']}\n"
+                f"👥 {data['guests']} чел.\n"
+                f"🪑 Стол {data['table']}\n"
+                f"📅 {data['date']} {data['time']}",
                 parse_mode="HTML"
             )
-        
+        else:
+            print(f"❌ Ошибка: {result}")
+            
     except Exception as e:
-        print(f"❌ Ошибка в обработчике: {e}")
+        print(f"❌ Ошибка: {e}")
         import traceback
         traceback.print_exc()
         await bot.send_message(
             ADMIN_ID,
-            f"❌ <b>ИСКЛЮЧЕНИЕ В БОТЕ</b>\n\n{e}",
+            f"❌ <b>ОШИБКА</b>\n\n{e}",
             parse_mode="HTML"
         )
 
@@ -198,13 +212,9 @@ async def web_app(message: types.Message):
 async def cancel_booking(call: types.CallbackQuery):
     try:
         _, booking_id = call.data.split("|")
+        await call.answer("⏳ Отмена...")
         
-        await call.answer("⏳ Отмена брони...")
-        
-        res = requests.post(
-            f"{API_URL}/cancel/{booking_id}",
-            timeout=10
-        )
+        res = requests.post(f"{API_URL}/cancel/{booking_id}", timeout=10)
         
         if int(booking_id) in reminders:
             reminders[int(booking_id)].cancel()
@@ -213,13 +223,13 @@ async def cancel_booking(call: types.CallbackQuery):
         if res.status_code == 200:
             await call.message.edit_text(
                 f"❌ <b>Бронь отменена</b>\n\n"
-                f"Бронь #{booking_id} успешно отменена.\n\n"
+                f"Бронь #{booking_id} отменена.\n\n"
                 f"📞 +7‒913‒432‒01‒01",
                 parse_mode="HTML"
             )
-            await call.answer("Бронь отменена")
+            await call.answer("Отменено")
         else:
-            await call.answer("Ошибка отмены", show_alert=True)
+            await call.answer("Ошибка", show_alert=True)
             
     except Exception as e:
         print(f"❌ Ошибка: {e}")
