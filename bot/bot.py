@@ -20,7 +20,7 @@ API_URL = "https://dubrovka-webapp-production.up.railway.app"
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
-# Хранилище для сообщений: {booking_id: {"chat_id": xxx, "message_id": xxx}}
+# Хранилище для сообщений
 booking_messages = {}
 reminders = {}
 
@@ -89,6 +89,7 @@ async def web_app(message: types.Message):
         
         print(f"📝 Получены данные: {data}")
         
+        # Отправляем запрос на сервер
         res = requests.post(
             f"{API_URL}/booking",
             json=data,
@@ -100,13 +101,31 @@ async def web_app(message: types.Message):
         
         await processing_msg.delete()
         
+        # 🔥 ГЛАВНОЕ: ПРОВЕРЯЕМ БАЗУ ДАННЫХ НАПРЯМУЮ
+        # Делаем запрос на /all_bookings, чтобы найти бронь
+        check_res = requests.get(f"{API_URL}/all_bookings", timeout=5)
+        all_bookings = []
         try:
-            result = res.json()
+            all_bookings = check_res.json()
         except:
-            result = {}
+            pass
         
-        booking_id = result.get("id")
+        # Ищем бронь с такими же данными
+        found_booking = None
+        for b in all_bookings:
+            if (b.get("table") == data["table"] and 
+                b.get("date") == data["date"] and 
+                b.get("time") == data["time"] and
+                b.get("phone") == data["phone"]):
+                found_booking = b
+                break
         
+        booking_id = None
+        if found_booking:
+            booking_id = found_booking.get("id")
+            print(f"✅ Найдена бронь в БД: ID={booking_id}")
+        
+        # Если бронь есть в базе — ОТПРАВЛЯЕМ УСПЕХ
         if booking_id:
             success_text = (
                 f"✅ <b>БРОНЬ ПОДТВЕРЖДЕНА!</b>\n\n"
@@ -129,7 +148,6 @@ async def web_app(message: types.Message):
                 )
             )
             
-            # Отправляем сообщение и сохраняем его ID
             sent_msg = await message.answer(success_text, reply_markup=kb, parse_mode="HTML")
             
             # Сохраняем информацию о сообщении
@@ -138,7 +156,7 @@ async def web_app(message: types.Message):
                 "message_id": sent_msg.message_id,
                 "booking": data
             }
-            print(f"✅ Сохранено сообщение для брони {booking_id}, msg_id={sent_msg.message_id}")
+            print(f"✅ Отправлено подтверждение гостю {message.chat.id}, бронь {booking_id}")
             
             # Планируем напоминание
             schedule_reminder(
@@ -163,6 +181,7 @@ async def web_app(message: types.Message):
                 parse_mode="HTML"
             )
         else:
+            # Брони нет в базе — стол занят
             await message.answer(
                 f"❌ <b>Извините, этот стол уже занят!</b>\n\n"
                 f"📅 {data['date']} {data['time']}\n"
@@ -170,6 +189,7 @@ async def web_app(message: types.Message):
                 f"Пожалуйста, выберите другое время.",
                 parse_mode="HTML"
             )
+            print(f"❌ Стол занят: {data['table']} {data['date']} {data['time']}")
         
     except Exception as e:
         print(f"❌ Ошибка: {e}")
