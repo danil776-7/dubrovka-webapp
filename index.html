@@ -492,7 +492,7 @@ button:active {
 
   <div class="card">
     <div class="working-hours">
-      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 01:00 | ПТ-СБ: 12:00 - 02:00</span>
+      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 23:00 | ПТ-СБ: 12:00 - 00:00</span>
     </div>
     
     <h2>🍷 БРОНИРОВАНИЕ СТОЛОВ</h2>
@@ -613,29 +613,27 @@ function minutesToTime(minutes) {
   return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
 }
 
-// 🔥 ПРАВИЛЬНАЯ ЛОГИКА
-function checkTimeAvailability(existingTimes, newTime, guests) {
+// 🔥 ПРОСТАЯ И ПОНЯТНАЯ ЛОГИКА
+function getTimeStatus(existingTimes, newTime, guests) {
   let duration = getBookingDurationMinutes(guests);
   let newStart = timeToMinutes(newTime);
   let newEnd = newStart + duration;
   
-  let sortedBusy = [...existingTimes].sort();
-  
-  for (let existingTime of sortedBusy) {
+  // Проверяем пересечение с существующими бронями
+  for (let existingTime of existingTimes) {
     let existingStart = timeToMinutes(existingTime);
     let existingDuration = getBookingDurationMinutes(5);
     let existingEnd = existingStart + existingDuration;
     
-    // 1. ПРОВЕРКА НА ПЕРЕСЕЧЕНИЕ (КРАСНЫЙ - ЗАНЯТО)
+    // Если время пересекается - ЗАНЯТО (КРАСНЫЙ)
     if (newStart < existingEnd && newEnd > existingStart) {
-      return { available: false, type: 'blocked' };
+      return { status: 'blocked' };
     }
   }
   
-  // 2. ПРОВЕРКА НА ПРЕДУПРЕЖДЕНИЕ (ЖЕЛТЫЙ - НАДО УЙТИ)
-  // Находим ближайшую следующую броню
+  // Находим ближайшую следующую бронь
   let nextBooking = null;
-  for (let existingTime of sortedBusy) {
+  for (let existingTime of existingTimes) {
     let existingStart = timeToMinutes(existingTime);
     if (existingStart > newStart) {
       if (!nextBooking || existingStart < timeToMinutes(nextBooking)) {
@@ -644,21 +642,19 @@ function checkTimeAvailability(existingTimes, newTime, guests) {
     }
   }
   
+  // Если есть следующая бронь, проверяем расстояние до неё
   if (nextBooking) {
     let nextStart = timeToMinutes(nextBooking);
-    let timeUntilNext = nextStart - newEnd;
+    let timeGap = nextStart - newEnd;
     
-    // Если до следующей брони меньше 90 минут
-    if (timeUntilNext > 0 && timeUntilNext < 90) {
-      return { 
-        available: true, 
-        type: 'warning', 
-        needToLeaveBy: nextBooking 
-      };
+    // Если до следующей брони меньше 90 минут - ПРЕДУПРЕЖДЕНИЕ (ЖЕЛТЫЙ)
+    if (timeGap > 0 && timeGap < 90) {
+      return { status: 'warning', needToLeaveBy: nextBooking };
     }
   }
   
-  return { available: true, type: 'free' };
+  // Иначе - СВОБОДНО
+  return { status: 'free' };
 }
 
 function generateTimes(date) {
@@ -680,6 +676,7 @@ function renderTimeSlots(allTimes, busyTimes, date, guests) {
   let now = new Date();
   let html = '';
   let currentGuests = parseInt(guests) || 1;
+  let sortedBusy = [...busyTimes].sort();
   
   allTimes.forEach(time => {
     let [h,m] = time.split(":");
@@ -690,7 +687,7 @@ function renderTimeSlots(allTimes, busyTimes, date, guests) {
     if (isPast) return;
     
     let isDirectlyBusy = busyTimes.includes(time);
-    let availability = checkTimeAvailability(busyTimes, time, currentGuests);
+    let timeStatus = getTimeStatus(sortedBusy, time, currentGuests);
     
     let statusClass = '';
     let statusText = '';
@@ -699,13 +696,13 @@ function renderTimeSlots(allTimes, busyTimes, date, guests) {
     if (isDirectlyBusy) {
       statusClass = 'busy';
       statusText = ' (занято)';
-    } else if (!availability.available) {
+    } else if (timeStatus.status === 'blocked') {
       statusClass = 'busy';
       statusText = ' (занято)';
-    } else if (availability.type === 'warning') {
+    } else if (timeStatus.status === 'warning') {
       statusClass = 'warning';
-      statusText = ` ⚠️ (до ${availability.needToLeaveBy})`;
-      onclick = `selectTimeSlot('${time}', '${availability.needToLeaveBy}')`;
+      statusText = ` ⚠️ (до ${timeStatus.needToLeaveBy})`;
+      onclick = `selectTimeSlot('${time}', '${timeStatus.needToLeaveBy}')`;
     } else {
       statusClass = '';
       statusText = '';
@@ -734,7 +731,7 @@ window.selectTimeSlot = (time, needToLeaveBy) => {
   }
   
   if (needToLeaveBy) {
-    warningMessage.innerHTML = `⚠️ <b>Важное предупреждение!</b><br>Следующая бронь в ${needToLeaveBy}. Пожалуйста, освободите стол до этого 시간.`;
+    warningMessage.innerHTML = `⚠️ <b>Важное предупреждение!</b><br>Следующая бронь в ${needToLeaveBy}. Пожалуйста, освободите стол до этого времени.`;
     warningMessage.style.display = "block";
   } else {
     warningMessage.style.display = "none";
@@ -892,8 +889,8 @@ bookBtn.onclick = async () => {
     return;
   }
   
-  let availability = checkTimeAvailability(busyTimes, selectedTime, guestsVal);
-  if(!availability.available) {
+  let timeStatus = getTimeStatus(busyTimes, selectedTime, guestsVal);
+  if(timeStatus.status === 'blocked') {
     showError(`⚠️ Этот стол уже забронирован на это время\n💡 Пожалуйста, выберите другое время`);
     return;
   }
