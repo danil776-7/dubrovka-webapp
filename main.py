@@ -7,6 +7,7 @@ import requests
 import os
 import threading
 import time
+import traceback
 
 # =====================
 # APP
@@ -246,8 +247,9 @@ def auto_complete_booking(booking_id):
 def normalize_date(date_str):
     try:
         return datetime.strptime(date_str, "%Y-%m-%d").strftime("%Y-%m-%d")
-    except:
-        raise HTTPException(status_code=400, detail="Invalid date")
+    except Exception as e:
+        print(f"❌ Ошибка normalize_date: {e}")
+        raise HTTPException(status_code=400, detail=f"Invalid date: {date_str}")
 
 # =====================
 # ЭНДПОИНТЫ
@@ -273,12 +275,16 @@ def bookings_by_date(date: str):
     try:
         print(f"📅 Запрос броней на дату: {date}")
         date = normalize_date(date)
+        
+        # Выполняем запрос
         data = db.query(Booking).filter(
             Booking.date == date,
             Booking.status == "active"
         ).all()
+        
         print(f"✅ Найдено броней: {len(data)}")
-        return [
+        
+        result = [
             {
                 "id": b.id,
                 "name": b.name,
@@ -291,8 +297,12 @@ def bookings_by_date(date: str):
             }
             for b in data
         ]
+        
+        return result
+        
     except Exception as e:
-        print(f"❌ Ошибка: {e}")
+        print(f"❌ ОШИБКА в bookings_by_date: {e}")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
@@ -301,15 +311,23 @@ def bookings_by_date(date: str):
 def busy_times(date: str, table: str):
     db = SessionLocal()
     try:
+        print(f"🔍 Запрос занятых времен: date={date}, table={table}")
         date = normalize_date(date)
+        
         data = db.query(Booking).filter(
             Booking.date == date,
             Booking.table == table,
             Booking.status == "active"
         ).all()
-        return [b.time for b in data]
+        
+        result = [b.time for b in data]
+        print(f"✅ Занятые времена: {result}")
+        
+        return result
+        
     except Exception as e:
-        print(f"❌ Ошибка: {e}")
+        print(f"❌ Ошибка в busy_times: {e}")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
@@ -340,7 +358,7 @@ def create_booking(data: dict):
                 detail=f"Too many guests. Max for table {table} is {TABLE_LIMITS[table]}"
             )
 
-        # 🔥 СНАЧАЛА ПРОВЕРЯЕМ, ЗАНЯТО ЛИ ВРЕМЯ
+        # Проверяем, занято ли время
         exists = db.query(Booking).filter(
             Booking.date == date,
             Booking.time == time,
@@ -351,7 +369,7 @@ def create_booking(data: dict):
         if exists:
             raise HTTPException(status_code=409, detail="Time slot already booked")
 
-        # 🔥 ТОЛЬКО ПОСЛЕ ПРОВЕРКИ СОЗДАЁМ БРОНЬ
+        # Создаём бронь
         booking = Booking(
             name=data["name"],
             phone=data["phone"],
@@ -392,6 +410,7 @@ def create_booking(data: dict):
     except Exception as e:
         db.rollback()
         print(f"❌ Ошибка: {e}")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
