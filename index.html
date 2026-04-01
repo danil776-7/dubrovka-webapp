@@ -8,6 +8,7 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
+/* все стили без изменений */
 * {
   margin: 0;
   padding: 0;
@@ -612,13 +613,11 @@ function minutesToTime(minutes) {
   return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
 }
 
-// 🔥 ПРОСТАЯ ЛОГИКА - ДЛЯ ОТЛАДКИ
+// 🔥 ИСПРАВЛЕННАЯ ЛОГИКА - ПРЕДУПРЕЖДЕНИЕ ДЛЯ РАЗРЫВА < 90 МИНУТ (ВКЛЮЧАЯ 0)
 function getSlotStatus(time, busyTimes, guests) {
   let duration = getBookingDurationMinutes(guests);
   let start = timeToMinutes(time);
   let end = start + duration;
-  
-  console.log(`Проверка времени ${time}: начало=${start}, конец=${end}, занятые времена:`, busyTimes);
   
   // Проверяем пересечение
   for (let bt of busyTimes) {
@@ -626,15 +625,12 @@ function getSlotStatus(time, busyTimes, guests) {
     let btDuration = getBookingDurationMinutes(5);
     let btEnd = btStart + btDuration;
     
-    console.log(`  Сравниваем с ${bt}: начало=${btStart}, конец=${btEnd}`);
-    
     if (start < btEnd && end > btStart) {
-      console.log(`    => ЗАНЯТО (пересечение)`);
       return { status: 'blocked' };
     }
   }
   
-  // Находим следующую бронь
+  // Находим ближайшую следующую бронь
   let nextBooking = null;
   for (let bt of busyTimes) {
     let btStart = timeToMinutes(bt);
@@ -648,15 +644,13 @@ function getSlotStatus(time, busyTimes, guests) {
   if (nextBooking) {
     let nextStart = timeToMinutes(nextBooking);
     let gap = nextStart - end;
-    console.log(`  Следующая бронь: ${nextBooking}, разрыв=${gap} минут`);
     
-    if (gap > 0 && gap < 90) {
-      console.log(`    => ПРЕДУПРЕЖДЕНИЕ (до следующей ${gap} мин)`);
+    // Если до следующей брони МЕНЬШЕ 90 минут (включая 0) - ПРЕДУПРЕЖДЕНИЕ
+    if (gap < 90) {
       return { status: 'warning', needToLeaveBy: nextBooking };
     }
   }
   
-  console.log(`    => СВОБОДНО`);
   return { status: 'free' };
 }
 
@@ -680,9 +674,6 @@ function renderTimeSlots(allTimes, busyTimes, date, guests) {
   let html = '';
   let currentGuests = parseInt(guests) || 1;
   let sortedBusy = [...busyTimes].sort();
-  
-  console.log(`=== ОТРИСОВКА ВРЕМЕН ===`);
-  console.log(`Дата: ${date}, гостей: ${currentGuests}, занятые времена:`, sortedBusy);
   
   allTimes.forEach(time => {
     let [h,m] = time.split(":");
@@ -750,7 +741,6 @@ async function loadBusyTimes() {
     let res = await fetch(`${API}/busy_times?date=${dateInput.value}&table=${selectedTable}`);
     busyTimes = await res.json();
     busyTimes = Array.isArray(busyTimes) ? busyTimes : [];
-    console.log(`📅 Загружены занятые времена для стола ${selectedTable} на ${dateInput.value}:`, busyTimes);
     let allTimes = generateTimes(dateInput.value);
     let currentGuests = parseInt(guestsInput.value) || 1;
     renderTimeSlots(allTimes, busyTimes, dateInput.value, currentGuests);
