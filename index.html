@@ -8,6 +8,7 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
+/* все стили без изменений */
 * {
   margin: 0;
   padding: 0;
@@ -491,7 +492,7 @@ button:active {
 
   <div class="card">
     <div class="working-hours">
-      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 23:00 | ПТ-СБ: 12:00 - 00:00</span>
+      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 01:00 | ПТ-СБ: 12:00 - 02:00</span>
     </div>
     
     <h2>🍷 БРОНИРОВАНИЕ СТОЛОВ</h2>
@@ -552,11 +553,10 @@ const TABLE_CAPACITY = {
   "1": 7, "2": 5, "3": 5, "4": 5, "5": 5, "6": 3
 };
 
-// Длительность брони в зависимости от количества гостей
 function getBookingDurationMinutes(guests) {
-  if (guests <= 2) return 90;   // 1.5 часа
-  if (guests <= 4) return 120;  // 2 часа
-  return 240;                    // 4 часа
+  if (guests <= 2) return 90;
+  if (guests <= 4) return 120;
+  return 240;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -633,17 +633,27 @@ function checkTimeAvailability(existingTimes, newTime, guests) {
   }
   
   // 2. ПРОВЕРКА НА ПРЕДУПРЕЖДЕНИЕ (ЖЕЛТЫЙ - НАДО УЙТИ)
-  // Проверяем только времена, которые заканчиваются до следующей брони
+  // Находим ближайшую следующую броню
+  let nextBooking = null;
   for (let existingTime of sortedBusy) {
     let existingStart = timeToMinutes(existingTime);
-    let timeUntilNext = existingStart - newEnd;
+    if (existingStart > newStart) {
+      if (!nextBooking || existingStart < timeToMinutes(nextBooking)) {
+        nextBooking = existingTime;
+      }
+    }
+  }
+  
+  if (nextBooking) {
+    let nextStart = timeToMinutes(nextBooking);
+    let timeUntilNext = nextStart - newEnd;
     
-    // Если новая броня заканчивается до следующей и до неё меньше 90 минут
+    // Если до следующей брони меньше 90 минут
     if (timeUntilNext > 0 && timeUntilNext < 90) {
       return { 
         available: true, 
         type: 'warning', 
-        needToLeaveBy: existingTime 
+        needToLeaveBy: nextBooking 
       };
     }
   }
@@ -724,7 +734,7 @@ window.selectTimeSlot = (time, needToLeaveBy) => {
   }
   
   if (needToLeaveBy) {
-    warningMessage.innerHTML = `⚠️ <b>Важное предупреждение!</b><br>Следующая бронь в ${needToLeaveBy}. Пожалуйста, освободите стол до этого времени.`;
+    warningMessage.innerHTML = `⚠️ <b>Важное предупреждение!</b><br>Следующая бронь в ${needToLeaveBy}. Пожалуйста, освободите стол до этого 시간.`;
     warningMessage.style.display = "block";
   } else {
     warningMessage.style.display = "none";
