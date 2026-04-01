@@ -552,6 +552,19 @@ const TABLE_CAPACITY = {
   "1": 7, "2": 5, "3": 5, "4": 5, "5": 5, "6": 3
 };
 
+// Функция для получения длительности брони в зависимости от количества гостей
+function getSessionDuration(guests) {
+  if (guests <= 2) return 1.5; // 1.5 часа = 90 минут
+  if (guests <= 4) return 2;   // 2 часа = 120 минут
+  return 4;                     // 4 часа = 240 минут
+}
+
+function getSessionMinutes(guests) {
+  if (guests <= 2) return 90;
+  if (guests <= 4) return 120;
+  return 240;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
 const tg = window.Telegram.WebApp;
 if(tg) tg.expand();
@@ -606,21 +619,24 @@ function minutesToTime(minutes) {
   return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
 }
 
-// 🔥 ОСНОВНАЯ ЛОГИКА: 2 часа брони + 30 минут зазор
-function isTimeAvailable(existingTimes, newTime, sessionHours = 2, bufferBefore = 30) {
+// 🔥 ОСНОВНАЯ ЛОГИКА С УЧЕТОМ ДЛИТЕЛЬНОСТИ ОТ КОЛИЧЕСТВА ГОСТЕЙ
+// bufferBefore = 90 минут (1.5 часа) до следующей брони
+function isTimeAvailable(existingTimes, newTime, guests, bufferBefore = 90) {
+  let sessionMinutes = getSessionMinutes(guests);
   let newStart = timeToMinutes(newTime);
-  let newEnd = newStart + (sessionHours * 60);
+  let newEnd = newStart + sessionMinutes;
   
   for (let existingTime of existingTimes) {
     let existingStart = timeToMinutes(existingTime);
-    let existingEnd = existingStart + (sessionHours * 60);
+    let existingSession = getSessionMinutes(5); // Используем максимальную длительность для существующих броней
+    let existingEnd = existingStart + existingSession;
     
-    // Если время пересекается (2 часа после брони)
+    // Если время пересекается
     if (newStart < existingEnd && newEnd > existingStart) {
       return { available: false, type: 'blocked', conflictTime: existingTime };
     }
     
-    // Если новая бронь заканчивается до следующей (предупреждение за 30 минут)
+    // 🔥 ПРЕДУПРЕЖДЕНИЕ ЗА 90 МИНУТ ДО СЛЕДУЮЩЕЙ БРОНИ
     if (newEnd > existingStart && newEnd <= existingStart + bufferBefore) {
       return { available: true, type: 'warning', needToLeaveBy: existingTime };
     }
@@ -638,7 +654,7 @@ function generateTimes(date) {
   return times;
 }
 
-function renderTimeSlots(allTimes, busyTimes, date) {
+function renderTimeSlots(allTimes, busyTimes, date, guests) {
   if (!allTimes.length) {
     timeSlotsContainer.innerHTML = '<div style="text-align:center;padding:20px;color:#888;">Нет доступных времен</div>';
     return;
@@ -647,6 +663,8 @@ function renderTimeSlots(allTimes, busyTimes, date) {
   let now = new Date();
   let html = '';
   let sortedBusy = [...busyTimes].sort();
+  let currentGuests = parseInt(guests) || 1;
+  let sessionDuration = getSessionDuration(currentGuests);
   
   allTimes.forEach(time => {
     let [h,m] = time.split(":");
@@ -657,7 +675,7 @@ function renderTimeSlots(allTimes, busyTimes, date) {
     if (isPast) return;
     
     let isBusy = busyTimes.includes(time);
-    let availability = isTimeAvailable(sortedBusy, time, 2, 30);
+    let availability = isTimeAvailable(sortedBusy, time, currentGuests, 90);
     
     let statusClass = '';
     let statusText = '';
@@ -715,7 +733,8 @@ async function loadBusyTimes() {
     busyTimes = await res.json();
     busyTimes = Array.isArray(busyTimes) ? busyTimes : [];
     let allTimes = generateTimes(dateInput.value);
-    renderTimeSlots(allTimes, busyTimes, dateInput.value);
+    let currentGuests = parseInt(guestsInput.value) || 1;
+    renderTimeSlots(allTimes, busyTimes, dateInput.value, currentGuests);
   } catch(e) { console.error(e); }
 }
 
@@ -776,6 +795,11 @@ guestsInput.addEventListener("input", (e) => {
   }
   if (selectedTable && guests >= 5) hookahWarning.style.display = "block";
   else hookahWarning.style.display = "none";
+  
+  // Обновляем список времен при изменении количества гостей
+  if (selectedTable && dateInput.value) {
+    loadBusyTimes();
+  }
 });
 
 document.querySelectorAll(".table").forEach(el => {
@@ -856,10 +880,11 @@ bookBtn.onclick = async () => {
     return;
   }
   
-  // 🔥 ПРОВЕРКА ДОСТУПНОСТИ
-  let availability = isTimeAvailable(busyTimes, selectedTime, 2, 30);
+  // Проверка доступности с учетом количества гостей и 90-минутного предупреждения
+  let availability = isTimeAvailable(busyTimes, selectedTime, guestsVal, 90);
   if(!availability.available) {
-    showError(`⚠️ Этот стол уже забронирован на это время\n💡 Пожалуйста, выберите другое время`);
+    let durationText = getSessionDuration(guestsVal);
+    showError(`⚠️ Этот стол уже забронирован на это время\n💡 Ваша компания будет сидеть ${durationText} часа\nПожалуйста, выберите другое время`);
     return;
   }
   
@@ -892,7 +917,9 @@ bookBtn.onclick = async () => {
     
     if(result.ok || result.id) {
       if(tg) tg.sendData(JSON.stringify(data));
-      showSuccess(`🎉 БРОНЬ СОЗДАНА!\n\n🪑 Стол ${selectedTable}\n⏰ ${selectedTime}\n👥 ${guestsVal} гостей\n👤 ${nameVal}\n\nПодтверждение отправлено в Telegram!`);
+      let durationText = getSessionDuration(guestsVal);
+      let hoursText = durationText === 1.5 ? "1.5 часа" : durationText === 2 ? "2 часа" : "4 часа";
+      showSuccess(`🎉 БРОНЬ СОЗДАНА!\n\n🪑 Стол ${selectedTable}\n⏰ ${selectedTime}\n👥 ${guestsVal} гостей\n👤 ${nameVal}\n\n⏱ Длительность брони: ${hoursText}\n\nПодтверждение отправлено в Telegram!`);
       
       nameInput.value = "";
       guestsInput.value = "1";
