@@ -70,6 +70,24 @@ class Booking(Base):
     status = Column(String(20), default="active")
     chat_id = Column(String(50), nullable=True)
 
+# 🔥 ПРИНУДИТЕЛЬНОЕ ДОБАВЛЕНИЕ КОЛОНКИ chat_id
+try:
+    with engine.connect() as conn:
+        # Проверяем существование колонки
+        result = conn.execute(text("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name='bookings' AND column_name='chat_id'
+        """))
+        if result.fetchone() is None:
+            conn.execute(text("ALTER TABLE bookings ADD COLUMN chat_id VARCHAR(50)"))
+            conn.commit()
+            print("✅ Добавлена колонка chat_id")
+        else:
+            print("✅ Колонка chat_id уже существует")
+except Exception as e:
+    print(f"⚠️ Ошибка при проверке колонки: {e}")
+
 # Создаем таблицы
 try:
     Base.metadata.create_all(bind=engine)
@@ -113,7 +131,7 @@ completion_timers = {}
 # =====================
 
 def send_telegram_to_user(chat_id, text):
-    if not chat_id or chat_id == "" or chat_id == "0" or chat_id == "None":
+    if not chat_id or chat_id == "" or chat_id == "0" or chat_id == "None" or chat_id == "null":
         print(f"⚠️ Нет chat_id ({chat_id}), сообщение не отправлено")
         return False
     try:
@@ -338,11 +356,11 @@ def create_booking(data: dict):
         guests = int(data["guests"])
         chat_id = str(data.get("chat_id", ""))
 
-        # 🔥 УБЕДИМСЯ, ЧТО CHAT_ID СОХРАНЯЕТСЯ
+        # 🔥 ПРОВЕРЯЕМ CHAT_ID
         if chat_id and chat_id != "" and chat_id != "0" and chat_id != "None":
-            print(f"✅ Сохраняем chat_id: {chat_id}")
+            print(f"✅ Получен chat_id: {chat_id}")
         else:
-            print(f"⚠️ chat_id не передан или пустой: {chat_id}")
+            print(f"⚠️ chat_id не передан: {chat_id}")
 
         if table not in TABLE_LIMITS:
             raise HTTPException(status_code=400, detail=f"Table {table} does not exist")
@@ -489,8 +507,8 @@ def cancel(id: int):
             cancel_message = (
                 f"❌ <b>Бронь отменена</b>\n\n"
                 f"Уважаемый(ая) {booking.name},\n\n"
-                f"Ваша бронь в Dubrovka на {booking.date} {booking.time} (стол {booking.table}) была отменена администратором.\n\n"
-                f"Если у вас есть вопросы, звоните: 📞 +7‒913‒432‒01‒01"
+                f"Ваша бронь в Dubrovka на {booking.date} {booking.time} (стол {booking.table}) была отменена.\n\n"
+                f"📞 +7‒913‒432‒01‒01"
             )
             send_telegram_to_user(booking.chat_id, cancel_message)
 
