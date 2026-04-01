@@ -491,7 +491,7 @@ button:active {
 
   <div class="card">
     <div class="working-hours">
-      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 01:00 | ПТ-СБ: 12:00 - 02:00</span>
+      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 23:00 | ПТ-СБ: 12:00 - 00:00</span>
     </div>
     
     <h2>🍷 БРОНИРОВАНИЕ СТОЛОВ</h2>
@@ -613,7 +613,7 @@ function minutesToTime(minutes) {
   return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
 }
 
-// 🔥 ИСПРАВЛЕННАЯ ЛОГИКА - ПРЕДУПРЕЖДЕНИЕ ДЛЯ ВСЕХ ВРЕМЕН
+// 🔥 ПРАВИЛЬНАЯ ЛОГИКА
 function checkTimeAvailability(existingTimes, newTime, guests) {
   let duration = getBookingDurationMinutes(guests);
   let newStart = timeToMinutes(newTime);
@@ -630,30 +630,21 @@ function checkTimeAvailability(existingTimes, newTime, guests) {
     if (newStart < existingEnd && newEnd > existingStart) {
       return { available: false, type: 'blocked' };
     }
+  }
+  
+  // 2. ПРОВЕРКА НА ПРЕДУПРЕЖДЕНИЕ (ЖЕЛТЫЙ - НАДО УЙТИ)
+  // Проверяем только времена, которые заканчиваются до следующей брони
+  for (let existingTime of sortedBusy) {
+    let existingStart = timeToMinutes(existingTime);
+    let timeUntilNext = existingStart - newEnd;
     
-    // 2. ПРОВЕРКА НА ПРЕДУПРЕЖДЕНИЕ (ЖЕЛТЫЙ - НАДО УЙТИ)
-    // Если новая броня заканчивается до следующей, но меньше чем за 90 минут
-    if (newEnd <= existingStart) {
-      let timeUntilNext = existingStart - newEnd;
-      if (timeUntilNext < 90) {
-        return { 
-          available: true, 
-          type: 'warning', 
-          needToLeaveBy: existingTime 
-        };
-      }
-    }
-    
-    // 3. Если новая броня начинается после следующей, но очень близко
-    if (newStart >= existingEnd) {
-      let timeAfterPrev = newStart - existingEnd;
-      if (timeAfterPrev < 90) {
-        return { 
-          available: true, 
-          type: 'warning', 
-          needToLeaveBy: existingTime 
-        };
-      }
+    // Если новая броня заканчивается до следующей и до неё меньше 90 минут
+    if (timeUntilNext > 0 && timeUntilNext < 90) {
+      return { 
+        available: true, 
+        type: 'warning', 
+        needToLeaveBy: existingTime 
+      };
     }
   }
   
