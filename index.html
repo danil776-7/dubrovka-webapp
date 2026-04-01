@@ -606,6 +606,28 @@ function minutesToTime(minutes) {
   return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
 }
 
+// 🔥 ОСНОВНАЯ ЛОГИКА: 2 часа брони + 30 минут зазор
+function isTimeAvailable(existingTimes, newTime, sessionHours = 2, bufferBefore = 30) {
+  let newStart = timeToMinutes(newTime);
+  let newEnd = newStart + (sessionHours * 60);
+  
+  for (let existingTime of existingTimes) {
+    let existingStart = timeToMinutes(existingTime);
+    let existingEnd = existingStart + (sessionHours * 60);
+    
+    // Если время пересекается (2 часа после брони)
+    if (newStart < existingEnd && newEnd > existingStart) {
+      return { available: false, type: 'blocked', conflictTime: existingTime };
+    }
+    
+    // Если новая бронь заканчивается до следующей (предупреждение за 30 минут)
+    if (newEnd > existingStart && newEnd <= existingStart + bufferBefore) {
+      return { available: true, type: 'warning', needToLeaveBy: existingTime };
+    }
+  }
+  return { available: true, type: 'free' };
+}
+
 function generateTimes(date) {
   let times = [];
   let workingHours = getWorkingHours(date);
@@ -624,6 +646,7 @@ function renderTimeSlots(allTimes, busyTimes, date) {
   
   let now = new Date();
   let html = '';
+  let sortedBusy = [...busyTimes].sort();
   
   allTimes.forEach(time => {
     let [h,m] = time.split(":");
@@ -631,11 +654,10 @@ function renderTimeSlots(allTimes, busyTimes, date) {
     slot.setHours(parseInt(h), m);
     let isPast = slot < now;
     
-    if (isPast) {
-      return;
-    }
+    if (isPast) return;
     
     let isBusy = busyTimes.includes(time);
+    let availability = isTimeAvailable(sortedBusy, time, 2, 30);
     
     let statusClass = '';
     let statusText = '';
@@ -644,10 +666,17 @@ function renderTimeSlots(allTimes, busyTimes, date) {
     if (isBusy) {
       statusClass = 'busy';
       statusText = ' (занято)';
+    } else if (!availability.available) {
+      statusClass = 'busy';
+      statusText = ' (занято)';
+    } else if (availability.type === 'warning') {
+      statusClass = 'warning';
+      statusText = ` ⚠️ (до ${availability.needToLeaveBy})`;
+      onclick = `selectTimeSlot('${time}', '${availability.needToLeaveBy}')`;
     } else {
       statusClass = '';
       statusText = '';
-      onclick = `selectTimeSlot('${time}')`;
+      onclick = `selectTimeSlot('${time}', null)`;
     }
     
     html += `<div class="time-slot ${statusClass}" onclick="${onclick}">${time}${statusText}</div>`;
@@ -660,7 +689,7 @@ function renderTimeSlots(allTimes, busyTimes, date) {
   }
 }
 
-window.selectTimeSlot = (time) => {
+window.selectTimeSlot = (time, needToLeaveBy) => {
   selectedTime = time;
   document.querySelectorAll('.time-slot').forEach(slot => slot.classList.remove('selected'));
   const slots = document.querySelectorAll('.time-slot');
@@ -670,7 +699,13 @@ window.selectTimeSlot = (time) => {
       break;
     }
   }
-  warningMessage.style.display = "none";
+  
+  if (needToLeaveBy) {
+    warningMessage.innerHTML = `⚠️ <b>Важное предупреждение!</b><br>Следующая бронь в ${needToLeaveBy}. Пожалуйста, освободите стол до этого времени.`;
+    warningMessage.style.display = "block";
+  } else {
+    warningMessage.style.display = "none";
+  }
 };
 
 async function loadBusyTimes() {
@@ -790,7 +825,7 @@ if (refreshBtn) {
 setInterval(() => {
   if (selectedTable && dateInput.value) {
     loadBusyTimes();
-    console.log("🔄 Автообновление");
+    console.log("🔄 Автообновление списка времен");
   }
 }, 10000);
 
@@ -821,7 +856,13 @@ bookBtn.onclick = async () => {
     return;
   }
   
-  // 🔥 ПРЯМАЯ ОТПРАВКА БЕЗ ПРОВЕРКИ
+  // 🔥 ПРОВЕРКА ДОСТУПНОСТИ
+  let availability = isTimeAvailable(busyTimes, selectedTime, 2, 30);
+  if(!availability.available) {
+    showError(`⚠️ Этот стол уже забронирован на это время\n💡 Пожалуйста, выберите другое время`);
+    return;
+  }
+  
   let data = {
     name: nameVal,
     phone: phoneVal,
