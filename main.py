@@ -114,7 +114,7 @@ completion_timers = {}
 
 def send_telegram_to_user(chat_id, text):
     if not chat_id or chat_id == "" or chat_id == "0" or chat_id == "None":
-        print(f"⚠️ Нет chat_id, сообщение не отправлено")
+        print(f"⚠️ Нет chat_id ({chat_id}), сообщение не отправлено")
         return False
     try:
         response = requests.post(
@@ -157,11 +157,11 @@ def send_booking_confirmation(booking):
         f"📞 <b>Телефон:</b> +7‒913‒432‒01‒01\n\n"
         f"❤️ Ждем вас в Dubrovka!"
     )
+    print(f"📱 Отправка подтверждения гостю {booking.name} (chat_id: {booking.chat_id})")
     if booking.chat_id:
         send_telegram_to_user(booking.chat_id, message)
-        print(f"📱 Подтверждение отправлено гостю {booking.name} (chat_id: {booking.chat_id})")
     else:
-        print(f"⚠️ У гостя {booking.name} нет chat_id")
+        print(f"⚠️ У гостя {booking.name} нет chat_id, подтверждение не отправлено")
 
 def send_reminder_to_guest(booking):
     message = (
@@ -196,15 +196,6 @@ def send_thank_you_to_guest(booking):
             print(f"✅ Благодарность отправлена гостю {booking.name}")
         else:
             print(f"❌ Не удалось отправить благодарность гостю {booking.name}")
-            # Отправляем админу ссылку, чтобы он мог отправить вручную
-            send_telegram_to_admin(
-                f"⚠️ <b>НЕ УДАЛОСЬ ОТПРАВИТЬ БЛАГОДАРНОСТЬ ГОСТЮ</b>\n\n"
-                f"👤 {booking.name}\n"
-                f"📞 {booking.phone}\n"
-                f"🪑 Стол {booking.table}\n"
-                f"📅 {booking.date} {booking.time}\n\n"
-                f"🔗 <b>Ссылка на отзыв:</b>\n{TWO_GIS_REVIEW_URL}"
-            )
     else:
         print(f"⚠️ У гостя {booking.name} нет chat_id, отправляем админу")
         send_telegram_to_admin(
@@ -347,6 +338,12 @@ def create_booking(data: dict):
         guests = int(data["guests"])
         chat_id = str(data.get("chat_id", ""))
 
+        # 🔥 УБЕДИМСЯ, ЧТО CHAT_ID СОХРАНЯЕТСЯ
+        if chat_id and chat_id != "" and chat_id != "0" and chat_id != "None":
+            print(f"✅ Сохраняем chat_id: {chat_id}")
+        else:
+            print(f"⚠️ chat_id не передан или пустой: {chat_id}")
+
         if table not in TABLE_LIMITS:
             raise HTTPException(status_code=400, detail=f"Table {table} does not exist")
 
@@ -403,7 +400,8 @@ def create_booking(data: dict):
             f"👥 {guests}\n"
             f"🪑 Стол {table}\n"
             f"📅 {date}\n"
-            f"⏰ {time}"
+            f"⏰ {time}\n"
+            f"📱 chat_id: {booking.chat_id if booking.chat_id else 'нет'}"
         )
 
         return {"ok": True, "id": booking.id}
@@ -444,7 +442,7 @@ def done(id: int):
 
         print(f"✅ Бронь {id} завершена")
 
-        # 🔥 ОТПРАВЛЯЕМ БЛАГОДАРНОСТЬ ГОСТЮ СО ССЫЛКОЙ НА ОТЗЫВ
+        # 🔥 ОТПРАВЛЯЕМ БЛАГОДАРНОСТЬ ГОСТЮ
         send_thank_you_to_guest(booking)
 
         # Уведомляем админа
@@ -517,7 +515,8 @@ def all_bookings():
                 "table": b.table,
                 "date": b.date,
                 "time": b.time,
-                "status": b.status
+                "status": b.status,
+                "chat_id": b.chat_id
             }
             for b in data
         ]
