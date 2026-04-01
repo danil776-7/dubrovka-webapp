@@ -8,6 +8,7 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
+/* все стили без изменений */
 * {
   margin: 0;
   padding: 0;
@@ -491,7 +492,7 @@ button:active {
 
   <div class="card">
     <div class="working-hours">
-      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 01:00 | ПТ-СБ: 12:00 - 02:00</span>
+      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 23:00 | ПТ-СБ: 12:00 - 00:00</span>
     </div>
     
     <h2>🍷 БРОНИРОВАНИЕ СТОЛОВ</h2>
@@ -552,10 +553,11 @@ const TABLE_CAPACITY = {
   "1": 7, "2": 5, "3": 5, "4": 5, "5": 5, "6": 3
 };
 
-function getSessionMinutes(guests) {
-  if (guests <= 2) return 90;
-  if (guests <= 4) return 120;
-  return 240;
+// Длительность брони в зависимости от количества гостей
+function getBookingDurationMinutes(guests) {
+  if (guests <= 2) return 90;   // 1.5 часа
+  if (guests <= 4) return 120;  // 2 часа
+  return 240;                    // 4 часа
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -612,32 +614,41 @@ function minutesToTime(minutes) {
   return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
 }
 
-// 🔥 ОСНОВНАЯ ЛОГИКА
-// Предупреждение: если до следующей брони меньше 90 минут
-// Блокировка: если время пересекается (2 часа после брони)
-function checkSlotAvailability(existingTimes, newTime, guests) {
-  let sessionMinutes = getSessionMinutes(guests);
+// 🔥 НОВАЯ ЛОГИКА - ПРАВИЛЬНО РАБОТАЕТ
+function checkTimeAvailability(existingTimes, newTime, guests) {
+  let duration = getBookingDurationMinutes(guests);
   let newStart = timeToMinutes(newTime);
-  let newEnd = newStart + sessionMinutes;
+  let newEnd = newStart + duration;
   
   // Сортируем занятые времена
-  let sortedTimes = [...existingTimes].sort();
+  let sortedBusy = [...existingTimes].sort();
   
-  for (let existingTime of sortedTimes) {
+  for (let existingTime of sortedBusy) {
     let existingStart = timeToMinutes(existingTime);
-    let existingSession = getSessionMinutes(5); // максимальная длительность
-    let existingEnd = existingStart + existingSession;
+    let existingDuration = getBookingDurationMinutes(5); // для существующих броней используем максимум
+    let existingEnd = existingStart + existingDuration;
     
-    // 1. ПРОВЕРКА НА ПЕРЕСЕЧЕНИЕ (БЛОКИРОВКА)
+    // СЛУЧАЙ 1: ПОЛНОЕ ПЕРЕСЕЧЕНИЕ - ЗАНЯТО (КРАСНЫЙ)
     if (newStart < existingEnd && newEnd > existingStart) {
-      return { available: false, type: 'blocked', conflictTime: existingTime };
+      return { 
+        available: false, 
+        type: 'blocked',
+        conflictTime: existingTime
+      };
     }
     
-    // 2. ПРОВЕРКА НА ПРЕДУПРЕЖДЕНИЕ (до следующей брони меньше 90 минут)
-    if (newEnd > existingStart && newEnd <= existingStart + 90) {
-      return { available: true, type: 'warning', needToLeaveBy: existingTime };
+    // СЛУЧАЙ 2: ПРЕДУПРЕЖДЕНИЕ - если до следующей брони меньше 90 минут
+    let timeUntilNext = existingStart - newEnd;
+    if (timeUntilNext > 0 && timeUntilNext < 90) {
+      return { 
+        available: true, 
+        type: 'warning', 
+        needToLeaveBy: existingTime,
+        minutesUntilNext: timeUntilNext
+      };
     }
   }
+  
   return { available: true, type: 'free' };
 }
 
@@ -659,7 +670,6 @@ function renderTimeSlots(allTimes, busyTimes, date, guests) {
   
   let now = new Date();
   let html = '';
-  let sortedBusy = [...busyTimes].sort();
   let currentGuests = parseInt(guests) || 1;
   
   allTimes.forEach(time => {
@@ -670,14 +680,14 @@ function renderTimeSlots(allTimes, busyTimes, date, guests) {
     
     if (isPast) return;
     
-    let isBusy = busyTimes.includes(time);
-    let availability = checkSlotAvailability(sortedBusy, time, currentGuests);
+    let isDirectlyBusy = busyTimes.includes(time);
+    let availability = checkTimeAvailability(busyTimes, time, currentGuests);
     
     let statusClass = '';
     let statusText = '';
     let onclick = '';
     
-    if (isBusy) {
+    if (isDirectlyBusy) {
       statusClass = 'busy';
       statusText = ' (занято)';
     } else if (!availability.available) {
@@ -873,7 +883,7 @@ bookBtn.onclick = async () => {
     return;
   }
   
-  let availability = checkSlotAvailability(busyTimes, selectedTime, guestsVal);
+  let availability = checkTimeAvailability(busyTimes, selectedTime, guestsVal);
   if(!availability.available) {
     showError(`⚠️ Этот стол уже забронирован на это время\n💡 Пожалуйста, выберите другое время`);
     return;
@@ -908,7 +918,9 @@ bookBtn.onclick = async () => {
     
     if(result.ok || result.id) {
       if(tg) tg.sendData(JSON.stringify(data));
-      showSuccess(`🎉 БРОНЬ СОЗДАНА!\n\n🪑 Стол ${selectedTable}\n⏰ ${selectedTime}\n👥 ${guestsVal} гостей\n👤 ${nameVal}\n\nПодтверждение отправлено в Telegram!`);
+      let duration = getBookingDurationMinutes(guestsVal);
+      let durationText = duration === 90 ? "1.5 часа" : duration === 120 ? "2 часа" : "4 часа";
+      showSuccess(`🎉 БРОНЬ СОЗДАНА!\n\n🪑 Стол ${selectedTable}\n⏰ ${selectedTime}\n👥 ${guestsVal} гостей\n👤 ${nameVal}\n\n⏱ Длительность брони: ${durationText}\n\nПодтверждение отправлено в Telegram!`);
       
       nameInput.value = "";
       guestsInput.value = "1";
