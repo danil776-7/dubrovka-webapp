@@ -7,7 +7,6 @@ import requests
 import os
 import threading
 import time
-import traceback
 
 # =====================
 # APP
@@ -15,7 +14,6 @@ import traceback
 
 app = FastAPI()
 
-# CORS настройки
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -56,7 +54,7 @@ SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
 # =====================
-# MODEL
+# MODEL (без created_at)
 # =====================
 
 class Booking(Base):
@@ -71,7 +69,6 @@ class Booking(Base):
     time = Column(String(5))
     status = Column(String(20), default="active")
     chat_id = Column(String(50), nullable=True)
-    created_at = Column(String(50), nullable=True)
 
 # Создаем таблицы
 try:
@@ -112,7 +109,7 @@ reminder_timers = {}
 completion_timers = {}
 
 # =====================
-# ФУНКЦИИ ОТПРАВКИ СООБЩЕНИЙ
+# ФУНКЦИИ
 # =====================
 
 def send_telegram_to_user(chat_id, text):
@@ -126,7 +123,7 @@ def send_telegram_to_user(chat_id, text):
         )
         return response.status_code == 200
     except Exception as e:
-        print(f"❌ Ошибка отправки: {e}")
+        print(f"❌ Ошибка: {e}")
         return False
 
 def send_telegram_to_admin(text):
@@ -144,48 +141,44 @@ def send_telegram_to_admin(text):
 def send_booking_confirmation(booking):
     message = (
         f"✅ <b>БРОНЬ ПОДТВЕРЖДЕНА!</b>\n\n"
-        f"🆔 <b>ID брони:</b> {booking.id}\n"
+        f"🆔 <b>ID:</b> {booking.id}\n"
         f"👤 <b>Имя:</b> {booking.name}\n"
         f"🪑 <b>Стол:</b> {booking.table}\n"
         f"👥 <b>Гостей:</b> {booking.guests}\n"
         f"📅 <b>Дата:</b> {booking.date}\n"
         f"⏰ <b>Время:</b> {booking.time}\n\n"
-        f"📍 <b>Адрес:</b> Ермакова 11, Новокузнецк\n"
+        f"📍 <b>Адрес:</b> Ермакова 11\n"
         f"📞 <b>Телефон:</b> +7‒913‒432‒01‒01\n\n"
-        f"❤️ Ждем вас в Dubrovka!"
+        f"❤️ Ждем вас!"
     )
     if booking.chat_id:
         send_telegram_to_user(booking.chat_id, message)
 
 def send_reminder_to_guest(booking):
     message = (
-        f"🔔 <b>НАПОМИНАНИЕ О БРОНИ!</b>\n\n"
-        f"🪑 <b>Стол:</b> {booking.table}\n"
-        f"📅 <b>Сегодня:</b> {booking.date}\n"
-        f"⏰ <b>Через 30 минут:</b> {booking.time}\n\n"
-        f"👤 <b>На имя:</b> {booking.name}\n"
-        f"👥 <b>Гостей:</b> {booking.guests}\n\n"
-        f"📍 <b>Ждем вас по адресу:</b> Ермакова 11\n"
-        f"📞 <b>Телефон:</b> +7‒913‒432‒01‒01"
+        f"🔔 <b>НАПОМИНАНИЕ!</b>\n\n"
+        f"🪑 Стол {booking.table}\n"
+        f"📅 {booking.date}\n"
+        f"⏰ Через 30 минут: {booking.time}\n\n"
+        f"📍 Ермакова 11\n"
+        f"📞 +7‒913‒432‒01‒01"
     )
     if booking.chat_id:
         send_telegram_to_user(booking.chat_id, message)
 
 def send_thank_you_to_guest(booking):
     message = (
-        f"🌟 <b>Спасибо, что посетили Dubrovka Lounge & Bar!</b> 🌟\n\n"
-        f"👤 <b>{booking.name}</b>, мы благодарим вас за визит!\n\n"
-        f"🍷 Надеемся, вам понравилась атмосфера, обслуживание и кухня.\n\n"
-        f"📝 <b>Пожалуйста, оставьте отзыв о нашем заведении в 2ГИС</b>\n"
-        f"Ваше мнение очень важно для нас!\n\n"
-        f"🔗 <a href='{TWO_GIS_REVIEW_URL}'>Написать отзыв в 2ГИС</a>\n\n"
+        f"🌟 <b>Спасибо за визит!</b> 🌟\n\n"
+        f"{booking.name}, благодарим вас!\n\n"
+        f"📝 <b>Оставьте отзыв в 2ГИС:</b>\n"
+        f"🔗 <a href='{TWO_GIS_REVIEW_URL}'>Написать отзыв</a>\n\n"
         f"❤️ Ждем вас снова!"
     )
     if booking.chat_id:
         send_telegram_to_user(booking.chat_id, message)
     else:
         send_telegram_to_admin(
-            f"✅ <b>ГОСТЬ ПОСЕТИЛ (нет чата)</b>\n\n"
+            f"✅ <b>ГОСТЬ ПОСЕТИЛ</b>\n\n"
             f"👤 {booking.name}\n"
             f"📞 {booking.phone}\n"
             f"🪑 Стол {booking.table}\n"
@@ -205,9 +198,9 @@ def schedule_reminder(booking):
             timer.daemon = True
             timer.start()
             reminder_timers[booking.id] = timer
-            print(f"⏰ Напоминание запланировано на {reminder_time}")
+            print(f"⏰ Напоминание на {reminder_time}")
     except Exception as e:
-        print(f"❌ Ошибка планирования: {e}")
+        print(f"❌ Ошибка: {e}")
 
 def schedule_auto_complete(booking):
     try:
@@ -215,7 +208,7 @@ def schedule_auto_complete(booking):
         timer.daemon = True
         timer.start()
         completion_timers[booking.id] = timer
-        print(f"🤖 Авто-завершение через 4 часа для брони {booking.id}")
+        print(f"🤖 Авто-завершение через 4 часа")
     except Exception as e:
         print(f"❌ Ошибка: {e}")
 
@@ -235,7 +228,7 @@ def auto_complete_booking(booking_id):
             send_thank_you_to_guest(booking)
         db.close()
     except Exception as e:
-        print(f"Ошибка авто-завершения: {e}")
+        print(f"Ошибка: {e}")
     finally:
         if booking_id in completion_timers:
             del completion_timers[booking_id]
@@ -247,9 +240,8 @@ def auto_complete_booking(booking_id):
 def normalize_date(date_str):
     try:
         return datetime.strptime(date_str, "%Y-%m-%d").strftime("%Y-%m-%d")
-    except Exception as e:
-        print(f"❌ Ошибка normalize_date: {e}")
-        raise HTTPException(status_code=400, detail=f"Invalid date: {date_str}")
+    except:
+        raise HTTPException(status_code=400, detail="Invalid date")
 
 # =====================
 # ЭНДПОИНТЫ
@@ -257,7 +249,7 @@ def normalize_date(date_str):
 
 @app.get("/")
 def root():
-    return {"status": "ok", "database": "connected"}
+    return {"status": "ok"}
 
 @app.get("/health")
 def health():
@@ -273,18 +265,14 @@ def health():
 def bookings_by_date(date: str):
     db = SessionLocal()
     try:
-        print(f"📅 Запрос броней на дату: {date}")
+        print(f"📅 Запрос на {date}")
         date = normalize_date(date)
-        
-        # Выполняем запрос
         data = db.query(Booking).filter(
             Booking.date == date,
             Booking.status == "active"
         ).all()
-        
-        print(f"✅ Найдено броней: {len(data)}")
-        
-        result = [
+        print(f"✅ Найдено: {len(data)}")
+        return [
             {
                 "id": b.id,
                 "name": b.name,
@@ -297,12 +285,8 @@ def bookings_by_date(date: str):
             }
             for b in data
         ]
-        
-        return result
-        
     except Exception as e:
-        print(f"❌ ОШИБКА в bookings_by_date: {e}")
-        traceback.print_exc()
+        print(f"❌ Ошибка: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
@@ -311,23 +295,15 @@ def bookings_by_date(date: str):
 def busy_times(date: str, table: str):
     db = SessionLocal()
     try:
-        print(f"🔍 Запрос занятых времен: date={date}, table={table}")
         date = normalize_date(date)
-        
         data = db.query(Booking).filter(
             Booking.date == date,
             Booking.table == table,
             Booking.status == "active"
         ).all()
-        
-        result = [b.time for b in data]
-        print(f"✅ Занятые времена: {result}")
-        
-        return result
-        
+        return [b.time for b in data]
     except Exception as e:
-        print(f"❌ Ошибка в busy_times: {e}")
-        traceback.print_exc()
+        print(f"❌ Ошибка: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
@@ -341,7 +317,7 @@ def create_booking(data: dict):
         required = ["name", "phone", "guests", "table", "date", "time"]
         for field in required:
             if field not in data:
-                raise HTTPException(status_code=400, detail=f"Missing field: {field}")
+                raise HTTPException(status_code=400, detail=f"Missing: {field}")
 
         date = normalize_date(data["date"])
         table = str(data["table"])
@@ -350,15 +326,14 @@ def create_booking(data: dict):
         chat_id = str(data.get("chat_id", ""))
 
         if table not in TABLE_LIMITS:
-            raise HTTPException(status_code=400, detail=f"Table {table} does not exist")
+            raise HTTPException(status_code=400, detail=f"Table {table} not exist")
 
         if guests > TABLE_LIMITS[table]:
             raise HTTPException(
                 status_code=400, 
-                detail=f"Too many guests. Max for table {table} is {TABLE_LIMITS[table]}"
+                detail=f"Max guests for table {table} is {TABLE_LIMITS[table]}"
             )
 
-        # Проверяем, занято ли время
         exists = db.query(Booking).filter(
             Booking.date == date,
             Booking.time == time,
@@ -369,7 +344,6 @@ def create_booking(data: dict):
         if exists:
             raise HTTPException(status_code=409, detail="Time slot already booked")
 
-        # Создаём бронь
         booking = Booking(
             name=data["name"],
             phone=data["phone"],
@@ -378,8 +352,7 @@ def create_booking(data: dict):
             date=date,
             time=time,
             status="active",
-            chat_id=chat_id if chat_id and chat_id != "0" and chat_id != "None" else None,
-            created_at=datetime.now().isoformat()
+            chat_id=chat_id if chat_id and chat_id != "0" and chat_id != "None" else None
         )
 
         db.add(booking)
@@ -390,7 +363,7 @@ def create_booking(data: dict):
         schedule_reminder(booking)
         schedule_auto_complete(booking)
 
-        print(f"✅ Новая бронь: ID={booking.id}")
+        print(f"✅ Бронь {booking.id}")
 
         send_telegram_to_admin(
             f"🔥 <b>НОВАЯ БРОНЬ!</b>\n\n"
@@ -410,7 +383,6 @@ def create_booking(data: dict):
     except Exception as e:
         db.rollback()
         print(f"❌ Ошибка: {e}")
-        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
@@ -425,7 +397,7 @@ def done(id: int):
         ).first()
 
         if not booking:
-            raise HTTPException(status_code=404, detail="Active booking not found")
+            raise HTTPException(status_code=404, detail="Not found")
 
         booking.status = "completed"
         db.commit()
@@ -443,16 +415,13 @@ def done(id: int):
             f"✅ <b>ГОСТЬ УШЕЛ</b>\n\n"
             f"🆔 ID: {id}\n"
             f"👤 {booking.name}\n"
-            f"📞 {booking.phone}\n"
             f"🪑 Стол {booking.table}\n"
-            f"👥 {booking.guests}\n"
-            f"📅 {booking.date}\n"
-            f"⏰ {booking.time}"
+            f"📅 {booking.date} {booking.time}"
         )
         
         send_thank_you_to_guest(booking)
 
-        return {"ok": True, "message": "Booking completed"}
+        return {"ok": True}
 
     except HTTPException:
         raise
@@ -469,7 +438,7 @@ def cancel(id: int):
         ).first()
 
         if not booking:
-            raise HTTPException(status_code=404, detail="Active booking not found")
+            raise HTTPException(status_code=404, detail="Not found")
 
         booking.status = "cancelled"
         db.commit()
@@ -487,7 +456,6 @@ def cancel(id: int):
             f"❌ <b>БРОНЬ ОТМЕНЕНА</b>\n\n"
             f"🆔 ID: {id}\n"
             f"👤 {booking.name}\n"
-            f"📞 {booking.phone}\n"
             f"🪑 Стол {booking.table}\n"
             f"📅 {booking.date} {booking.time}"
         )
@@ -495,13 +463,12 @@ def cancel(id: int):
         if booking.chat_id:
             cancel_message = (
                 f"❌ <b>Бронь отменена</b>\n\n"
-                f"Уважаемый(ая) {booking.name},\n\n"
-                f"Ваша бронь в Dubrovka на {booking.date} {booking.time} (стол {booking.table}) была отменена администратором.\n\n"
-                f"Если у вас есть вопросы, звоните: 📞 +7‒913‒432‒01‒01"
+                f"{booking.name}, ваша бронь отменена.\n\n"
+                f"📞 +7‒913‒432‒01‒01"
             )
             send_telegram_to_user(booking.chat_id, cancel_message)
 
-        return {"ok": True, "message": "Booking cancelled"}
+        return {"ok": True}
 
     except HTTPException:
         raise
@@ -528,7 +495,3 @@ def all_bookings():
         ]
     finally:
         db.close()
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
