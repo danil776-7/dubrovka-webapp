@@ -22,6 +22,7 @@ dp = Dispatcher(bot)
 
 reminders = {}
 
+# Клавиатура с кнопкой бронирования
 keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
 keyboard.add(
     types.KeyboardButton(
@@ -33,6 +34,7 @@ keyboard.add(
 )
 
 def schedule_reminder(chat_id, booking_id, booking_time, booking_date, booking_table, booking_name):
+    """Запланировать напоминание за 30 минут до брони"""
     try:
         booking_datetime = datetime.strptime(f"{booking_date} {booking_time}", "%Y-%m-%d %H:%M")
         reminder_time = booking_datetime - timedelta(minutes=30)
@@ -82,7 +84,7 @@ async def test(message: types.Message):
 @dp.message_handler(content_types=types.ContentType.WEB_APP_DATA)
 async def web_app(message: types.Message):
     try:
-        # 🔥 ОТПРАВЛЯЕМ СООБЩЕНИЕ АДМИНУ ПРИ ЛЮБОМ ЗАПРОСЕ
+        # Отправляем сообщение админу о получении запроса
         await bot.send_message(
             ADMIN_ID,
             f"📨 <b>ЗАПРОС ОТ БОТА</b>\n\n"
@@ -119,7 +121,7 @@ async def web_app(message: types.Message):
         
         booking_id = result.get("id")
         
-        # 🔥 ОТПРАВЛЯЕМ РЕЗУЛЬТАТ АДМИНУ
+        # Отправляем результат админу
         await bot.send_message(
             ADMIN_ID,
             f"📊 <b>РЕЗУЛЬТАТ</b>\n\n"
@@ -130,64 +132,69 @@ async def web_app(message: types.Message):
         )
         
         if booking_id:
-            success_text = (
-                f"✅ <b>БРОНЬ ПОДТВЕРЖДЕНА!</b>\n\n"
-                f"🆔 <b>ID брони:</b> {booking_id}\n"
-                f"👤 <b>Имя:</b> {data['name']}\n"
-                f"🪑 <b>Стол:</b> {data['table']}\n"
-                f"👥 <b>Гостей:</b> {data['guests']}\n"
-                f"📅 <b>Дата:</b> {data['date']}\n"
-                f"⏰ <b>Время:</b> {data['time']}\n\n"
-                f"📍 <b>Адрес:</b> Ермакова 11, Новокузнецк\n"
-                f"📞 <b>Телефон:</b> +7‒913‒432‒01‒01\n\n"
-                f"❤️ Ждем вас в Dubrovka!"
-            )
-            
-            kb = types.InlineKeyboardMarkup()
-            kb.add(
-                types.InlineKeyboardButton(
-                    "❌ Отменить бронь",
-                    callback_data=f"cancel|{booking_id}"
-                )
-            )
-            
-            await message.answer(success_text, reply_markup=kb, parse_mode="HTML")
-            print(f"✅ Отправлено подтверждение гостю {message.chat.id}")
-            
-            schedule_reminder(
-                message.chat.id,
-                booking_id,
-                data['time'],
-                data['date'],
-                data['table'],
-                data['name']
-            )
-            
+            # 🔥 ОТПРАВЛЯЕМ СООБЩЕНИЕ АДМИНУ О УСПЕШНОЙ БРОНИ
             await bot.send_message(
                 ADMIN_ID,
-                f"🔥 <b>НОВАЯ БРОНЬ!</b>\n\n"
+                f"✅ <b>БРОНЬ СОЗДАНА!</b>\n\n"
                 f"🆔 ID: {booking_id}\n"
                 f"👤 {data['name']}\n"
                 f"📞 {data['phone']}\n"
                 f"👥 {data['guests']} чел.\n"
                 f"🪑 Стол {data['table']}\n"
-                f"📅 {data['date']} {data['time']}",
+                f"📅 {data['date']} {data['time']}\n\n"
+                f"📱 chat_id: {data.get('chat_id', 'нет')}",
                 parse_mode="HTML"
             )
+            
+            # Если есть chat_id, отправляем подтверждение гостю
+            if data.get('chat_id'):
+                success_text = (
+                    f"✅ <b>БРОНЬ ПОДТВЕРЖДЕНА!</b>\n\n"
+                    f"🆔 <b>ID брони:</b> {booking_id}\n"
+                    f"👤 <b>Имя:</b> {data['name']}\n"
+                    f"🪑 <b>Стол:</b> {data['table']}\n"
+                    f"👥 <b>Гостей:</b> {data['guests']}\n"
+                    f"📅 <b>Дата:</b> {data['date']}\n"
+                    f"⏰ <b>Время:</b> {data['time']}\n\n"
+                    f"📍 <b>Адрес:</b> Ермакова 11, Новокузнецк\n"
+                    f"📞 <b>Телефон:</b> +7‒913‒432‒01‒01\n\n"
+                    f"❤️ Ждем вас в Dubrovka!"
+                )
+                
+                kb = types.InlineKeyboardMarkup()
+                kb.add(
+                    types.InlineKeyboardButton(
+                        "❌ Отменить бронь",
+                        callback_data=f"cancel|{booking_id}"
+                    )
+                )
+                
+                await message.answer(success_text, reply_markup=kb, parse_mode="HTML")
+                print(f"✅ Отправлено подтверждение гостю {message.chat.id}")
+                
+                # Планируем напоминание
+                schedule_reminder(
+                    message.chat.id,
+                    booking_id,
+                    data['time'],
+                    data['date'],
+                    data['table'],
+                    data['name']
+                )
+            else:
+                await message.answer(
+                    f"✅ <b>Бронь создана!</b>\n\n"
+                    f"🆔 ID: {booking_id}\n"
+                    f"🪑 Стол {data['table']}\n"
+                    f"📅 {data['date']} {data['time']}\n\n"
+                    f"Подтверждение отправлено администратору.",
+                    parse_mode="HTML"
+                )
+                
         elif result.get("ok") == True:
-            success_text = (
-                f"✅ <b>БРОНЬ ПОДТВЕРЖДЕНА!</b>\n\n"
-                f"👤 {data['name']}\n"
-                f"🪑 Стол {data['table']}\n"
-                f"👥 {data['guests']} чел.\n"
-                f"📅 {data['date']} {data['time']}\n\n"
-                f"📍 Ермакова 11\n"
-                f"❤️ Ждем вас!"
-            )
-            await message.answer(success_text, parse_mode="HTML")
             await bot.send_message(
                 ADMIN_ID,
-                f"🔥 <b>НОВАЯ БРОНЬ!</b>\n\n"
+                f"✅ <b>БРОНЬ СОЗДАНА (ok=true)</b>\n\n"
                 f"👤 {data['name']}\n"
                 f"📞 {data['phone']}\n"
                 f"👥 {data['guests']} чел.\n"
@@ -195,26 +202,54 @@ async def web_app(message: types.Message):
                 f"📅 {data['date']} {data['time']}",
                 parse_mode="HTML"
             )
-        else:
-            print(f"❌ Ошибка: {result}")
             
+            if data.get('chat_id'):
+                await message.answer(
+                    f"✅ <b>Бронь создана!</b>\n\n"
+                    f"🪑 Стол {data['table']}\n"
+                    f"📅 {data['date']} {data['time']}\n\n"
+                    f"📍 Ермакова 11\n"
+                    f"❤️ Ждем вас!",
+                    parse_mode="HTML"
+                )
+            else:
+                await message.answer("✅ Бронь создана! Подтверждение отправлено администратору.")
+        else:
+            print(f"❌ Ошибка бронирования: {result}")
+            await bot.send_message(
+                ADMIN_ID,
+                f"❌ <b>ОШИБКА БРОНИРОВАНИЯ</b>\n\n"
+                f"Статус: {res.status_code}\n"
+                f"Ответ: {res.text}",
+                parse_mode="HTML"
+            )
+            await message.answer("❌ Этот стол уже занят в выбранное время")
+        
     except Exception as e:
-        print(f"❌ Ошибка: {e}")
+        print(f"❌ Ошибка в обработчике: {e}")
         import traceback
         traceback.print_exc()
         await bot.send_message(
             ADMIN_ID,
-            f"❌ <b>ОШИБКА</b>\n\n{e}",
+            f"❌ <b>ИСКЛЮЧЕНИЕ В БОТЕ</b>\n\n{e}",
             parse_mode="HTML"
+        )
+        await message.answer(
+            "❌ Произошла ошибка при бронировании.\n"
+            "Пожалуйста, попробуйте позже."
         )
 
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith("cancel"))
 async def cancel_booking(call: types.CallbackQuery):
     try:
         _, booking_id = call.data.split("|")
-        await call.answer("⏳ Отмена...")
         
-        res = requests.post(f"{API_URL}/cancel/{booking_id}", timeout=10)
+        await call.answer("⏳ Отмена брони...")
+        
+        res = requests.post(
+            f"{API_URL}/cancel/{booking_id}",
+            timeout=10
+        )
         
         if int(booking_id) in reminders:
             reminders[int(booking_id)].cancel()
@@ -223,13 +258,14 @@ async def cancel_booking(call: types.CallbackQuery):
         if res.status_code == 200:
             await call.message.edit_text(
                 f"❌ <b>Бронь отменена</b>\n\n"
-                f"Бронь #{booking_id} отменена.\n\n"
+                f"Бронь #{booking_id} успешно отменена.\n\n"
+                f"Если у вас есть вопросы, свяжитесь с администратором:\n"
                 f"📞 +7‒913‒432‒01‒01",
                 parse_mode="HTML"
             )
-            await call.answer("Отменено")
+            await call.answer("Бронь отменена")
         else:
-            await call.answer("Ошибка", show_alert=True)
+            await call.answer("Ошибка отмены", show_alert=True)
             
     except Exception as e:
         print(f"❌ Ошибка: {e}")
