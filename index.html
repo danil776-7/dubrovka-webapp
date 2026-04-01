@@ -491,7 +491,7 @@ button:active {
 
   <div class="card">
     <div class="working-hours">
-      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 01:00 | ПТ-СБ: 12:00 - 02:00</span>
+      🕐 РЕЖИМ РАБОТЫ: <span>ВС-ЧТ: 12:00 - 23:00 | ПТ-СБ: 12:00 - 00:00</span>
     </div>
     
     <h2>🍷 БРОНИРОВАНИЕ СТОЛОВ</h2>
@@ -619,25 +619,26 @@ function minutesToTime(minutes) {
   return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
 }
 
-// 🔥 ОСНОВНАЯ ЛОГИКА С УЧЕТОМ ДЛИТЕЛЬНОСТИ ОТ КОЛИЧЕСТВА ГОСТЕЙ
-// bufferBefore = 90 минут (1.5 часа) до следующей брони
-function isTimeAvailable(existingTimes, newTime, guests, bufferBefore = 90) {
+// 🔥 ОСНОВНАЯ ЛОГИКА
+// blockTime - время блокировки (2 часа после брони)
+// warningTime - время предупреждения (1.5 часа до следующей брони)
+function isTimeAvailable(existingTimes, newTime, guests, warningMinutes = 90, blockMinutes = 120) {
   let sessionMinutes = getSessionMinutes(guests);
   let newStart = timeToMinutes(newTime);
   let newEnd = newStart + sessionMinutes;
   
   for (let existingTime of existingTimes) {
     let existingStart = timeToMinutes(existingTime);
-    let existingSession = getSessionMinutes(5); // Используем максимальную длительность для существующих броней
+    let existingSession = getSessionMinutes(5); // максимальная длительность для существующих броней
     let existingEnd = existingStart + existingSession;
     
-    // Если время пересекается
+    // Если время пересекается (блокировка)
     if (newStart < existingEnd && newEnd > existingStart) {
       return { available: false, type: 'blocked', conflictTime: existingTime };
     }
     
-    // 🔥 ПРЕДУПРЕЖДЕНИЕ ЗА 90 МИНУТ ДО СЛЕДУЮЩЕЙ БРОНИ
-    if (newEnd > existingStart && newEnd <= existingStart + bufferBefore) {
+    // 🔥 ПРЕДУПРЕЖДЕНИЕ: если до следующей брони меньше warningMinutes (90 мин)
+    if (newEnd > existingStart && newEnd <= existingStart + warningMinutes) {
       return { available: true, type: 'warning', needToLeaveBy: existingTime };
     }
   }
@@ -664,7 +665,6 @@ function renderTimeSlots(allTimes, busyTimes, date, guests) {
   let html = '';
   let sortedBusy = [...busyTimes].sort();
   let currentGuests = parseInt(guests) || 1;
-  let sessionDuration = getSessionDuration(currentGuests);
   
   allTimes.forEach(time => {
     let [h,m] = time.split(":");
@@ -675,7 +675,7 @@ function renderTimeSlots(allTimes, busyTimes, date, guests) {
     if (isPast) return;
     
     let isBusy = busyTimes.includes(time);
-    let availability = isTimeAvailable(sortedBusy, time, currentGuests, 90);
+    let availability = isTimeAvailable(sortedBusy, time, currentGuests, 90, 120);
     
     let statusClass = '';
     let statusText = '';
@@ -880,8 +880,8 @@ bookBtn.onclick = async () => {
     return;
   }
   
-  // Проверка доступности с учетом количества гостей и 90-минутного предупреждения
-  let availability = isTimeAvailable(busyTimes, selectedTime, guestsVal, 90);
+  // Проверка доступности с учетом предупреждения за 90 минут
+  let availability = isTimeAvailable(busyTimes, selectedTime, guestsVal, 90, 120);
   if(!availability.available) {
     let durationText = getSessionDuration(guestsVal);
     showError(`⚠️ Этот стол уже забронирован на это время\n💡 Ваша компания будет сидеть ${durationText} часа\nПожалуйста, выберите другое время`);
