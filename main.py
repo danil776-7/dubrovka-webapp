@@ -55,7 +55,7 @@ SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
 # =====================
-# MODEL (без created_at)
+# MODEL
 # =====================
 
 class Booking(Base):
@@ -70,6 +70,7 @@ class Booking(Base):
     time = Column(String(5))
     status = Column(String(20), default="active")
     chat_id = Column(String(50), nullable=True)
+    created_at = Column(String(50), nullable=True)
 
 # Создаем таблицы
 try:
@@ -339,6 +340,7 @@ def create_booking(data: dict):
                 detail=f"Too many guests. Max for table {table} is {TABLE_LIMITS[table]}"
             )
 
+        # 🔥 СНАЧАЛА ПРОВЕРЯЕМ, ЗАНЯТО ЛИ ВРЕМЯ
         exists = db.query(Booking).filter(
             Booking.date == date,
             Booking.time == time,
@@ -349,6 +351,7 @@ def create_booking(data: dict):
         if exists:
             raise HTTPException(status_code=409, detail="Time slot already booked")
 
+        # 🔥 ТОЛЬКО ПОСЛЕ ПРОВЕРКИ СОЗДАЁМ БРОНЬ
         booking = Booking(
             name=data["name"],
             phone=data["phone"],
@@ -357,7 +360,8 @@ def create_booking(data: dict):
             date=date,
             time=time,
             status="active",
-            chat_id=chat_id if chat_id and chat_id != "0" and chat_id != "None" else None
+            chat_id=chat_id if chat_id and chat_id != "0" and chat_id != "None" else None,
+            created_at=datetime.now().isoformat()
         )
 
         db.add(booking)
