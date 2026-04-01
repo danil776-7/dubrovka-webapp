@@ -54,7 +54,7 @@ SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
 # =====================
-# MODEL (без created_at)
+# MODEL
 # =====================
 
 class Booking(Base):
@@ -296,6 +296,7 @@ def busy_times(date: str, table: str):
     db = SessionLocal()
     try:
         date = normalize_date(date)
+        # 🔥 ТОЛЬКО ТОЧНЫЕ СОВПАДЕНИЯ, БЕЗ ИНТЕРВАЛОВ
         data = db.query(Booking).filter(
             Booking.date == date,
             Booking.table == table,
@@ -334,6 +335,7 @@ def create_booking(data: dict):
                 detail=f"Max guests for table {table} is {TABLE_LIMITS[table]}"
             )
 
+        # 🔥 ПРОВЕРКА ТОЛЬКО ТОЧНОГО СОВПАДЕНИЯ
         exists = db.query(Booking).filter(
             Booking.date == date,
             Booking.time == time,
