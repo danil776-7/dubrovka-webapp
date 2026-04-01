@@ -34,7 +34,6 @@ keyboard.add(
 )
 
 def schedule_reminder(chat_id, booking_id, booking_time, booking_date, booking_table, booking_name):
-    """Запланировать напоминание за 30 минут до брони"""
     try:
         booking_datetime = datetime.strptime(f"{booking_date} {booking_time}", "%Y-%m-%d %H:%M")
         reminder_time = booking_datetime - timedelta(minutes=30)
@@ -54,8 +53,7 @@ def schedule_reminder(chat_id, booking_id, booking_time, booking_date, booking_t
                         f"⏰ <b>Через 30 минут:</b> {booking_time}\n\n"
                         f"👤 <b>На имя:</b> {booking_name}\n\n"
                         f"📍 <b>Ждем вас по адресу:</b> Ермакова 11\n"
-                        f"📞 <b>Телефон:</b> +7‒913‒432‒01‒01\n\n"
-                        f"🌟 Пожалуйста, не опаздывайте!"
+                        f"📞 <b>Телефон:</b> +7‒913‒432‒01‒01"
                     ),
                     asyncio.get_event_loop()
                 )
@@ -67,7 +65,7 @@ def schedule_reminder(chat_id, booking_id, booking_time, booking_date, booking_t
             print(f"⏰ Напоминание запланировано для брони {booking_id}")
             
     except Exception as e:
-        print(f"❌ Ошибка планирования напоминания: {e}")
+        print(f"❌ Ошибка: {e}")
 
 @dp.message_handler(commands=["start"])
 async def start(message: types.Message):
@@ -112,8 +110,35 @@ async def web_app(message: types.Message):
         
         booking_id = result.get("id")
         
-        if booking_id:
-            # Успешная бронь - отправляем подтверждение гостю
+        # 🔥 ПРОВЕРЯЕМ ПО АДМИН ПАНЕЛИ — ЕСТЬ ЛИ БРОНЬ В БАЗЕ
+        # Делаем отдельный запрос, чтобы проверить, создалась ли бронь
+        check_res = requests.get(
+            f"{API_URL}/all_bookings",
+            timeout=5
+        )
+        
+        all_bookings = []
+        try:
+            all_bookings = check_res.json()
+        except:
+            pass
+        
+        # Ищем бронь с такими же данными
+        found_booking = None
+        for b in all_bookings:
+            if (b.get("table") == data["table"] and 
+                b.get("date") == data["date"] and 
+                b.get("time") == data["time"] and
+                b.get("phone") == data["phone"]):
+                found_booking = b
+                booking_id = b.get("id")
+                break
+        
+        # 🔥 ЕСЛИ БРОНЬ ЕСТЬ В БАЗЕ — ОТПРАВЛЯЕМ УСПЕХ, ДАЖЕ ЕСЛИ СЕРВЕР ВЕРНУЛ ОШИБКУ
+        if found_booking or booking_id:
+            if not booking_id and found_booking:
+                booking_id = found_booking.get("id")
+            
             success_text = (
                 f"✅ <b>БРОНЬ ПОДТВЕРЖДЕНА!</b>\n\n"
                 f"🆔 <b>ID брони:</b> {booking_id}\n"
@@ -136,7 +161,7 @@ async def web_app(message: types.Message):
             )
             
             await message.answer(success_text, reply_markup=kb, parse_mode="HTML")
-            print(f"✅ Отправлено подтверждение гостю {message.chat.id}")
+            print(f"✅ Отправлено подтверждение гостю {message.chat.id} (бронь найдена в БД)")
             
             # Планируем напоминание
             schedule_reminder(
@@ -148,7 +173,7 @@ async def web_app(message: types.Message):
                 data['name']
             )
             
-            # Уведомление админу о новой брони
+            # Уведомление админу
             await bot.send_message(
                 ADMIN_ID,
                 f"🔥 <b>НОВАЯ БРОНЬ!</b>\n\n"
@@ -160,8 +185,21 @@ async def web_app(message: types.Message):
                 f"📅 {data['date']} {data['time']}",
                 parse_mode="HTML"
             )
+        elif result.get("ok") == True:
+            # Альтернативный формат успеха
+            success_text = (
+                f"✅ <b>БРОНЬ ПОДТВЕРЖДЕНА!</b>\n\n"
+                f"👤 {data['name']}\n"
+                f"🪑 Стол {data['table']}\n"
+                f"👥 {data['guests']} чел.\n"
+                f"📅 {data['date']} {data['time']}\n\n"
+                f"📍 Ермакова 11\n"
+                f"❤️ Ждем вас!"
+            )
+            await message.answer(success_text, parse_mode="HTML")
+            print(f"✅ Отправлено подтверждение гостю (ok=true)")
         else:
-            # Стол занят - сообщаем гостю
+            # Стол занят — сообщаем гостю
             await message.answer(
                 f"❌ <b>Извините, этот стол уже занят!</b>\n\n"
                 f"📅 {data['date']} {data['time']}\n"
@@ -172,7 +210,7 @@ async def web_app(message: types.Message):
             print(f"❌ Стол занят: {data['table']} {data['date']} {data['time']}")
         
     except Exception as e:
-        print(f"❌ Ошибка в обработчике: {e}")
+        print(f"❌ Ошибка: {e}")
         import traceback
         traceback.print_exc()
         await message.answer(
