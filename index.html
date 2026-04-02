@@ -75,41 +75,15 @@ body{
   position:relative;
 }
 
-.table-card.selected{
-  border:2px solid #d4af37;
-}
-
-.table-card.booked{
-  opacity:0.4;
-}
+.table-card.booked{opacity:0.4;}
 
 .card-img{
   height:100px;
   background:linear-gradient(135deg,#333,#111);
 }
 
-.status{
-  position:absolute;
-  top:8px;
-  left:8px;
-  font-size:11px;
-}
-
-.dot{
-  position:absolute;
-  top:8px;
-  right:8px;
-  width:8px;
-  height:8px;
-  border-radius:50%;
-  background:#2ecc71;
-}
-
-.booked .dot{background:red;}
-
 .card-body{
   padding:10px;
-  font-size:13px;
 }
 
 /* VIP */
@@ -122,54 +96,46 @@ body{
   cursor:pointer;
 }
 
-/* TIME */
-.time-slots{
-  display:flex;
-  flex-wrap:wrap;
-  gap:6px;
-  margin-top:10px;
+/* MODAL */
+.modal{
+  position:fixed;
+  inset:0;
+  background:#000;
+  display:none;
+  z-index:9999;
 }
 
+.modal.active{display:block;}
+
+.gallery{
+  display:flex;
+  overflow-x:auto;
+  scroll-snap-type:x mandatory;
+}
+
+.gallery img{
+  width:100%;
+  height:250px;
+  object-fit:cover;
+  scroll-snap-align:center;
+}
+
+.modal-body{
+  padding:15px;
+}
+
+/* TIME */
 .time-slot{
-  padding:8px 10px;
+  padding:8px;
   background:#222;
   border-radius:10px;
-  cursor:pointer;
+  margin:5px;
+  display:inline-block;
 }
 
-.time-slot.selected{
-  background:#d4af37;
-  color:black;
-}
-
-.time-slot.busy{
-  opacity:0.3;
-}
-
-.time-slot.warning{
-  background:rgba(255,193,7,0.3);
-}
-
-/* INPUT */
-input{
-  width:100%;
-  padding:12px;
-  margin-top:8px;
-  border-radius:10px;
-  border:none;
-}
-
-/* BUTTON */
-button{
-  width:100%;
-  padding:14px;
-  margin-top:10px;
-  border:none;
-  border-radius:12px;
-  background:#d4af37;
-  color:black;
-  font-weight:700;
-}
+.time-slot.selected{background:#d4af37;color:black;}
+.time-slot.busy{opacity:0.3;}
+.time-slot.warning{background:orange;}
 </style>
 </head>
 
@@ -190,22 +156,31 @@ button{
 
 <div id="tablesGrid" class="tables-grid"></div>
 
-<div class="vip-btn" onclick="alert('VIP через администратора')">⭐ VIP ЗАЛ</div>
-
-<div id="tableInfo">Выберите стол</div>
-
-<input id="date" type="date">
-<div id="timeSlotsContainer" class="time-slots"></div>
-
-<div id="warningMessage"></div>
-
-<input id="guests" type="number" value="1">
-<input id="name" placeholder="Имя">
-<input id="phone" placeholder="+7XXXXXXXXXX">
-
-<button id="bookBtn">Забронировать</button>
+<div class="vip-btn" onclick="alert('VIP через администратора')">
+⭐ VIP ЗАЛ
+</div>
 
 </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal" class="modal">
+  <div class="gallery" id="gallery"></div>
+
+  <div class="modal-body">
+    <h2 id="title"></h2>
+    <p id="desc"></p>
+
+    <div id="times"></div>
+    <div id="warning"></div>
+
+    <input id="guests" type="number" value="1">
+    <input id="name" placeholder="Имя">
+    <input id="phone" placeholder="+7XXXXXXXXXX">
+
+    <button onclick="book()">Забронировать</button>
+    <button onclick="closeModal()">Закрыть</button>
+  </div>
 </div>
 
 <script>
@@ -214,12 +189,12 @@ const API="https://dubrovka-webapp-production.up.railway.app";
 const TABLE_CAPACITY={"1":7,"2":5,"3":5,"4":5,"5":5,"6":3};
 
 const tableDescriptions={
- "1":"Приватная зона до 7",
- "2":"Приватная зона до 5",
- "3":"Приватная зона до 5",
- "4":"Приватная зона до 5",
- "5":"Открытая зона",
- "6":"Компакт"
+ "1":"Приватная зона 👥7",
+ "2":"Приватная зона 👥5",
+ "3":"Приватная зона 👥5",
+ "4":"Приватная зона 👥5",
+ "5":"Открытая зона 👥5",
+ "6":"Компакт 👥3"
 };
 
 function getBookingDurationMinutes(g){
@@ -233,112 +208,100 @@ let selectedTime=null;
 let busyTimes=[];
 let currentDate=new Date().toISOString().split("T")[0];
 
-document.getElementById("date").value=currentDate;
-
-/* ===== TABLES ===== */
+/* TABLES */
 function renderTables(){
  let grid=document.getElementById("tablesGrid");
- grid.innerHTML="";
 
  for(let i=1;i<=6;i++){
   let el=document.createElement("div");
   el.className="table-card";
 
   el.innerHTML=`
-   <div class="card-img">
-    <div class="status">Свободен</div>
-    <div class="dot"></div>
-   </div>
+   <div class="card-img"></div>
    <div class="card-body">
     Стол ${i}<br>👥 ${TABLE_CAPACITY[i]}
    </div>
   `;
 
-  el.onclick=async()=>{
-   selectedTable=String(i);
-   document.getElementById("tableInfo").innerText=tableDescriptions[i];
-
-   document.querySelectorAll(".table-card").forEach(t=>t.classList.remove("selected"));
-   el.classList.add("selected");
-
-   await loadTimes();
-  };
+  el.onclick=()=>openTable(i);
 
   grid.appendChild(el);
  }
 }
 
-/* ===== TIME LOGIC (ТВОЯ) ===== */
-function timeToMinutes(t){let[a,b]=t.split(":").map(Number);return a*60+b;}
+/* OPEN */
+function openTable(id){
+ selectedTable=String(id);
 
-function getSlotStatus(time,busyTimes,guests){
- let duration=getBookingDurationMinutes(guests);
- let start=timeToMinutes(time);
- let end=start+duration;
+ document.getElementById("modal").classList.add("active");
+ document.getElementById("title").innerText="Стол "+id;
+ document.getElementById("desc").innerText=tableDescriptions[id];
 
- for(let bt of busyTimes){
-  let s=timeToMinutes(bt);
-  let e=s+120;
-  if(start<e && end>s) return {status:'blocked'};
- }
-
- let next=null;
- for(let bt of busyTimes){
-  let s=timeToMinutes(bt);
-  if(s>start && (!next||s<timeToMinutes(next))) next=bt;
- }
-
- if(next){
-  let gap=timeToMinutes(next)-end;
-  if(gap<90) return {status:'warning',leave:next};
- }
-
- return {status:'free'};
+ renderGallery();
+ loadTimes();
 }
 
-/* ===== TIMES ===== */
+/* CLOSE */
+function closeModal(){
+ document.getElementById("modal").classList.remove("active");
+}
+
+/* GALLERY */
+function renderGallery(){
+ document.getElementById("gallery").innerHTML=`
+  <img src="https://via.placeholder.com/400x250">
+  <img src="https://via.placeholder.com/400x250">
+ `;
+}
+
+/* TIME LOGIC */
+function toMin(t){let[a,b]=t.split(":");return a*60+ +b;}
+
+function getStatus(t){
+ let start=toMin(t);
+ let end=start+120;
+
+ for(let bt of busyTimes){
+  let s=toMin(bt);
+  let e=s+120;
+  if(start<e&&end>s)return "busy";
+ }
+ return "free";
+}
+
+/* LOAD TIMES */
 async function loadTimes(){
  let res=await fetch(`${API}/busy_times?date=${currentDate}&table=${selectedTable}`);
  busyTimes=await res.json();
 
- let container=document.getElementById("timeSlotsContainer");
+ let container=document.getElementById("times");
  container.innerHTML="";
 
  for(let h=12;h<24;h++){
-  let t=`${h}:00`;
+  let t=h+":00";
 
   let el=document.createElement("div");
-  let status=getSlotStatus(t,busyTimes,2);
-
   el.className="time-slot";
   el.innerText=t;
 
-  if(status.status==="blocked") el.classList.add("busy");
-  if(status.status==="warning") el.classList.add("warning");
+  if(getStatus(t)==="busy") el.classList.add("busy");
 
   el.onclick=()=>{
-   if(status.status==="blocked") return;
+   if(el.classList.contains("busy")) return;
 
    selectedTime=t;
 
    document.querySelectorAll(".time-slot").forEach(x=>x.classList.remove("selected"));
    el.classList.add("selected");
-
-   if(status.status==="warning"){
-    document.getElementById("warningMessage").innerText=
-     `⚠️ Освободите стол до ${status.leave}`;
-   }else{
-    document.getElementById("warningMessage").innerText="";
-   }
   };
 
   container.appendChild(el);
  }
 }
 
-/* ===== BOOK ===== */
-document.getElementById("bookBtn").onclick=async()=>{
- if(!selectedTable||!selectedTime) return alert("Выбери стол и время");
+/* BOOK */
+async function book(){
+ if(!selectedTime) return alert("Выбери время");
 
  await fetch(API+"/booking",{
   method:"POST",
@@ -352,7 +315,8 @@ document.getElementById("bookBtn").onclick=async()=>{
  });
 
  alert("Бронь создана");
-};
+ closeModal();
+}
 
 renderTables();
 </script>
