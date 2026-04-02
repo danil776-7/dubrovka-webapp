@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dubrovka Lounge & Bar</title>
 
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-
 <style>
 body{
   margin:0;
@@ -19,28 +17,27 @@ body{
 .top{
   background:#eee;
   color:black;
-  padding:10px;
+  padding:10px 15px;
   display:flex;
   justify-content:space-between;
-  font-size:14px;
 }
 
 /* TIMELINE */
 .timeline{
-  padding:15px;
   background:#3b1509;
+  padding:15px;
 }
 
 .times{
   display:flex;
-  overflow-x:auto;
   gap:10px;
+  overflow-x:auto;
 }
 
 .time{
-  padding:8px 12px;
-  border:1px solid #fff3;
-  border-radius:8px;
+  padding:8px 14px;
+  background:#0003;
+  border-radius:10px;
   cursor:pointer;
 }
 
@@ -53,23 +50,28 @@ body{
 .grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
-  gap:10px;
-  padding:10px;
+  gap:12px;
+  padding:12px;
 }
 
 /* CARD */
 .card{
   position:relative;
-  border-radius:14px;
+  border-radius:16px;
   overflow:hidden;
-  background:#555;
   cursor:pointer;
 }
 
 .card img{
   width:100%;
-  height:140px;
+  height:150px;
   object-fit:cover;
+}
+
+.overlay{
+  position:absolute;
+  inset:0;
+  background:linear-gradient(to top,#000a,transparent);
 }
 
 .status{
@@ -84,32 +86,23 @@ body{
 
 .dot{
   position:absolute;
-  top:8px;
-  right:8px;
+  top:10px;
+  right:10px;
   width:8px;
   height:8px;
   background:#4cff4c;
   border-radius:50%;
 }
 
-.card-info{
+.info{
+  position:absolute;
+  bottom:0;
   padding:10px;
-  background:#6b5a54;
   font-size:13px;
 }
 
-/* VIP */
-.vip{
-  margin:10px;
-  padding:14px;
-  border:1px solid #fff3;
-  border-radius:12px;
-  text-align:center;
-  cursor:pointer;
-}
-
 /* MODAL */
-.modal{
+.table-modal{
   position:fixed;
   inset:0;
   background:#000;
@@ -117,25 +110,67 @@ body{
   z-index:9999;
 }
 
-.modal.active{display:block;}
-
-.modal-header{
-  display:flex;
-  justify-content:space-between;
-  padding:10px;
+.table-modal.active{
+  display:block;
 }
 
-.gallery img{
+/* HEADER MODAL */
+.table-header{
+  display:flex;
+  justify-content:space-between;
+  padding:12px;
+  background:#111;
+}
+
+/* IMAGE */
+.table-gallery{
+  position:relative;
+}
+
+.table-gallery img{
   width:100%;
   height:250px;
   object-fit:cover;
 }
 
-.btn{
-  margin:15px;
+.table-status{
+  position:absolute;
+  top:10px;
+  left:10px;
+  background:#000a;
+  padding:5px 10px;
+  border-radius:6px;
+}
+
+.table-dot{
+  position:absolute;
+  top:12px;
+  right:12px;
+  width:8px;
+  height:8px;
+  background:#4cff4c;
+  border-radius:50%;
+}
+
+.table-capacity{
+  position:absolute;
+  bottom:10px;
+  left:10px;
+  background:#000a;
+  padding:5px 10px;
+  border-radius:6px;
+}
+
+/* BODY */
+.table-body{
   padding:15px;
+}
+
+.book-btn{
+  margin-top:15px;
   background:#ddd;
   color:black;
+  padding:16px;
   border-radius:10px;
   text-align:center;
   cursor:pointer;
@@ -160,53 +195,53 @@ body{
 <!-- TABLES -->
 <div id="grid" class="grid"></div>
 
-<!-- VIP -->
-<div class="vip" onclick="alert('VIP бронируется через администратора\n📞 +7‒913‒432‒01‒01')">
-VIP ЗАЛ
-</div>
+<!-- MODAL -->
+<div id="tableModal" class="table-modal">
 
-<!-- MODAL TABLE -->
-<div id="modal" class="modal">
-  <div class="modal-header">
-    <div onclick="closeModal()">← Назад</div>
-    <div onclick="closeModal()">✕</div>
+  <div class="table-header">
+    <div onclick="closeTable()">←</div>
+    <div id="tableTitle"></div>
+    <div onclick="closeTable()">✕</div>
   </div>
 
-  <div class="gallery">
-    <img src="https://via.placeholder.com/400x250">
+  <div class="table-gallery">
+    <img id="tableImage" src="https://via.placeholder.com/400x250">
+
+    <div class="table-status">Свободно</div>
+    <div class="table-dot"></div>
+    <div class="table-capacity">👥 <span id="tableCap"></span></div>
   </div>
 
-  <div style="padding:10px;">
-    <h2 id="title"></h2>
-    <p id="desc"></p>
-    <p>Нет броней</p>
+  <div class="table-body">
+    <div>Нет броней</div>
+
+    <div class="book-btn">
+      Забронировать →
+    </div>
   </div>
 
-  <div class="btn">Забронировать →</div>
 </div>
 
 <script>
-/* ТВОИ СТОЛЫ */
 const TABLES=[
- {id:"1",cap:7,floor:"1 этаж"},
- {id:"2",cap:5,floor:"1 этаж"},
- {id:"3",cap:5,floor:"1 этаж"},
- {id:"4",cap:5,floor:"1 этаж"},
- {id:"5",cap:5,floor:"1 этаж"},
- {id:"6",cap:3,floor:"1 этаж"}
+ {id:"1",cap:7},
+ {id:"2",cap:5},
+ {id:"3",cap:5},
+ {id:"4",cap:5},
+ {id:"5",cap:5},
+ {id:"6",cap:3}
 ];
 
-/* ТВОИ ОПИСАНИЯ */
 const DESCRIPTIONS={
- "1":"🍷 Приватная зона со шторками и PlayStation\n👥 до 7 гостей",
- "2":"🍷 Приватная зона со шторками и PlayStation\n👥 до 5 гостей",
- "3":"🍷 Приватная зона со шторками и PlayStation\n👥 до 5 гостей",
- "4":"🍷 Приватная зона со шторками и PlayStation\n👥 до 5 гостей",
- "5":"✨ Открытая зона\n👥 до 5 гостей",
- "6":"🪑 Компактный стол\n👥 до 3 гостей"
+ "1":"Приватная зона со шторками и PlayStation",
+ "2":"Приватная зона со шторками и PlayStation",
+ "3":"Приватная зона со шторками и PlayStation",
+ "4":"Приватная зона со шторками и PlayStation",
+ "5":"Открытая зона",
+ "6":"Компактный стол"
 };
 
-/* TIME */
+/* TIMES */
 for(let h=12;h<24;h++){
  let el=document.createElement("div");
  el.className="time";
@@ -228,12 +263,12 @@ TABLES.forEach(t=>{
  el.className="card";
 
  el.innerHTML=`
-  <img src="https://via.placeholder.com/300x150">
+  <img src="https://via.placeholder.com/300x200">
+  <div class="overlay"></div>
   <div class="status">Свободно</div>
   <div class="dot"></div>
-  <div class="card-info">
-   ${t.floor}<br>
-   №${t.id} стол 👥 ${t.cap}
+  <div class="info">
+    №${t.id} стол<br>👥 ${t.cap}
   </div>
  `;
 
@@ -244,13 +279,15 @@ TABLES.forEach(t=>{
 
 /* OPEN */
 function openTable(id){
- document.getElementById("modal").classList.add("active");
- document.getElementById("title").innerText="Стол №"+id;
- document.getElementById("desc").innerText=DESCRIPTIONS[id];
+ document.getElementById("tableModal").classList.add("active");
+ document.getElementById("tableTitle").innerText="СТОЛ №"+id;
+ document.getElementById("tableCap").innerText=TABLES.find(t=>t.id==id).cap;
+ document.getElementById("tableImage").src="https://via.placeholder.com/400x250";
 }
 
-function closeModal(){
- document.getElementById("modal").classList.remove("active");
+/* CLOSE */
+function closeTable(){
+ document.getElementById("tableModal").classList.remove("active");
 }
 </script>
 
