@@ -19,8 +19,6 @@ body{
 /* VIDEO */
 .video-background{
   position:fixed;
-  top:0;
-  left:0;
   width:100%;
   height:100%;
   object-fit:cover;
@@ -54,11 +52,6 @@ body{
   font-weight:700;
 }
 
-.logo-subtitle{
-  font-size:11px;
-  color:#d4af37;
-}
-
 /* CARD */
 .card{
   background:rgba(10,10,15,0.85);
@@ -67,7 +60,7 @@ body{
   border:1px solid rgba(212,175,55,0.3);
 }
 
-/* TABLE CARDS */
+/* TABLES */
 .tables-grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
@@ -75,7 +68,7 @@ body{
 }
 
 .table-card{
-  background:rgba(20,20,30,0.9);
+  background:#1a1a22;
   border-radius:14px;
   overflow:hidden;
   cursor:pointer;
@@ -99,9 +92,6 @@ body{
   position:absolute;
   top:8px;
   left:8px;
-  background:rgba(0,0,0,0.6);
-  padding:4px 8px;
-  border-radius:8px;
   font-size:11px;
 }
 
@@ -115,7 +105,7 @@ body{
   background:#2ecc71;
 }
 
-.table-card.booked .dot{background:red;}
+.booked .dot{background:red;}
 
 .card-body{
   padding:10px;
@@ -156,6 +146,10 @@ body{
   opacity:0.3;
 }
 
+.time-slot.warning{
+  background:rgba(255,193,7,0.3);
+}
+
 /* INPUT */
 input{
   width:100%;
@@ -190,19 +184,20 @@ button{
 <div class="logo-container">
   <img src="logo.png" class="logo-img">
   <div class="logo-text">DUBROVKA</div>
-  <div class="logo-subtitle">LOUNGE & BAR</div>
 </div>
 
 <div class="card">
 
 <div id="tablesGrid" class="tables-grid"></div>
 
-<div class="vip-btn" id="vipBtn">⭐ VIP ЗАЛ</div>
+<div class="vip-btn" onclick="alert('VIP через администратора')">⭐ VIP ЗАЛ</div>
 
 <div id="tableInfo">Выберите стол</div>
 
 <input id="date" type="date">
 <div id="timeSlotsContainer" class="time-slots"></div>
+
+<div id="warningMessage"></div>
 
 <input id="guests" type="number" value="1">
 <input id="name" placeholder="Имя">
@@ -216,18 +211,22 @@ button{
 <script>
 const API="https://dubrovka-webapp-production.up.railway.app";
 
-const TABLE_CAPACITY={
- "1":7,"2":5,"3":5,"4":5,"5":5,"6":3
-};
+const TABLE_CAPACITY={"1":7,"2":5,"3":5,"4":5,"5":5,"6":3};
 
 const tableDescriptions={
- "1":"🍷 Приватная зона\n👥 до 7",
- "2":"🍷 Приватная зона\n👥 до 5",
- "3":"🍷 Приватная зона\n👥 до 5",
- "4":"🍷 Приватная зона\n👥 до 5",
- "5":"✨ Открытая зона\n👥 до 5",
- "6":"🪑 Компактный стол\n👥 до 3"
+ "1":"Приватная зона до 7",
+ "2":"Приватная зона до 5",
+ "3":"Приватная зона до 5",
+ "4":"Приватная зона до 5",
+ "5":"Открытая зона",
+ "6":"Компакт"
 };
+
+function getBookingDurationMinutes(g){
+ if(g<=2) return 90;
+ if(g<=4) return 120;
+ return 240;
+}
 
 let selectedTable=null;
 let selectedTime=null;
@@ -236,12 +235,7 @@ let currentDate=new Date().toISOString().split("T")[0];
 
 document.getElementById("date").value=currentDate;
 
-// VIP
-document.getElementById("vipBtn").onclick=()=>{
- alert("VIP только через администратора\n📞 +7‒913‒432‒01‒01");
-};
-
-// TABLES
+/* ===== TABLES ===== */
 function renderTables(){
  let grid=document.getElementById("tablesGrid");
  grid.innerHTML="";
@@ -260,21 +254,49 @@ function renderTables(){
    </div>
   `;
 
-  el.onclick=()=>{
+  el.onclick=async()=>{
    selectedTable=String(i);
    document.getElementById("tableInfo").innerText=tableDescriptions[i];
 
    document.querySelectorAll(".table-card").forEach(t=>t.classList.remove("selected"));
    el.classList.add("selected");
 
-   loadTimes();
+   await loadTimes();
   };
 
   grid.appendChild(el);
  }
 }
 
-// TIMES
+/* ===== TIME LOGIC (ТВОЯ) ===== */
+function timeToMinutes(t){let[a,b]=t.split(":").map(Number);return a*60+b;}
+
+function getSlotStatus(time,busyTimes,guests){
+ let duration=getBookingDurationMinutes(guests);
+ let start=timeToMinutes(time);
+ let end=start+duration;
+
+ for(let bt of busyTimes){
+  let s=timeToMinutes(bt);
+  let e=s+120;
+  if(start<e && end>s) return {status:'blocked'};
+ }
+
+ let next=null;
+ for(let bt of busyTimes){
+  let s=timeToMinutes(bt);
+  if(s>start && (!next||s<timeToMinutes(next))) next=bt;
+ }
+
+ if(next){
+  let gap=timeToMinutes(next)-end;
+  if(gap<90) return {status:'warning',leave:next};
+ }
+
+ return {status:'free'};
+}
+
+/* ===== TIMES ===== */
 async function loadTimes(){
  let res=await fetch(`${API}/busy_times?date=${currentDate}&table=${selectedTable}`);
  busyTimes=await res.json();
@@ -286,26 +308,35 @@ async function loadTimes(){
   let t=`${h}:00`;
 
   let el=document.createElement("div");
+  let status=getSlotStatus(t,busyTimes,2);
+
   el.className="time-slot";
   el.innerText=t;
 
-  if(busyTimes.includes(t)){
-   el.classList.add("busy");
-  }
+  if(status.status==="blocked") el.classList.add("busy");
+  if(status.status==="warning") el.classList.add("warning");
 
   el.onclick=()=>{
-   if(el.classList.contains("busy")) return;
+   if(status.status==="blocked") return;
+
    selectedTime=t;
 
    document.querySelectorAll(".time-slot").forEach(x=>x.classList.remove("selected"));
    el.classList.add("selected");
+
+   if(status.status==="warning"){
+    document.getElementById("warningMessage").innerText=
+     `⚠️ Освободите стол до ${status.leave}`;
+   }else{
+    document.getElementById("warningMessage").innerText="";
+   }
   };
 
   container.appendChild(el);
  }
 }
 
-// BOOK
+/* ===== BOOK ===== */
 document.getElementById("bookBtn").onclick=async()=>{
  if(!selectedTable||!selectedTime) return alert("Выбери стол и время");
 
