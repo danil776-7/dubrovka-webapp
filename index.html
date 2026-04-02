@@ -3,31 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dubrovka Booking Pro</title>
+<title>Booking</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
 body {
   margin:0;
-  font-family:-apple-system,BlinkMacSystemFont;
-  background: radial-gradient(circle at top,#0f172a,#020617);
-  color:#fff;
+  background:#0b0b0f;
+  color:white;
+  font-family:-apple-system;
 }
 
 .container {
-  max-width:900px;
-  margin:auto;
   padding:15px;
-}
-
-/* GLASS */
-.glass {
-  background: rgba(255,255,255,0.05);
-  backdrop-filter: blur(20px);
-  border-radius:20px;
-  border:1px solid rgba(255,255,255,0.08);
-  padding:20px;
-  margin-bottom:15px;
 }
 
 /* TIME */
@@ -35,73 +23,93 @@ body {
   display:flex;
   overflow-x:auto;
   gap:10px;
+  margin-bottom:15px;
 }
 
 .time-slot {
-  min-width:75px;
-  padding:10px;
-  border-radius:12px;
-  background:rgba(255,255,255,0.05);
-  text-align:center;
+  padding:10px 14px;
+  border-radius:10px;
+  background:#1a1a22;
   cursor:pointer;
 }
 
 .time-slot.selected {
-  background:linear-gradient(135deg,#d4af37,#facc15);
+  background:white;
   color:black;
 }
 
-.time-slot.busy {
-  opacity:0.3;
+/* GRID */
+.tables-grid {
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
 }
 
-/* MAP */
-.hall-map {
-  position:relative;
-  height:420px;
-}
-
-.table {
-  position:absolute;
-  width:80px;
-  height:80px;
-  border-radius:16px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  font-size:12px;
-  background:rgba(255,255,255,0.05);
+/* CARD */
+.card {
+  background:#1a1a22;
+  border-radius:14px;
+  overflow:hidden;
   cursor:pointer;
 }
 
-.table.selected {
-  background:linear-gradient(135deg,#d4af37,#facc15);
-  color:black;
+.card-img {
+  height:120px;
+  background:linear-gradient(135deg,#333,#111);
 }
 
-.table.booked {
-  opacity:0.25;
+.card-body {
+  padding:10px;
 }
 
-/* FORM */
-input {
-  width:100%;
-  padding:14px;
-  border-radius:12px;
-  border:none;
-  margin-bottom:10px;
+.status {
+  position:absolute;
+  top:10px;
+  left:10px;
+  background:rgba(0,0,0,0.6);
+  padding:4px 8px;
+  border-radius:8px;
+  font-size:12px;
+}
+
+.dot {
+  position:absolute;
+  top:10px;
+  right:10px;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#2ecc71;
+}
+
+.booked .dot {
+  background:red;
+}
+
+/* MODAL */
+.modal {
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  background:#111;
+  border-radius:20px 20px 0 0;
+  padding:20px;
+  display:none;
+}
+
+.modal.active {
+  display:block;
 }
 
 button {
   width:100%;
-  padding:16px;
+  padding:15px;
+  border-radius:12px;
   border:none;
-  border-radius:16px;
-  background:linear-gradient(135deg,#d4af37,#facc15);
-  font-weight:bold;
+  margin-top:10px;
+  background:white;
 }
-
 </style>
 </head>
 
@@ -109,70 +117,44 @@ button {
 
 <div class="container">
 
-<div class="glass">
-  <div id="date"></div>
+<div id="times" class="time-scroll"></div>
+
+<div id="tables" class="tables-grid"></div>
+
 </div>
 
-<div class="glass">
-  <div>Выберите время</div>
-  <div id="times" class="time-scroll"></div>
-</div>
-
-<div class="glass">
-  <div>Карта зала</div>
-  <div id="hall" class="hall-map"></div>
-</div>
-
-<div class="glass">
-  <input id="name" placeholder="Имя">
-  <input id="phone" placeholder="+7XXXXXXXXXX">
-  <input id="guests" type="number" value="1">
-  <button id="book">Забронировать</button>
-</div>
-
+<!-- MODAL -->
+<div id="modal" class="modal">
+  <div id="modalContent"></div>
 </div>
 
 <script>
 const API="https://dubrovka-webapp-production.up.railway.app";
 
 const TABLES_CONFIG = [
-  { id: "1", number: 1, capacity: 7, x: 1, y: 1 },
-  { id: "2", number: 2, capacity: 5, x: 2, y: 1 },
-  { id: "3", number: 3, capacity: 5, x: 3, y: 1 },
-  { id: "4", number: 4, capacity: 5, x: 4, y: 1 },
-  { id: "5", number: 5, capacity: 5, x: 1, y: 2 },
-  { id: "6", number: 6, capacity: 3, x: 2, y: 2 },
-  { id: "7", number: 7, capacity: 5, x: 3, y: 2 },
-  { id: "8", number: 8, capacity: 5, x: 4, y: 2 },
-  { id: "9", number: 9, capacity: 5, x: 1, y: 3 },
-  { id: "10", number: 10, capacity: 5, x: 2, y: 3 },
-  { id: "11", number: 11, capacity: 5, x: 3, y: 3 },
-  { id: "12", number: 12, capacity: 7, x: 4, y: 3 }
+  { id:"1", number:1, capacity:7 },
+  { id:"2", number:2, capacity:5 },
+  { id:"3", number:3, capacity:5 },
+  { id:"4", number:4, capacity:5 },
+  { id:"5", number:5, capacity:5 },
+  { id:"6", number:6, capacity:3 },
+  { id:"7", number:7, capacity:5 },
+  { id:"8", number:8, capacity:5 },
+  { id:"9", number:9, capacity:5 },
+  { id:"10", number:10, capacity:5 },
+  { id:"11", number:11, capacity:5 },
+  { id:"12", number:12, capacity:7 }
 ];
 
-const TABLES = TABLES_CONFIG.map(t => ({
-  ...t,
-  x: (t.x - 1) * 100 + 20,
-  y: (t.y - 1) * 100 + 20
-}));
-
 let selectedTime=null;
-let selectedTable=null;
 let bookings=[];
-let currentDate=null;
-
-// DATE
-function setDate(){
-  let d=new Date();
-  currentDate=d.toISOString().split("T")[0];
-  document.getElementById("date").innerText=d.toLocaleDateString();
-}
+let currentDate=new Date().toISOString().split("T")[0];
 
 // TIME
 function generateTimes(){
   let arr=[];
   for(let h=12;h<26;h++){
-    for(let m=0;m<60;m+=10){
+    for(let m=0;m<60;m+=30){
       let hh=h>=24?h-24:h;
       arr.push(`${String(hh).padStart(2,"0")}:${String(m).padStart(2,"0")}`);
     }
@@ -200,108 +182,98 @@ function renderTimes(){
   });
 }
 
-// TABLE BUSY LOGIC
-function isTableBusy(id){
+// BUSY
+function isBusy(tableId){
   if(!selectedTime) return false;
 
   return bookings.some(b=>{
-    if(b.table!=id || b.date!=currentDate) return false;
+    if(b.table!=tableId || b.date!=currentDate) return false;
 
     let [h,m]=b.time.split(":").map(Number);
     let start=h*60+m;
-    let end=start + (b.duration||2)*60;
+    let end=start+(b.duration||2)*60;
 
     let [sh,sm]=selectedTime.split(":").map(Number);
-    let current=sh*60+sm;
+    let cur=sh*60+sm;
 
-    return current>=start && current<end;
+    return cur>=start && cur<end;
   });
 }
 
-// RENDER TABLES
+// TABLES
 function renderTables(){
-  let hall=document.getElementById("hall");
-  hall.innerHTML="";
+  let c=document.getElementById("tables");
+  c.innerHTML="";
 
-  TABLES.forEach(t=>{
+  TABLES_CONFIG.forEach(t=>{
+    let busy=isBusy(t.id);
+
     let el=document.createElement("div");
-    el.className="table";
-    el.style.left=t.x+"px";
-    el.style.top=t.y+"px";
+    el.className="card "+(busy?"booked":"");
 
     el.innerHTML=`
-      <div>${t.number}</div>
-      <div>👥 ${t.capacity}</div>
+      <div class="card-img">
+        <div class="status">${busy?"Занят":"Свободно"}</div>
+        <div class="dot"></div>
+      </div>
+      <div class="card-body">
+        <div>№${t.number} стол</div>
+        <div style="font-size:12px;color:#aaa;">👥 ${t.capacity}</div>
+      </div>
     `;
 
-    if(isTableBusy(t.id)) el.classList.add("booked");
-
     el.onclick=()=>{
-      if(el.classList.contains("booked")) return;
-
-      selectedTable=t.id;
-
-      document.querySelectorAll(".table").forEach(e=>e.classList.remove("selected"));
-      el.classList.add("selected");
+      if(busy) return;
+      openModal(t);
     };
 
-    hall.appendChild(el);
+    c.appendChild(el);
   });
 }
 
-// API
-async function loadBookings(){
-  let res=await fetch(API+"/all_bookings");
-  bookings=await res.json();
-}
+// MODAL
+function openModal(table){
+  let m=document.getElementById("modal");
+  let c=document.getElementById("modalContent");
 
-// DURATION
-function getDuration(g){
-  return g>=5 ? 3 : 2;
-}
+  c.innerHTML=`
+    <h3>Стол №${table.number}</h3>
+    <p>Вместимость: ${table.capacity}</p>
+    <button onclick="book('${table.id}')">Забронировать</button>
+  `;
 
-// CAPACITY CHECK
-function canFit(tableId, guests){
-  let t=TABLES.find(x=>x.id==tableId);
-  return guests<=t.capacity;
+  m.classList.add("active");
 }
 
 // BOOK
-document.getElementById("book").onclick=async()=>{
-  let name=document.getElementById("name").value;
-  let phone=document.getElementById("phone").value;
-  let guests=parseInt(document.getElementById("guests").value);
-
-  if(!selectedTime || !selectedTable) return alert("Выберите время и стол");
-
-  if(!canFit(selectedTable, guests)){
-    return alert("Слишком много гостей для стола");
-  }
-
-  let data={
-    name,
-    phone,
-    guests,
-    table:selectedTable,
-    date:currentDate,
-    time:selectedTime,
-    duration:getDuration(guests)
-  };
+window.book=async(tableId)=>{
+  if(!selectedTime) return alert("Выбери время");
 
   await fetch(API+"/booking",{
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body:JSON.stringify(data)
+    body:JSON.stringify({
+      table:tableId,
+      time:selectedTime,
+      date:currentDate,
+      guests:2
+    })
   });
 
-  alert("Бронь создана");
+  alert("Готово");
+  document.getElementById("modal").classList.remove("active");
   init();
 };
 
+// API
+async function load(){
+  let res=await fetch(API+"/all_bookings");
+  bookings=await res.json();
+}
+
 // INIT
 async function init(){
-  setDate();
-  await loadBookings();
+  await load();
   renderTimes();
   renderTables();
 }
