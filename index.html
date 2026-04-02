@@ -12,7 +12,7 @@ body{
   background:#2b1208;color:#fff;min-height:100vh;
 }
 
-/* BG */
+/* VIDEO BG */
 .video-bg{
   position:fixed;inset:0;width:100%;height:100%;object-fit:cover;
   opacity:.35;z-index:-1;
@@ -25,15 +25,11 @@ body{
 }
 
 /* TIMELINE */
-.timeline{
-  background:#3b1509;padding:14px 12px 10px;
-}
-.slider{
-  display:flex;gap:8px;overflow-x:auto;
-}
+.timeline{background:#3b1509;padding:14px 12px}
+.slider{display:flex;gap:8px;overflow-x:auto}
 .time-chip{
   min-width:80px;text-align:center;padding:10px;border-radius:10px;
-  background:#0003;border:1px solid #ffffff20;cursor:pointer;
+  background:#0003;border:1px solid #ffffff20;cursor:pointer;transition:.2s;
 }
 .time-chip.active{background:#fff;color:#000}
 
@@ -45,31 +41,18 @@ body{
 @media(min-width:768px){.grid{grid-template-columns:repeat(3,1fr)}}
 
 /* CARD */
-.card{
-  position:relative;border-radius:16px;overflow:hidden;
-}
+.card{position:relative;border-radius:16px;overflow:hidden;cursor:pointer}
 .card img{width:100%;height:170px;object-fit:cover}
 .overlay{position:absolute;inset:0;background:linear-gradient(to top,#000c,transparent)}
-.badge{
-  position:absolute;top:10px;left:10px;padding:6px 10px;border-radius:8px;
-  font-size:12px;background:#000a
-}
-.green{background:#1f7a1f}
-.red{background:#a02020}
-.yellow{background:#ffc107;color:#000}
-.card-info{
-  position:absolute;bottom:0;left:0;right:0;padding:10px;
-}
+.card-info{position:absolute;bottom:0;left:0;right:0;padding:10px}
 
 /* MODALS */
 .modal{
   position:fixed;inset:0;background:rgba(0,0,0,.9);
-  opacity:0;pointer-events:none;
-  transition:.3s;
+  opacity:0;pointer-events:none;transition:.3s;
 }
 .modal.active{opacity:1;pointer-events:auto}
 
-/* BOX */
 .box{
   position:absolute;left:50%;top:50%;
   transform:translate(-50%,-40%) scale(.95);
@@ -96,7 +79,7 @@ body{
 }
 .slot:hover{transform:scale(1.05)}
 .slot.active{background:#fff;color:#000}
-.slot.busy{opacity:.3;pointer-events:none}
+.slot.range{background:#444}
 
 /* BUTTON */
 .btn{
@@ -110,7 +93,7 @@ body{
 .btn:hover:not(.disabled){transform:translateY(-2px)}
 
 .warn{
-  display:none;margin:10px;padding:10px;background:#ffc10722;color:#ffc107
+  display:none;margin:10px;padding:10px;background:#ffc10722;color:#ffc107;border-radius:8px
 }
 
 /* FORM */
@@ -123,8 +106,8 @@ input{
 
 <body>
 
-<video class="video-bg" autoplay muted loop>
-  <source src="bg.mp4">
+<video class="video-bg" autoplay muted loop playsinline>
+  <source src="bg.mp4" type="video/mp4">
 </video>
 
 <div class="top">
@@ -159,8 +142,14 @@ input{
     </div>
 
     <div style="padding:12px">
-      <div>С: <b id="from">--</b></div>
-      <div>До: <b id="to">--</b></div>
+      <input type="date" id="dateInput" style="
+        width:100%;padding:12px;border-radius:10px;
+        background:#1c1c1c;color:#fff;border:1px solid #444">
+    </div>
+
+    <div style="padding:12px">
+      С: <b id="from">--</b><br>
+      До: <b id="to">--</b>
     </div>
 
     <div id="warn" class="warn"></div>
@@ -180,8 +169,8 @@ input{
     </div>
 
     <input id="name" placeholder="Имя">
-    <input id="phone" placeholder="+7XXXXXXXXXX">
-    <input id="guests" value="2">
+    <input id="phone" placeholder="+7 XXX XXX XX XX" maxlength="18">
+    <input id="guests" value="2" type="number" min="1" max="20">
 
     <div class="btn" onclick="book()">Подтвердить</div>
   </div>
@@ -190,19 +179,21 @@ input{
 <script>
 const API="https://dubrovka-webapp-production.up.railway.app";
 
+/* TABLES */
 const TABLES=[
- {id:"1",cap:7,img:"https://images.unsplash.com/photo-1552566626-52f8b828add9"},
- {id:"2",cap:5,img:"https://images.unsplash.com/photo-1555396273-367ea4eb4db5"},
- {id:"3",cap:5,img:"https://images.unsplash.com/photo-1565299624946-b28f40a0ae38"},
- {id:"4",cap:5,img:"https://images.unsplash.com/photo-1541542684-4a0f6a1d1a66"},
- {id:"5",cap:5,img:"https://images.unsplash.com/photo-1559339352-11d035aa65de"},
- {id:"6",cap:3,img:"https://images.unsplash.com/photo-1559339352-11d035aa65de"},
- {id:"vip",cap:"VIP",img:"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4"}
+ {id:"1",cap:7,img:"table1.jpg"},
+ {id:"2",cap:5,img:"table2.jpg"},
+ {id:"3",cap:5,img:"table3.jpg"},
+ {id:"4",cap:5,img:"table4.jpg"},
+ {id:"5",cap:5,img:"table5.jpg"},
+ {id:"6",cap:3,img:"table6.jpg"},
+ {id:"vip",cap:"VIP",img:"vip.jpg"}
 ];
 
 let selectedTable=null;
-let selectedTime=null;
-let busyMap={};
+let selectedFrom=null;
+let selectedTo=null;
+let selecting="from";
 
 /* timeline */
 const slider=document.getElementById("slider");
@@ -213,10 +204,8 @@ for(let h=12;h<24;h++){
     el.className="time-chip";
     el.innerText=t;
     el.onclick=()=>{
-      selectedTime=t;
       document.querySelectorAll(".time-chip").forEach(x=>x.classList.remove("active"));
       el.classList.add("active");
-      render();
     }
     slider.appendChild(el);
   });
@@ -239,7 +228,7 @@ function render(){
   });
 }
 
-/* modals */
+/* modal table */
 function openTable(t){
   selectedTable=t.id;
   document.getElementById("t").innerText=t.id;
@@ -248,44 +237,81 @@ function openTable(t){
 }
 function closeTable(){tableModal.classList.remove("active")}
 
+/* modal time */
 function openTime(){
   tableModal.classList.remove("active");
   timeModal.classList.add("active");
+
+  selecting="from";
+  selectedFrom=null;
+  selectedTo=null;
+
+  from.innerText="--";
+  to.innerText="--";
+
+  continueBtn.classList.add("disabled");
+
+  const today=new Date().toISOString().split("T")[0];
+  dateInput.value=today;
+
   renderTimeGrid();
 }
 function closeTime(){timeModal.classList.remove("active")}
 
-/* time select */
+/* time grid */
 function renderTimeGrid(){
-  let g=document.getElementById("timeGrid");
+  let g=timeGrid;
   g.innerHTML="";
+
   for(let h=12;h<24;h++){
     ["00","30"].forEach(m=>{
-      let t=`${h}:${m}`;
+      let t=`${String(h).padStart(2,'0')}:${m}`;
       let el=document.createElement("div");
       el.className="slot";
       el.innerText=t;
 
       el.onclick=()=>{
-        selectedTime=t;
+        if(selecting==="from"){
+          selectedFrom=t;
+          from.innerText=t;
+          selecting="to";
+          document.querySelectorAll(".slot").forEach(x=>x.classList.remove("active","range"));
+          el.classList.add("active");
+          return;
+        }
 
-        document.querySelectorAll(".slot").forEach(x=>x.classList.remove("active"));
-        el.classList.add("active");
+        if(selecting==="to"){
+          if(t <= selectedFrom){
+            alert("Время 'До' должно быть позже");
+            return;
+          }
+          selectedTo=t;
+          to.innerText=t;
+          selecting="done";
 
-        document.getElementById("from").innerText=t;
-        document.getElementById("to").innerText=(h+1)+":"+m;
-
-        document.getElementById("continueBtn").classList.remove("disabled");
-      }
+          highlightRange();
+          continueBtn.classList.remove("disabled");
+        }
+      };
 
       g.appendChild(el);
     });
   }
 }
 
+/* highlight range */
+function highlightRange(){
+  document.querySelectorAll(".slot").forEach(el=>{
+    const t=el.innerText;
+    if(t>selectedFrom && t<selectedTo){
+      el.classList.add("range");
+    }
+  });
+}
+
 /* continue */
 continueBtn.onclick=()=>{
-  if(!selectedTime) return;
+  if(!selectedFrom || !selectedTo) return;
   timeModal.classList.remove("active");
   formModal.classList.add("active");
 }
@@ -293,8 +319,30 @@ continueBtn.onclick=()=>{
 /* form */
 function closeForm(){formModal.classList.remove("active")}
 
-async function book(){
-  alert("Бронь отправлена");
+/* phone mask */
+phone.oninput=()=>{
+  let v=phone.value.replace(/\D/g,"").substring(0,11);
+  if(!v.startsWith("7")) v="7"+v;
+  let f="+7";
+  if(v.length>1) f+=" "+v.substring(1,4);
+  if(v.length>4) f+=" "+v.substring(4,7);
+  if(v.length>7) f+=" "+v.substring(7,9);
+  if(v.length>9) f+=" "+v.substring(9,11);
+  phone.value=f;
+}
+
+/* book */
+function book(){
+  if(!selectedFrom || !selectedTo){
+    alert("Выберите время");
+    return;
+  }
+  if(phone.value.length<16){
+    alert("Введите корректный номер");
+    return;
+  }
+
+  alert("Бронь создана ✅");
   formModal.classList.remove("active");
 }
 
