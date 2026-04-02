@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Dubrovka — Booking PRO</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -13,498 +12,294 @@ body{
   background:#2b1208;color:#fff;min-height:100vh;
 }
 
-/* VIDEO BG */
+/* BG */
 .video-bg{
   position:fixed;inset:0;width:100%;height:100%;object-fit:cover;
   opacity:.35;z-index:-1;
 }
 
-/* TOP BAR */
+/* TOP */
 .top{
   background:#eee;color:#111;padding:10px 14px;
   display:flex;justify-content:space-between;align-items:center;
-  font-size:14px
 }
 
 /* TIMELINE */
 .timeline{
   background:#3b1509;padding:14px 12px 10px;
-  border-bottom:1px solid rgba(255,255,255,.08);
-}
-.timeline-head{
-  display:flex;justify-content:space-between;align-items:center;
-  margin-bottom:8px;font-size:13px;color:#f1d9c7
 }
 .slider{
-  display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;
-  scroll-snap-type:x mandatory;
+  display:flex;gap:8px;overflow-x:auto;
 }
 .time-chip{
-  min-width:78px;text-align:center;padding:10px 8px;border-radius:10px;
-  background:#0003;border:1px solid rgba(255,255,255,.08);
-  cursor:pointer;scroll-snap-align:start
+  min-width:80px;text-align:center;padding:10px;border-radius:10px;
+  background:#0003;border:1px solid #ffffff20;cursor:pointer;
 }
 .time-chip.active{background:#fff;color:#000}
-.tickline{
-  height:2px;background:rgba(255,255,255,.15);border-radius:2px;margin-top:6px
-}
-
-/* FILTERS (один зал, оставляем для UX как у Restoplace) */
-.filters{
-  display:flex;gap:8px;padding:10px 12px;background:#3b1509;flex-wrap:wrap
-}
-.chip{
-  padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.15);
-  background:#0003;cursor:pointer;font-size:12px
-}
-.chip.active{background:#fff;color:#000}
 
 /* GRID */
-.container{max-width:1200px;margin:0 auto}
 .grid{
   display:grid;grid-template-columns:repeat(2,1fr);
   gap:12px;padding:12px
 }
 @media(min-width:768px){.grid{grid-template-columns:repeat(3,1fr)}}
-@media(min-width:1200px){.grid{grid-template-columns:repeat(4,1fr)}}
 
 /* CARD */
 .card{
-  position:relative;border-radius:16px;overflow:hidden;cursor:pointer;
-  background:#000;
+  position:relative;border-radius:16px;overflow:hidden;
 }
-.card img{width:100%;height:180px;object-fit:cover;display:block}
-.overlay{position:absolute;inset:0;background:linear-gradient(to top,#000b,transparent 60%)}
-
+.card img{width:100%;height:170px;object-fit:cover}
+.overlay{position:absolute;inset:0;background:linear-gradient(to top,#000c,transparent)}
 .badge{
   position:absolute;top:10px;left:10px;padding:6px 10px;border-radius:8px;
   font-size:12px;background:#000a
 }
-.badge.green{background:#1f7a1f}
-.badge.red{background:#a02020}
-.badge.yellow{background:#ffc107;color:#000}
-
-.dot{
-  position:absolute;top:12px;right:12px;width:8px;height:8px;border-radius:50%
-}
-.dot.green{background:#4cff4c}
-.dot.red{background:#ff4c4c}
-.dot.yellow{background:#ffc107}
-
+.green{background:#1f7a1f}
+.red{background:#a02020}
+.yellow{background:#ffc107;color:#000}
 .card-info{
-  position:absolute;left:0;right:0;bottom:0;padding:10px;
-  background:linear-gradient(to top,#000c,transparent);
-  font-size:13px
+  position:absolute;bottom:0;left:0;right:0;padding:10px;
 }
 
 /* MODALS */
 .modal{
-  position:fixed;inset:0;background:rgba(0,0,0,.92);
-  display:none;z-index:9999
+  position:fixed;inset:0;background:rgba(0,0,0,.9);
+  opacity:0;pointer-events:none;
+  transition:.3s;
 }
-.modal.active{display:block}
+.modal.active{opacity:1;pointer-events:auto}
 
-/* TABLE MODAL (как на скрине) */
-.table-box{
-  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-  width:360px;max-width:92vw;background:#111;border-radius:14px;overflow:hidden;
-  box-shadow:0 20px 60px rgba(0,0,0,.6)
-}
-.modal-header{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:14px;background:#1a1a1a;font-size:14px
-}
-.modal img{width:100%;height:220px;object-fit:cover}
-.meta{padding:12px;color:#ccc;font-size:13px}
-.btn{
-  margin:12px;background:#e6e6e6;color:#000;padding:16px;border-radius:12px;
-  text-align:center;cursor:pointer;font-weight:600
-}
-
-/* TIME MODAL */
-.panel{
-  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-  width:420px;max-width:94vw;background:#111;border-radius:14px;overflow:hidden;
-}
-.panel-body{padding:12px}
-.row{display:flex;gap:10px;margin:10px 0}
+/* BOX */
 .box{
-  flex:1;border-radius:10px;padding:14px;background:#222;border:1px solid #444
+  position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-40%) scale(.95);
+  opacity:0;transition:.3s;
+  width:380px;max-width:95vw;background:#111;border-radius:14px;overflow:hidden;
 }
-.tabs{display:flex;gap:8px;margin-top:10px}
-.tab{padding:8px 12px;border-radius:8px;background:#222;border:1px solid #444;cursor:pointer}
-.tab.active{background:#fff;color:#000}
+.modal.active .box{
+  transform:translate(-50%,-50%) scale(1);
+  opacity:1;
+}
 
-.time-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.slot{
-  width:72px;text-align:center;padding:12px;border-radius:8px;
-  border:1px solid #555;cursor:pointer;background:#1c1c1c
+.header{
+  display:flex;justify-content:space-between;padding:14px;background:#1a1a1a;
 }
-.slot.busy{opacity:.35;pointer-events:none;text-decoration:line-through}
-.slot.warning{background:#ffc107;color:#000}
+
+/* TIME GRID */
+.time-grid{
+  display:flex;flex-wrap:wrap;gap:8px;padding:12px;
+}
+.slot{
+  width:70px;padding:12px;text-align:center;border-radius:8px;
+  border:1px solid #555;background:#1c1c1c;cursor:pointer;
+  transition:.2s;
+}
+.slot:hover{transform:scale(1.05)}
 .slot.active{background:#fff;color:#000}
+.slot.busy{opacity:.3;pointer-events:none}
+
+/* BUTTON */
+.btn{
+  margin:12px;padding:16px;border-radius:12px;
+  text-align:center;font-weight:600;cursor:pointer;
+  background:#fff;color:#000;transition:.25s;
+}
+.btn.disabled{
+  background:#555;color:#aaa;cursor:not-allowed;
+}
+.btn:hover:not(.disabled){transform:translateY(-2px)}
 
 .warn{
-  display:none;margin:10px 0;padding:10px;border-left:3px solid #ffc107;
-  background:#ffc10722;color:#ffc107;font-size:13px;border-radius:8px
+  display:none;margin:10px;padding:10px;background:#ffc10722;color:#ffc107
 }
 
 /* FORM */
-.form{
-  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-  width:420px;max-width:94vw;background:#111;border-radius:14px;overflow:hidden;
-}
 input{
-  width:calc(100% - 24px);margin:10px 12px;padding:14px;border-radius:10px;
-  border:1px solid #444;background:#1c1c1c;color:#fff
-}
-
-/* small */
-@media(max-width:420px){
-  .card img{height:150px}
+  width:calc(100% - 24px);margin:10px 12px;padding:14px;
+  border-radius:10px;border:1px solid #444;background:#1c1c1c;color:#fff
 }
 </style>
 </head>
 
 <body>
 
-<video class="video-bg" autoplay muted loop playsinline>
-  <source src="bg.mp4" type="video/mp4">
+<video class="video-bg" autoplay muted loop>
+  <source src="bg.mp4">
 </video>
 
 <div class="top">
-  <div><b>Dubrovka Lounge</b></div>
+  <b>Dubrovka</b>
   <div>+7‒913‒432‒01‒01</div>
 </div>
 
 <div class="timeline">
-  <div class="timeline-head">
-    <div>Забронировать</div>
-    <div id="todayLabel">Сегодня</div>
-  </div>
   <div id="slider" class="slider"></div>
-  <div class="tickline"></div>
 </div>
 
-<div class="filters">
-  <div class="chip active">Все столы</div>
-  <div class="chip">По занятости</div>
-  <div class="chip">По порядку</div>
-</div>
+<div id="grid" class="grid"></div>
 
-<div class="container">
-  <div id="grid" class="grid"></div>
-</div>
-
-<!-- TABLE MODAL -->
+<!-- TABLE -->
 <div id="tableModal" class="modal">
-  <div class="table-box">
-    <div class="modal-header">
-      <div>СТОЛ №<span id="tableTitle"></span></div>
+  <div class="box">
+    <div class="header">
+      <div>СТОЛ №<span id="t"></span></div>
       <div onclick="closeTable()">✕</div>
     </div>
-    <img id="tableImage" src="">
-    <div class="meta">Нет броней</div>
+    <img id="img" style="width:100%;height:200px;object-fit:cover">
     <div class="btn" onclick="openTime()">Забронировать →</div>
   </div>
 </div>
 
-<!-- TIME MODAL -->
+<!-- TIME -->
 <div id="timeModal" class="modal">
-  <div class="panel">
-    <div class="modal-header">
+  <div class="box">
+    <div class="header">
       <div>Дата и время</div>
       <div onclick="closeTime()">✕</div>
     </div>
-    <div class="panel-body">
-      <div class="box">Дата бронирования<br><b id="dateLabel"></b></div>
 
-      <div class="row">
-        <div class="box">С: <b id="fromTime">--:--</b></div>
-        <div class="box">До: <b id="toTime">--:--</b></div>
-      </div>
-
-      <div>Во сколько вы придёте?</div>
-      <div class="tabs">
-        <div class="tab active" id="tabHours">Часы</div>
-        <div class="tab" id="tabMinutes">Минуты</div>
-      </div>
-
-      <div id="warning" class="warn"></div>
-      <div id="timeGrid" class="time-grid"></div>
+    <div style="padding:12px">
+      <div>С: <b id="from">--</b></div>
+      <div>До: <b id="to">--</b></div>
     </div>
+
+    <div id="warn" class="warn"></div>
+
+    <div id="timeGrid" class="time-grid"></div>
+
+    <div id="continueBtn" class="btn disabled">Продолжить →</div>
   </div>
 </div>
 
-<!-- FORM MODAL -->
+<!-- FORM -->
 <div id="formModal" class="modal">
-  <div class="form">
-    <div class="modal-header">
+  <div class="box">
+    <div class="header">
       <div>Бронирование</div>
       <div onclick="closeForm()">✕</div>
     </div>
 
     <input id="name" placeholder="Имя">
     <input id="phone" placeholder="+7XXXXXXXXXX">
-    <input id="guests" type="number" value="2" min="1" max="20">
+    <input id="guests" value="2">
 
     <div class="btn" onclick="book()">Подтвердить</div>
   </div>
 </div>
 
 <script>
-/* ===== CONFIG ===== */
 const API="https://dubrovka-webapp-production.up.railway.app";
 
-/* ===== TABLES (6 + VIP) ===== */
 const TABLES=[
- {id:"1",cap:7,imgs:["table1.jpg"]},
- {id:"2",cap:5,imgs:["table2.jpg"]},
- {id:"3",cap:5,imgs:["table3.jpg"]},
- {id:"4",cap:5,imgs:["table4.jpg"]},
- {id:"5",cap:5,imgs:["table5.jpg"]},
- {id:"6",cap:3,imgs:["table6.jpg"]},
- {id:"vip",cap:"VIP",imgs:["vip.jpg"]}
+ {id:"1",cap:7,img:"https://images.unsplash.com/photo-1552566626-52f8b828add9"},
+ {id:"2",cap:5,img:"https://images.unsplash.com/photo-1555396273-367ea4eb4db5"},
+ {id:"3",cap:5,img:"https://images.unsplash.com/photo-1565299624946-b28f40a0ae38"},
+ {id:"4",cap:5,img:"https://images.unsplash.com/photo-1541542684-4a0f6a1d1a66"},
+ {id:"5",cap:5,img:"https://images.unsplash.com/photo-1559339352-11d035aa65de"},
+ {id:"6",cap:3,img:"https://images.unsplash.com/photo-1559339352-11d035aa65de"},
+ {id:"vip",cap:"VIP",img:"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4"}
 ];
 
-/* ===== STATE ===== */
 let selectedTable=null;
 let selectedTime=null;
 let busyMap={};
 
-/* ===== UTILS ===== */
-const toMin=t=>{let[a,b]=t.split(":").map(Number);return a*60+b}
-const minToTime=m=>`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`
-const duration=g=>g<=2?90:g<=4?120:240;
-
-/* ===== TIMELINE (шаг 30 мин) ===== */
+/* timeline */
 const slider=document.getElementById("slider");
-(function initTimeline(){
-  for(let h=12;h<24;h++){
-    ["00","30"].forEach(m=>{
-      const t=`${String(h).padStart(2,'0')}:${m}`;
-      const el=document.createElement("div");
-      el.className="time-chip";
-      el.innerText=t;
-      el.onclick=()=>{
-        selectedTime=t;
-        document.querySelectorAll(".time-chip").forEach(x=>x.classList.remove("active"));
-        el.classList.add("active");
-        render();
-      };
-      slider.appendChild(el);
-    });
-  }
-})();
-
-/* ===== LOAD BUSY (по всем столам) ===== */
-async function loadBusyAll(){
-  const promises = TABLES.map(t =>
-    fetch(`${API}/busy_times?table=${t.id}`)
-      .then(r=>r.json())
-      .then(data=>({id:t.id, data:Array.isArray(data)?data:[]}))
-      .catch(()=>({id:t.id, data:[]}))
-  );
-  const res = await Promise.all(promises);
-  res.forEach(r=>busyMap[r.id]=r.data);
-}
-
-/* ===== STATUS (PRO логика) ===== */
-function getStatus(tableId){
-  if(!selectedTime){
-    return {text:"Выберите время", cls:""};
-  }
-  if(tableId==="vip"){
-    return {text:"Через администратора", cls:"yellow"};
-  }
-
-  const times = (busyMap[tableId]||[]).slice().sort();
-  const start = toMin(selectedTime);
-  const guests = parseInt(document.getElementById("guests")?.value||2);
-  const dur = duration(guests);
-  const end = start + dur;
-
-  // пересечение
-  for(const bt of times){
-    const s = toMin(bt);
-    const e = s + duration(5); // чужая бронь считаем как на 5 гостей (макс)
-    if(start < e && end > s){
-      return {text:`Занят с ${bt} до ${minToTime(e)}`, cls:"red"};
-    }
-  }
-
-  // ближайшая следующая
-  let next=null;
-  for(const bt of times){
-    const s = toMin(bt);
-    if(s>start && (!next || s < toMin(next))) next=bt;
-  }
-
-  if(next){
-    const nextStart = toMin(next);
-    const gap = nextStart - end;
-    if(gap < 90){
-      return {text:`⚠ до ${next}`, cls:"yellow"};
-    }
-    return {text:`Свободно до ${next}`, cls:"green"};
-  }
-
-  return {text:"Свободно", cls:"green"};
-}
-
-/* ===== GRID RENDER ===== */
-const grid=document.getElementById("grid");
-function render(){
-  grid.innerHTML="";
-  TABLES.forEach(t=>{
-    const st=getStatus(t.id);
-
-    const el=document.createElement("div");
-    el.className="card";
-    el.innerHTML=`
-      <img src="${t.imgs[0]}" alt="">
-      <div class="overlay"></div>
-      <div class="badge ${st.cls||""}">${st.text}</div>
-      <div class="dot ${st.cls||""}"></div>
-      <div class="card-info">№${t.id} · 👥 ${t.cap}</div>
-    `;
-    el.onclick=()=>openTable(t);
-    grid.appendChild(el);
-  });
-}
-
-/* ===== TABLE MODAL ===== */
-function openTable(t){
-  selectedTable=t.id;
-  document.getElementById("tableTitle").innerText=t.id==="vip"?"VIP":t.id;
-  document.getElementById("tableImage").src=t.imgs[0];
-  document.getElementById("tableModal").classList.add("active");
-}
-function closeTable(){
-  document.getElementById("tableModal").classList.remove("active");
-}
-
-/* ===== TIME MODAL ===== */
-function openTime(){
-  document.getElementById("tableModal").classList.remove("active");
-  document.getElementById("timeModal").classList.add("active");
-
-  const d=new Date();
-  document.getElementById("dateLabel").innerText =
-    d.toLocaleDateString("ru-RU",{day:"numeric",month:"long"})+" (сегодня)";
-
-  renderTimeGrid();
-}
-function closeTime(){
-  document.getElementById("timeModal").classList.remove("active");
-}
-
-function renderTimeGrid(){
-  const gridEl=document.getElementById("timeGrid");
-  const warn=document.getElementById("warning");
-  gridEl.innerHTML="";
-  warn.style.display="none";
-
-  const times=[];
-  for(let h=12;h<24;h++){
-    times.push(`${String(h).padStart(2,'0')}:00`);
-    times.push(`${String(h).padStart(2,'0')}:30`);
-  }
-
-  const busyTimes=(busyMap[selectedTable]||[]).slice().sort();
-
-  times.forEach(t=>{
-    const el=document.createElement("div");
-    el.className="slot";
+for(let h=12;h<24;h++){
+  ["00","30"].forEach(m=>{
+    let t=`${h}:${m}`;
+    let el=document.createElement("div");
+    el.className="time-chip";
     el.innerText=t;
-
-    if(busyTimes.includes(t)){
-      el.classList.add("busy");
-    }
-
     el.onclick=()=>{
       selectedTime=t;
-
-      document.querySelectorAll(".slot").forEach(x=>x.classList.remove("active","warning"));
+      document.querySelectorAll(".time-chip").forEach(x=>x.classList.remove("active"));
       el.classList.add("active");
-
-      const guests=parseInt(document.getElementById("guests")?.value||2);
-      const start=toMin(t);
-      const end=start+duration(guests);
-
-      document.getElementById("fromTime").innerText=t;
-      document.getElementById("toTime").innerText=minToTime(end);
-
-      const st=getStatus(selectedTable);
-      if(st.cls==="yellow"){
-        warn.style.display="block";
-        const until = st.text.split(" ").pop();
-        warn.innerText=`⚠ Следующая бронь скоро. Освободите до ${until}`;
-        el.classList.add("warning");
-      }else{
-        warn.style.display="none";
-      }
-
-      // переход к форме
-      setTimeout(()=>{
-        document.getElementById("timeModal").classList.remove("active");
-        document.getElementById("formModal").classList.add("active");
-      },200);
-    };
-
-    gridEl.appendChild(el);
+      render();
+    }
+    slider.appendChild(el);
   });
 }
 
-/* ===== FORM ===== */
-function closeForm(){
-  document.getElementById("formModal").classList.remove("active");
+/* render */
+function render(){
+  let g=document.getElementById("grid");
+  g.innerHTML="";
+  TABLES.forEach(t=>{
+    let el=document.createElement("div");
+    el.className="card";
+    el.innerHTML=`
+      <img src="${t.img}">
+      <div class="overlay"></div>
+      <div class="card-info">№${t.id} 👥 ${t.cap}</div>
+    `;
+    el.onclick=()=>openTable(t);
+    g.appendChild(el);
+  });
 }
 
-/* ===== BOOK ===== */
-async function book(){
-  const data={
-    table:selectedTable,
-    time:selectedTime,
-    date:new Date().toISOString().split("T")[0],
-    name:document.getElementById("name").value,
-    phone:document.getElementById("phone").value,
-    guests:parseInt(document.getElementById("guests").value||2)
-  };
+/* modals */
+function openTable(t){
+  selectedTable=t.id;
+  document.getElementById("t").innerText=t.id;
+  document.getElementById("img").src=t.img;
+  tableModal.classList.add("active");
+}
+function closeTable(){tableModal.classList.remove("active")}
 
-  try{
-    const r=await fetch(API+"/booking",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify(data)
+function openTime(){
+  tableModal.classList.remove("active");
+  timeModal.classList.add("active");
+  renderTimeGrid();
+}
+function closeTime(){timeModal.classList.remove("active")}
+
+/* time select */
+function renderTimeGrid(){
+  let g=document.getElementById("timeGrid");
+  g.innerHTML="";
+  for(let h=12;h<24;h++){
+    ["00","30"].forEach(m=>{
+      let t=`${h}:${m}`;
+      let el=document.createElement("div");
+      el.className="slot";
+      el.innerText=t;
+
+      el.onclick=()=>{
+        selectedTime=t;
+
+        document.querySelectorAll(".slot").forEach(x=>x.classList.remove("active"));
+        el.classList.add("active");
+
+        document.getElementById("from").innerText=t;
+        document.getElementById("to").innerText=(h+1)+":"+m;
+
+        document.getElementById("continueBtn").classList.remove("disabled");
+      }
+
+      g.appendChild(el);
     });
-    const res=await r.json();
-    if(res.error || res.detail){
-      alert("Стол уже занят в выбранное время");
-      await loadBusyAll();
-      render();
-      return;
-    }
-    alert("Бронь создана ✅");
-    document.getElementById("formModal").classList.remove("active");
-    await loadBusyAll();
-    render();
-  }catch(e){
-    alert("Ошибка соединения");
   }
 }
 
-/* ===== AUTO REFRESH ===== */
-setInterval(async ()=>{
-  await loadBusyAll();
-  render();
-}, 10000);
+/* continue */
+continueBtn.onclick=()=>{
+  if(!selectedTime) return;
+  timeModal.classList.remove("active");
+  formModal.classList.add("active");
+}
 
-/* ===== INIT ===== */
-(async ()=>{
-  await loadBusyAll();
-  render();
-})();
+/* form */
+function closeForm(){formModal.classList.remove("active")}
+
+async function book(){
+  alert("Бронь отправлена");
+  formModal.classList.remove("active");
+}
+
+/* init */
+render();
 </script>
 
 </body>
