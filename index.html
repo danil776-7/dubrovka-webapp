@@ -72,7 +72,6 @@ body{
   display:grid;
   grid-template-columns:repeat(2,1fr);
   gap:12px;
-  margin-bottom:15px;
 }
 
 .table-card{
@@ -123,6 +122,16 @@ body{
   font-size:13px;
 }
 
+/* VIP */
+.vip-btn{
+  margin-top:10px;
+  padding:12px;
+  background:#1a1a22;
+  border-radius:12px;
+  text-align:center;
+  cursor:pointer;
+}
+
 /* TIME */
 .time-slots{
   display:flex;
@@ -147,7 +156,7 @@ body{
   opacity:0.3;
 }
 
-/* INPUTS */
+/* INPUT */
 input{
   width:100%;
   padding:12px;
@@ -188,6 +197,8 @@ button{
 
 <div id="tablesGrid" class="tables-grid"></div>
 
+<div class="vip-btn" id="vipBtn">⭐ VIP ЗАЛ</div>
+
 <div id="tableInfo">Выберите стол</div>
 
 <input id="date" type="date">
@@ -210,12 +221,12 @@ const TABLE_CAPACITY={
 };
 
 const tableDescriptions={
- "1":"Приватная зона 👥7",
- "2":"Приватная зона 👥5",
- "3":"Приватная зона 👥5",
- "4":"Приватная зона 👥5",
- "5":"Открытая зона 👥5",
- "6":"Компакт 👥3"
+ "1":"🍷 Приватная зона\n👥 до 7",
+ "2":"🍷 Приватная зона\n👥 до 5",
+ "3":"🍷 Приватная зона\n👥 до 5",
+ "4":"🍷 Приватная зона\n👥 до 5",
+ "5":"✨ Открытая зона\n👥 до 5",
+ "6":"🪑 Компактный стол\n👥 до 3"
 };
 
 let selectedTable=null;
@@ -224,6 +235,11 @@ let busyTimes=[];
 let currentDate=new Date().toISOString().split("T")[0];
 
 document.getElementById("date").value=currentDate;
+
+// VIP
+document.getElementById("vipBtn").onclick=()=>{
+ alert("VIP только через администратора\n📞 +7‒913‒432‒01‒01");
+};
 
 // TABLES
 function renderTables(){
@@ -307,7 +323,6 @@ document.getElementById("bookBtn").onclick=async()=>{
  alert("Бронь создана");
 };
 
-// INIT
 renderTables();
 </script>
 
