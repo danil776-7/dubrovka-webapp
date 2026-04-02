@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dubrovka Lounge</title>
+<title>Dubrovka Lounge & Bar</title>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
@@ -11,7 +11,7 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 
 body{
-  font-family:-apple-system;
+  font-family:-apple-system,BlinkMacSystemFont;
   background:#0a0a0f;
   color:#fff;
 }
@@ -48,8 +48,8 @@ body{
 
 .logo-text{
   font-size:24px;
-  color:#d4af37;
   font-weight:700;
+  color:#d4af37;
 }
 
 /* CARD */
@@ -60,7 +60,7 @@ body{
   border:1px solid rgba(212,175,55,0.3);
 }
 
-/* TABLES */
+/* TABLE CARDS */
 .tables-grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
@@ -68,14 +68,17 @@ body{
 }
 
 .table-card{
-  background:#1a1a22;
+  background:rgba(20,20,30,0.9);
   border-radius:14px;
   overflow:hidden;
   cursor:pointer;
   position:relative;
+  transition:0.2s;
 }
 
-.table-card.booked{opacity:0.4;}
+.table-card:hover{
+  transform:translateY(-2px);
+}
 
 .card-img{
   height:100px;
@@ -84,16 +87,23 @@ body{
 
 .card-body{
   padding:10px;
+  font-size:13px;
 }
 
 /* VIP */
 .vip-btn{
-  margin-top:10px;
-  padding:12px;
-  background:#1a1a22;
-  border-radius:12px;
+  margin-top:12px;
+  padding:14px;
+  background:rgba(20,20,30,0.9);
+  border-radius:14px;
   text-align:center;
   cursor:pointer;
+  border:1px solid rgba(212,175,55,0.2);
+  font-weight:600;
+}
+
+.vip-btn:hover{
+  background:rgba(212,175,55,0.15);
 }
 
 /* MODAL */
@@ -127,9 +137,9 @@ body{
 /* TIME */
 .time-slot{
   padding:8px;
+  margin:5px;
   background:#222;
   border-radius:10px;
-  margin:5px;
   display:inline-block;
 }
 
@@ -156,9 +166,7 @@ body{
 
 <div id="tablesGrid" class="tables-grid"></div>
 
-<div class="vip-btn" onclick="alert('VIP через администратора')">
-⭐ VIP ЗАЛ
-</div>
+<div class="vip-btn" id="vipBtn">VIP ЗАЛ</div>
 
 </div>
 </div>
@@ -189,12 +197,12 @@ const API="https://dubrovka-webapp-production.up.railway.app";
 const TABLE_CAPACITY={"1":7,"2":5,"3":5,"4":5,"5":5,"6":3};
 
 const tableDescriptions={
- "1":"Приватная зона 👥7",
- "2":"Приватная зона 👥5",
- "3":"Приватная зона 👥5",
- "4":"Приватная зона 👥5",
- "5":"Открытая зона 👥5",
- "6":"Компакт 👥3"
+ "1":"🍷 Приватная зона\n👥 до 7",
+ "2":"🍷 Приватная зона\n👥 до 5",
+ "3":"🍷 Приватная зона\n👥 до 5",
+ "4":"🍷 Приватная зона\n👥 до 5",
+ "5":"✨ Открытая зона\n👥 до 5",
+ "6":"🪑 Компакт\n👥 до 3"
 };
 
 function getBookingDurationMinutes(g){
@@ -203,10 +211,30 @@ function getBookingDurationMinutes(g){
  return 240;
 }
 
+function toMin(t){let[a,b]=t.split(":");return a*60+ +b;}
+
+function getSlotStatus(time,busyTimes,guests){
+ let start=toMin(time);
+ let end=start+getBookingDurationMinutes(guests);
+
+ for(let bt of busyTimes){
+  let s=toMin(bt);
+  let e=s+120;
+  if(start<e && end>s) return "busy";
+ }
+
+ return "free";
+}
+
 let selectedTable=null;
 let selectedTime=null;
 let busyTimes=[];
 let currentDate=new Date().toISOString().split("T")[0];
+
+/* VIP */
+document.getElementById("vipBtn").onclick=()=>{
+ alert("VIP бронируется через администратора\n📞 +7‒913‒432‒01‒01");
+};
 
 /* TABLES */
 function renderTables(){
@@ -254,22 +282,7 @@ function renderGallery(){
  `;
 }
 
-/* TIME LOGIC */
-function toMin(t){let[a,b]=t.split(":");return a*60+ +b;}
-
-function getStatus(t){
- let start=toMin(t);
- let end=start+120;
-
- for(let bt of busyTimes){
-  let s=toMin(bt);
-  let e=s+120;
-  if(start<e&&end>s)return "busy";
- }
- return "free";
-}
-
-/* LOAD TIMES */
+/* TIMES */
 async function loadTimes(){
  let res=await fetch(`${API}/busy_times?date=${currentDate}&table=${selectedTable}`);
  busyTimes=await res.json();
@@ -284,7 +297,9 @@ async function loadTimes(){
   el.className="time-slot";
   el.innerText=t;
 
-  if(getStatus(t)==="busy") el.classList.add("busy");
+  if(getSlotStatus(t,busyTimes,2)==="busy"){
+   el.classList.add("busy");
+  }
 
   el.onclick=()=>{
    if(el.classList.contains("busy")) return;
@@ -301,7 +316,7 @@ async function loadTimes(){
 
 /* BOOK */
 async function book(){
- if(!selectedTime) return alert("Выбери время");
+ if(!selectedTime) return alert("Выберите время");
 
  await fetch(API+"/booking",{
   method:"POST",
