@@ -6,97 +6,203 @@
 <title>Dubrovka PRO</title>
 
 <style>
+/* ================= RESET ================= */
 *{margin:0;padding:0;box-sizing:border-box}
 body{
-  font-family:-apple-system,BlinkMacSystemFont;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto;
   background:#2b1208;color:#fff;
+  overflow-x:hidden;
 }
 
-/* HEADER */
+/* ================= HEADER ================= */
 .header{
   background:#eee;color:#000;
   padding:12px 16px;
-  display:flex;justify-content:space-between
+  display:flex;justify-content:space-between;align-items:center;
 }
 
-/* GRID */
+/* ================= TIMELINE ================= */
+.timeline{
+  background:#3b1509;
+  padding:16px;
+}
+.timeline-bar{
+  position:relative;
+  height:40px;
+}
+.timeline-track{
+  height:4px;
+  background:#6b3a2a;
+  border-radius:4px;
+  position:absolute;top:18px;left:0;right:0;
+}
+.timeline-pointer{
+  position:absolute;
+  top:10px;
+  width:16px;height:16px;
+  background:#fff;border-radius:50%;
+  transform:translateX(-50%);
+  cursor:pointer;
+}
+.timeline-label{
+  text-align:center;
+  margin-bottom:8px;
+  font-weight:600;
+}
+
+/* ================= GRID ================= */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
-  gap:12px;padding:12px
+  gap:12px;
+  padding:16px;
 }
 
+/* ================= CARD ================= */
 .card{
-  border-radius:14px;overflow:hidden;
-  position:relative;cursor:pointer
+  position:relative;
+  border-radius:14px;
+  overflow:hidden;
+  cursor:pointer;
+  transition:.25s;
 }
+.card:hover{transform:scale(1.03)}
+
 .card img{
-  width:100%;height:160px;object-fit:cover
+  width:100%;
+  height:160px;
+  object-fit:cover;
 }
 
 .overlay{
-  position:absolute;inset:0;
-  display:flex;flex-direction:column;
-  justify-content:space-between;padding:10px;
-  background:linear-gradient(transparent,rgba(0,0,0,.8))
+  position:absolute;
+  inset:0;
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  background:linear-gradient(transparent,rgba(0,0,0,.85));
 }
 
-/* STATUS */
-.status{
-  padding:4px 8px;border-radius:8px;
-  font-size:12px;width:max-content
+.badge{
+  font-size:12px;
+  padding:4px 8px;
+  border-radius:8px;
+  width:max-content;
 }
 .free{background:#1faa5c}
 .partial{background:#cfa72a}
 .busy{background:#c0392b}
 
-/* MODAL */
+/* ================= MODAL ================= */
 .modal{
-  position:fixed;inset:0;background:#000c;
-  display:none;justify-content:center;align-items:center
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.85);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  opacity:0;
+  pointer-events:none;
+  transition:.25s;
 }
-.modal.active{display:flex}
+.modal.active{
+  opacity:1;
+  pointer-events:auto;
+}
 
 .box{
-  width:420px;background:#111;border-radius:14px
+  width:420px;
+  background:#111;
+  border-radius:14px;
+  overflow:hidden;
+  transform:translateY(20px);
+  transition:.25s;
+}
+.modal.active .box{
+  transform:translateY(0);
 }
 
-.header-modal{
-  padding:14px;background:#1c1c1c;
-  display:flex;justify-content:space-between
+/* ================= MODAL HEADER ================= */
+.modal-header{
+  padding:14px;
+  background:#1c1c1c;
+  display:flex;
+  justify-content:space-between;
 }
 
-/* TIME GRID */
+/* ================= TIME ================= */
+.time-header{
+  padding:12px;
+}
+
+.tabs{
+  display:flex;
+  margin:10px;
+}
+.tab{
+  flex:1;
+  padding:10px;
+  text-align:center;
+  background:#222;
+  cursor:pointer;
+}
+.tab.active{
+  background:#fff;
+  color:#000;
+}
+
 .time-grid{
-  display:flex;flex-wrap:wrap;
-  gap:8px;padding:12px
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  padding:12px;
 }
 
-.slot{
-  width:70px;padding:12px;text-align:center;
-  border-radius:8px;background:#1c1c1c;
-  border:1px solid #333;cursor:pointer
+.cell{
+  padding:14px;
+  text-align:center;
+  border-radius:8px;
+  border:1px solid #333;
+  cursor:pointer;
 }
-.slot.active{background:#fff;color:#000}
-.slot.range{background:#444}
-.slot.busy{opacity:.3;pointer-events:none}
+.cell:hover{background:#2a2a2a}
+.cell.active{background:#fff;color:#000}
+.cell.busy{
+  opacity:.3;
+  pointer-events:none;
+}
 
-/* BUTTON */
+/* ================= BUTTON ================= */
 .btn{
-  margin:12px;padding:14px;text-align:center;
-  background:#fff;color:#000;border-radius:10px;
-  cursor:pointer
+  margin:12px;
+  padding:14px;
+  text-align:center;
+  border-radius:10px;
+  background:#fff;
+  color:#000;
+  cursor:pointer;
 }
 .btn.disabled{
-  background:#555;color:#aaa
+  background:#555;
+  color:#aaa;
+  pointer-events:none;
 }
 
-/* INPUT */
+/* ================= INPUT ================= */
 input{
   width:calc(100% - 24px);
-  margin:8px 12px;padding:14px;
-  border-radius:10px;border:1px solid #333;
-  background:#1c1c1c;color:#fff
+  margin:8px 12px;
+  padding:14px;
+  border-radius:10px;
+  border:1px solid #333;
+  background:#1c1c1c;
+  color:#fff;
+}
+
+/* ================= MOBILE ================= */
+@media(max-width:500px){
+  .box{width:95%}
 }
 </style>
 </head>
@@ -108,33 +214,49 @@ input{
   <div>+7‒913‒432‒01‒01</div>
 </div>
 
+<!-- TIMELINE -->
+<div class="timeline">
+  <div class="timeline-label" id="timelineLabel">с 12:00 ч.</div>
+  <div class="timeline-bar">
+    <div class="timeline-track"></div>
+    <div id="pointer" class="timeline-pointer" style="left:0%"></div>
+  </div>
+</div>
+
+<!-- TABLES -->
 <div id="grid" class="grid"></div>
 
-<!-- TIME -->
+<!-- TIME MODAL -->
 <div id="timeModal" class="modal">
   <div class="box">
-    <div class="header-modal">
+
+    <div class="modal-header">
       <div>Дата и время</div>
       <div onclick="closeTime()">✕</div>
     </div>
 
-    <input type="date" id="dateInput">
-
-    <div style="padding:12px">
+    <div class="time-header">
       С: <b id="from">--</b><br>
       До: <b id="to">--</b>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="setMode('hour')">Часы</div>
+      <div class="tab" onclick="setMode('minute')">Минуты</div>
     </div>
 
     <div id="timeGrid" class="time-grid"></div>
 
     <div id="continueBtn" class="btn disabled">Продолжить</div>
+
   </div>
 </div>
 
 <!-- FORM -->
 <div id="formModal" class="modal">
   <div class="box">
-    <div class="header-modal">
+
+    <div class="modal-header">
       <div>Бронирование</div>
       <div onclick="closeForm()">✕</div>
     </div>
@@ -143,219 +265,254 @@ input{
 
     <input id="phone" placeholder="+7 XXX XXX XX XX" maxlength="18">
 
-    <!-- 🔥 ЛИМИТ ГОСТЕЙ -->
     <input id="guests" type="number" min="1" max="8" value="2">
 
     <div class="btn" onclick="book()">Подтвердить</div>
+
   </div>
 </div>
 
 <script>
 
-/* TABLES */
+/* ================= TABLES ================= */
 const TABLES=[1,2,3,4,5,6,"VIP"];
 
-/* ЗАНЯТОСТЬ */
+/* ================= BUSY ================= */
 const BUSY={
-  1:[["18:00","20:00"]],
-  2:[["17:30","19:00"]],
-  3:[["19:00","22:00"]],
-  4:[],
-  5:[["16:00","18:00"]],
-  6:[["20:00","23:00"]],
-  VIP:[["18:00","23:00"]]
+ 1:[["18:00","20:00"]],
+ 2:[["17:30","19:00"]],
+ 3:[["19:00","23:00"]],
+ 4:[],
+ 5:[["16:00","18:00"]],
+ 6:[["20:00","23:00"]],
+ VIP:[["18:00","23:00"]]
 };
 
+/* ================= STATE ================= */
 let selectedTable=null;
 let selectedFrom=null;
 let selectedTo=null;
+let tempHour=null;
+let mode="hour";
 
-/* STATUS */
-function getStatus(table){
-  const busy=BUSY[table]||[];
-
-  if(busy.length===0){
-    return {class:"free",text:"Свободно"};
-  }
-
-  if(busy.length>=2){
-    return {class:"busy",text:"Занято"};
-  }
-
-  return {
-    class:"partial",
-    text:`Свободно до ${busy[0][0]}`
-  };
+/* ================= UTILS ================= */
+function toMin(t){
+ let[a,b]=t.split(":").map(Number);
+ return a*60+b;
 }
 
-/* RENDER */
+/* ================= STATUS ================= */
+function getStatus(t){
+ let now=12*60;
+ let busy=BUSY[t]||[];
+
+ if(!busy.length){
+  return ["free","Свободно"];
+ }
+
+ let current=busy.find(([s,e])=>{
+  return toMin(s)<=now && toMin(e)>now;
+ });
+
+ if(current){
+  return ["busy","Занято"];
+ }
+
+ return ["partial","Свободно до "+busy[0][0]];
+}
+
+/* ================= RENDER ================= */
 function render(){
-  grid.innerHTML="";
+ grid.innerHTML="";
 
-  TABLES.forEach(t=>{
-    let s=getStatus(t);
+ TABLES.forEach(t=>{
+  let [cls,text]=getStatus(t);
 
-    let el=document.createElement("div");
-    el.className="card";
+  let el=document.createElement("div");
+  el.className="card";
 
-    el.innerHTML=`
-      <img src="https://images.unsplash.com/photo-1552566626-52f8b828add9">
-      <div class="overlay">
-        <div class="status ${s.class}">${s.text}</div>
-        <div>Стол ${t}</div>
-      </div>
-    `;
+  el.innerHTML=`
+    <img src="https://images.unsplash.com/photo-1552566626-52f8b828add9">
+    <div class="overlay">
+      <div class="badge ${cls}">${text}</div>
+      <div>Стол ${t}</div>
+    </div>
+  `;
 
-    el.onclick=()=>{
-      selectedTable=t;
-      openTime();
-    };
+  el.onclick=()=>{
+    selectedTable=t;
+    openTime();
+  };
 
-    grid.appendChild(el);
-  });
+  grid.appendChild(el);
+ });
 }
 
-/* TIME */
+/* ================= TIME ================= */
 function openTime(){
-  timeModal.classList.add("active");
+ timeModal.classList.add("active");
 
-  selectedFrom=null;
-  selectedTo=null;
+ selectedFrom=null;
+ selectedTo=null;
 
-  from.innerText="--";
-  to.innerText="--";
+ from.innerText="--";
+ to.innerText="--";
 
-  continueBtn.classList.add("disabled");
-
-  renderTimeGrid();
+ setMode("hour");
 }
 
 function closeTime(){
-  timeModal.classList.remove("active");
+ timeModal.classList.remove("active");
 }
 
-/* TIME GRID */
-function renderTimeGrid(){
-  timeGrid.innerHTML="";
+/* ================= MODE ================= */
+function setMode(m){
+ mode=m;
 
+ document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+ document.querySelectorAll(".tab")[m==="hour"?0:1].classList.add("active");
+
+ renderGrid();
+}
+
+/* ================= GRID ================= */
+function renderGrid(){
+ timeGrid.innerHTML="";
+
+ if(mode==="hour"){
   for(let h=12;h<24;h++){
-    ["00","30"].forEach(m=>{
-      let t=`${String(h).padStart(2,'0')}:${m}`;
+    let el=document.createElement("div");
+    el.className="cell";
+    el.innerText=h;
 
-      let el=document.createElement("div");
-      el.className="slot";
-      el.innerText=t;
+    el.onclick=()=>{
+      tempHour=h;
+      setMode("minute");
+    };
 
-      if(isBusy(t)){
-        el.classList.add("busy");
-      }
-
-      el.onclick=()=>{
-
-        if(!selectedFrom){
-          selectedFrom=t;
-          from.innerText=t;
-          reset();
-          el.classList.add("active");
-          return;
-        }
-
-        if(selectedFrom && !selectedTo){
-
-          if(t <= selectedFrom){
-            selectedFrom=t;
-            from.innerText=t;
-            reset();
-            el.classList.add("active");
-            return;
-          }
-
-          selectedTo=t;
-          to.innerText=t;
-
-          highlight();
-          continueBtn.classList.remove("disabled");
-          return;
-        }
-
-        selectedFrom=t;
-        selectedTo=null;
-
-        from.innerText=t;
-        to.innerText="--";
-
-        continueBtn.classList.add("disabled");
-
-        reset();
-        el.classList.add("active");
-      };
-
-      timeGrid.appendChild(el);
-    });
+    timeGrid.appendChild(el);
   }
+ }else{
+  [0,15,30,45].forEach(m=>{
+    let t=`${tempHour}:${String(m).padStart(2,'0')}`;
+
+    let el=document.createElement("div");
+    el.className="cell";
+    el.innerText=String(m).padStart(2,'0');
+
+    if(isBusy(t)){
+      el.classList.add("busy");
+    }
+
+    el.onclick=()=>selectTime(t);
+
+    timeGrid.appendChild(el);
+  });
+ }
 }
 
+/* ================= BUSY CHECK ================= */
 function isBusy(t){
-  const busy=BUSY[selectedTable]||[];
-  return busy.some(([s,e])=>t>=s && t<e);
+ let busy=BUSY[selectedTable]||[];
+ return busy.some(([s,e])=>{
+   return toMin(t)>=toMin(s) && toMin(t)<toMin(e);
+ });
 }
 
-function reset(){
-  document.querySelectorAll(".slot").forEach(x=>{
-    x.classList.remove("active","range");
-  });
+/* ================= SELECT ================= */
+function selectTime(t){
+
+ if(!selectedFrom){
+  selectedFrom=t;
+  from.innerText=t;
+  return;
+ }
+
+ if(selectedFrom && !selectedTo){
+
+  if(toMin(t)<=toMin(selectedFrom)){
+    selectedFrom=t;
+    from.innerText=t;
+    return;
+  }
+
+  selectedTo=t;
+  to.innerText=t;
+
+  continueBtn.classList.remove("disabled");
+  return;
+ }
+
+ selectedFrom=t;
+ selectedTo=null;
+
+ from.innerText=t;
+ to.innerText="--";
+
+ continueBtn.classList.add("disabled");
 }
 
-function highlight(){
-  document.querySelectorAll(".slot").forEach(el=>{
-    let t=el.innerText;
-    if(t > selectedFrom && t < selectedTo){
-      el.classList.add("range");
-    }
-    if(t===selectedTo){
-      el.classList.add("active");
-    }
-  });
-}
-
-/* CONTINUE */
+/* ================= CONTINUE ================= */
 continueBtn.onclick=()=>{
-  if(!selectedFrom || !selectedTo) return;
-  timeModal.classList.remove("active");
-  formModal.classList.add("active");
-}
+ if(!selectedFrom || !selectedTo) return;
 
-/* FORM */
+ timeModal.classList.remove("active");
+ formModal.classList.add("active");
+};
+
+/* ================= FORM ================= */
 function closeForm(){
-  formModal.classList.remove("active");
+ formModal.classList.remove("active");
 }
 
-/* LIMIT ГОСТЕЙ */
-guests.oninput=()=>{
-  if(guests.value>8) guests.value=8;
-  if(guests.value<1) guests.value=1;
-}
-
-/* PHONE */
+/* ================= PHONE ================= */
 phone.oninput=()=>{
-  let v=phone.value.replace(/\D/g,"").substring(0,11);
-  if(!v.startsWith("7")) v="7"+v;
+ let v=phone.value.replace(/\D/g,"").substring(0,11);
+ if(!v.startsWith("7")) v="7"+v;
 
-  let f="+7";
-  if(v.length>1) f+=" "+v.slice(1,4);
-  if(v.length>4) f+=" "+v.slice(4,7);
-  if(v.length>7) f+=" "+v.slice(7,9);
-  if(v.length>9) f+=" "+v.slice(9,11);
+ let f="+7";
+ if(v.length>1) f+=" "+v.slice(1,4);
+ if(v.length>4) f+=" "+v.slice(4,7);
+ if(v.length>7) f+=" "+v.slice(7,9);
+ if(v.length>9) f+=" "+v.slice(9,11);
 
-  phone.value=f;
-}
+ phone.value=f;
+};
 
-/* BOOK */
+/* ================= GUEST LIMIT ================= */
+guests.oninput=()=>{
+ if(guests.value>8) guests.value=8;
+ if(guests.value<1) guests.value=1;
+};
+
+/* ================= BOOK ================= */
 function book(){
-  alert("Бронь создана");
+ alert(`Стол ${selectedTable}\n${selectedFrom}-${selectedTo}`);
 }
 
-/* INIT */
+/* ================= TIMELINE DRAG ================= */
+let pointer=document.getElementById("pointer");
+let bar=document.querySelector(".timeline-bar");
+
+pointer.onmousedown=(e)=>{
+ document.onmousemove=(e2)=>{
+  let rect=bar.getBoundingClientRect();
+  let x=e2.clientX-rect.left;
+
+  if(x<0)x=0;
+  if(x>rect.width)x=rect.width;
+
+  let percent=x/rect.width;
+
+  pointer.style.left=(percent*100)+"%";
+
+  let hour=12+Math.floor(percent*12);
+  timelineLabel.innerText="с "+hour+":00 ч.";
+ };
+ document.onmouseup=()=>document.onmousemove=null;
+};
+
+/* ================= INIT ================= */
 render();
 
 </script>
