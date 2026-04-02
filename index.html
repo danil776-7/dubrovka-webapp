@@ -2,122 +2,113 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Dubrovka — Booking PRO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dubrovka PRO</title>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
-  background:#2b1208;color:#fff;min-height:100vh;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto;
+  background:#2b1208;color:#fff;
 }
 
-/* VIDEO BG */
-.video-bg{
-  position:fixed;inset:0;width:100%;height:100%;object-fit:cover;
-  opacity:.35;z-index:-1;
-}
-
-/* TOP */
+/* HEADER */
 .top{
-  background:#eee;color:#111;padding:10px 14px;
-  display:flex;justify-content:space-between;align-items:center;
+  background:#eee;color:#000;padding:12px;
+  display:flex;justify-content:space-between
 }
 
 /* TIMELINE */
-.timeline{background:#3b1509;padding:14px 12px}
-.slider{display:flex;gap:8px;overflow-x:auto}
+.timeline{
+  background:#3b1509;padding:12px;
+  display:flex;overflow-x:auto;gap:8px
+}
 .time-chip{
-  min-width:80px;text-align:center;padding:10px;border-radius:10px;
-  background:#0003;border:1px solid #ffffff20;cursor:pointer;transition:.2s;
+  min-width:80px;text-align:center;padding:10px;
+  background:#0003;border-radius:10px;cursor:pointer
 }
 .time-chip.active{background:#fff;color:#000}
 
 /* GRID */
 .grid{
-  display:grid;grid-template-columns:repeat(2,1fr);
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
   gap:12px;padding:12px
 }
-@media(min-width:768px){.grid{grid-template-columns:repeat(3,1fr)}}
 
-/* CARD */
-.card{position:relative;border-radius:16px;overflow:hidden;cursor:pointer}
-.card img{width:100%;height:170px;object-fit:cover}
-.overlay{position:absolute;inset:0;background:linear-gradient(to top,#000c,transparent)}
-.card-info{position:absolute;bottom:0;left:0;right:0;padding:10px}
+.card{
+  border-radius:16px;overflow:hidden;cursor:pointer;
+  position:relative
+}
+.card img{width:100%;height:160px;object-fit:cover}
+.card-info{position:absolute;bottom:0;padding:10px}
 
 /* MODALS */
 .modal{
-  position:fixed;inset:0;background:rgba(0,0,0,.9);
-  opacity:0;pointer-events:none;transition:.3s;
+  position:fixed;inset:0;background:rgba(0,0,0,.85);
+  opacity:0;pointer-events:none;transition:.3s
 }
 .modal.active{opacity:1;pointer-events:auto}
 
 .box{
   position:absolute;left:50%;top:50%;
   transform:translate(-50%,-40%) scale(.95);
-  opacity:0;transition:.3s;
-  width:380px;max-width:95vw;background:#111;border-radius:14px;overflow:hidden;
+  opacity:0;
+  background:#111;border-radius:14px;width:400px;
+  transition:.3s
 }
 .modal.active .box{
   transform:translate(-50%,-50%) scale(1);
-  opacity:1;
+  opacity:1
 }
 
 .header{
-  display:flex;justify-content:space-between;padding:14px;background:#1a1a1a;
+  padding:14px;background:#1a1a1a;
+  display:flex;justify-content:space-between
 }
 
 /* TIME GRID */
 .time-grid{
-  display:flex;flex-wrap:wrap;gap:8px;padding:12px;
+  display:flex;flex-wrap:wrap;gap:8px;padding:12px
 }
 .slot{
-  width:70px;padding:12px;text-align:center;border-radius:8px;
-  border:1px solid #555;background:#1c1c1c;cursor:pointer;
-  transition:.2s;
+  width:70px;padding:12px;text-align:center;
+  border-radius:8px;border:1px solid #555;
+  background:#1c1c1c;cursor:pointer;
+  transition:.2s
 }
 .slot:hover{transform:scale(1.05)}
 .slot.active{background:#fff;color:#000}
 .slot.range{background:#444}
+.slot.busy{opacity:.3;pointer-events:none}
 
 /* BUTTON */
 .btn{
   margin:12px;padding:16px;border-radius:12px;
-  text-align:center;font-weight:600;cursor:pointer;
-  background:#fff;color:#000;transition:.25s;
+  text-align:center;background:#fff;color:#000;
+  font-weight:600;cursor:pointer
 }
 .btn.disabled{
-  background:#555;color:#aaa;cursor:not-allowed;
-}
-.btn:hover:not(.disabled){transform:translateY(-2px)}
-
-.warn{
-  display:none;margin:10px;padding:10px;background:#ffc10722;color:#ffc107;border-radius:8px
+  background:#555;color:#aaa;cursor:not-allowed
 }
 
 /* FORM */
 input{
   width:calc(100% - 24px);margin:10px 12px;padding:14px;
-  border-radius:10px;border:1px solid #444;background:#1c1c1c;color:#fff
+  border-radius:10px;border:1px solid #444;
+  background:#1c1c1c;color:#fff
 }
 </style>
 </head>
 
 <body>
 
-<video class="video-bg" autoplay muted loop playsinline>
-  <source src="bg.mp4" type="video/mp4">
-</video>
-
 <div class="top">
-  <b>Dubrovka</b>
+  <b>Dubrovka Lounge</b>
   <div>+7‒913‒432‒01‒01</div>
 </div>
 
-<div class="timeline">
-  <div id="slider" class="slider"></div>
-</div>
+<div id="timeline" class="timeline"></div>
 
 <div id="grid" class="grid"></div>
 
@@ -125,38 +116,33 @@ input{
 <div id="tableModal" class="modal">
   <div class="box">
     <div class="header">
-      <div>СТОЛ №<span id="t"></span></div>
+      <div>СТОЛ №<span id="tableId"></span></div>
       <div onclick="closeTable()">✕</div>
     </div>
-    <img id="img" style="width:100%;height:200px;object-fit:cover">
-    <div class="btn" onclick="openTime()">Забронировать →</div>
+    <img id="tableImg" style="width:100%;height:200px;object-fit:cover">
+    <div class="btn" onclick="openTime()">Забронировать</div>
   </div>
 </div>
 
 <!-- TIME -->
 <div id="timeModal" class="modal">
   <div class="box">
+
     <div class="header">
       <div>Дата и время</div>
       <div onclick="closeTime()">✕</div>
     </div>
 
-    <div style="padding:12px">
-      <input type="date" id="dateInput" style="
-        width:100%;padding:12px;border-radius:10px;
-        background:#1c1c1c;color:#fff;border:1px solid #444">
-    </div>
+    <input type="date" id="dateInput">
 
     <div style="padding:12px">
       С: <b id="from">--</b><br>
       До: <b id="to">--</b>
     </div>
 
-    <div id="warn" class="warn"></div>
-
     <div id="timeGrid" class="time-grid"></div>
 
-    <div id="continueBtn" class="btn disabled">Продолжить →</div>
+    <div id="continueBtn" class="btn disabled">Продолжить</div>
   </div>
 </div>
 
@@ -170,13 +156,15 @@ input{
 
     <input id="name" placeholder="Имя">
     <input id="phone" placeholder="+7 XXX XXX XX XX" maxlength="18">
-    <input id="guests" value="2" type="number" min="1" max="20">
+    <input id="guests" value="2">
 
     <div class="btn" onclick="book()">Подтвердить</div>
   </div>
 </div>
 
 <script>
+
+/* CONFIG */
 const API="https://dubrovka-webapp-production.up.railway.app";
 
 /* TABLES */
@@ -190,59 +178,68 @@ const TABLES=[
  {id:"vip",cap:"VIP",img:"vip.jpg"}
 ];
 
+/* STATE */
 let selectedTable=null;
 let selectedFrom=null;
 let selectedTo=null;
-let selecting="from";
+let busyMap={};
 
-/* timeline */
-const slider=document.getElementById("slider");
+/* UTILS */
+const toMin=t=>{
+  let[a,b]=t.split(":").map(Number);
+  return a*60+b;
+};
+
+/* TIMELINE */
 for(let h=12;h<24;h++){
   ["00","30"].forEach(m=>{
     let t=`${h}:${m}`;
     let el=document.createElement("div");
     el.className="time-chip";
     el.innerText=t;
-    el.onclick=()=>{
-      document.querySelectorAll(".time-chip").forEach(x=>x.classList.remove("active"));
-      el.classList.add("active");
-    }
-    slider.appendChild(el);
+    timeline.appendChild(el);
   });
 }
 
-/* render */
+/* LOAD BUSY */
+async function loadBusy(){
+  for(let t of TABLES){
+    try{
+      let r=await fetch(`${API}/busy_times?table=${t.id}`);
+      busyMap[t.id]=await r.json();
+    }catch{busyMap[t.id]=[]}
+  }
+}
+
+/* RENDER */
 function render(){
-  let g=document.getElementById("grid");
-  g.innerHTML="";
+  grid.innerHTML="";
   TABLES.forEach(t=>{
     let el=document.createElement("div");
     el.className="card";
     el.innerHTML=`
       <img src="${t.img}">
-      <div class="overlay"></div>
       <div class="card-info">№${t.id} 👥 ${t.cap}</div>
     `;
     el.onclick=()=>openTable(t);
-    g.appendChild(el);
+    grid.appendChild(el);
   });
 }
 
-/* modal table */
+/* TABLE */
 function openTable(t){
   selectedTable=t.id;
-  document.getElementById("t").innerText=t.id;
-  document.getElementById("img").src=t.img;
+  tableId.innerText=t.id;
+  tableImg.src=t.img;
   tableModal.classList.add("active");
 }
 function closeTable(){tableModal.classList.remove("active")}
 
-/* modal time */
+/* TIME */
 function openTime(){
   tableModal.classList.remove("active");
   timeModal.classList.add("active");
 
-  selecting="from";
   selectedFrom=null;
   selectedTo=null;
 
@@ -251,17 +248,15 @@ function openTime(){
 
   continueBtn.classList.add("disabled");
 
-  const today=new Date().toISOString().split("T")[0];
-  dateInput.value=today;
+  dateInput.value=new Date().toISOString().split("T")[0];
 
   renderTimeGrid();
 }
 function closeTime(){timeModal.classList.remove("active")}
 
-/* time grid */
+/* GRID TIME */
 function renderTimeGrid(){
-  let g=timeGrid;
-  g.innerHTML="";
+  timeGrid.innerHTML="";
 
   for(let h=12;h<24;h++){
     ["00","30"].forEach(m=>{
@@ -270,84 +265,134 @@ function renderTimeGrid(){
       el.className="slot";
       el.innerText=t;
 
+      // busy
+      if(busyMap[selectedTable]?.includes(t)){
+        el.classList.add("busy");
+      }
+
       el.onclick=()=>{
-        if(selecting==="from"){
+
+        if(!selectedFrom){
           selectedFrom=t;
           from.innerText=t;
-          selecting="to";
-          document.querySelectorAll(".slot").forEach(x=>x.classList.remove("active","range"));
+          resetSlots();
           el.classList.add("active");
           return;
         }
 
-        if(selecting==="to"){
+        if(selectedFrom && !selectedTo){
+
           if(t <= selectedFrom){
-            alert("Время 'До' должно быть позже");
+            selectedFrom=t;
+            from.innerText=t;
+            resetSlots();
+            el.classList.add("active");
             return;
           }
+
           selectedTo=t;
           to.innerText=t;
-          selecting="done";
-
           highlightRange();
           continueBtn.classList.remove("disabled");
+          return;
         }
+
+        selectedFrom=t;
+        selectedTo=null;
+        from.innerText=t;
+        to.innerText="--";
+        continueBtn.classList.add("disabled");
+
+        resetSlots();
+        el.classList.add("active");
       };
 
-      g.appendChild(el);
+      timeGrid.appendChild(el);
     });
   }
 }
 
-/* highlight range */
+function resetSlots(){
+  document.querySelectorAll(".slot").forEach(x=>{
+    x.classList.remove("active","range");
+  });
+}
+
 function highlightRange(){
   document.querySelectorAll(".slot").forEach(el=>{
-    const t=el.innerText;
-    if(t>selectedFrom && t<selectedTo){
+    let t=el.innerText;
+    if(t > selectedFrom && t < selectedTo){
       el.classList.add("range");
+    }
+    if(t===selectedTo){
+      el.classList.add("active");
     }
   });
 }
 
-/* continue */
+/* CONTINUE */
 continueBtn.onclick=()=>{
   if(!selectedFrom || !selectedTo) return;
   timeModal.classList.remove("active");
   formModal.classList.add("active");
 }
 
-/* form */
+/* FORM */
 function closeForm(){formModal.classList.remove("active")}
 
-/* phone mask */
+/* PHONE */
 phone.oninput=()=>{
   let v=phone.value.replace(/\D/g,"").substring(0,11);
   if(!v.startsWith("7")) v="7"+v;
+
   let f="+7";
   if(v.length>1) f+=" "+v.substring(1,4);
   if(v.length>4) f+=" "+v.substring(4,7);
   if(v.length>7) f+=" "+v.substring(7,9);
   if(v.length>9) f+=" "+v.substring(9,11);
+
   phone.value=f;
 }
 
-/* book */
-function book(){
+/* BOOK */
+async function book(){
   if(!selectedFrom || !selectedTo){
     alert("Выберите время");
     return;
   }
-  if(phone.value.length<16){
-    alert("Введите корректный номер");
+
+  if(phone.value.length < 16){
+    alert("Введите номер");
     return;
   }
 
-  alert("Бронь создана ✅");
-  formModal.classList.remove("active");
+  try{
+    await fetch(API+"/booking",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        table:selectedTable,
+        date:dateInput.value,
+        time:selectedFrom,
+        end:selectedTo,
+        name:name.value,
+        phone:phone.value
+      })
+    });
+
+    alert("Бронь создана");
+    formModal.classList.remove("active");
+
+  }catch{
+    alert("Ошибка");
+  }
 }
 
-/* init */
-render();
+/* INIT */
+(async()=>{
+  await loadBusy();
+  render();
+})();
 </script>
 
 </body>
