@@ -3,20 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dubrovka Lounge</title>
+<title>Dubrovka</title>
 
 <style>
 body{
   margin:0;
-  font-family:-apple-system, Arial;
+  font-family:-apple-system;
   background:#2b1208;
   color:white;
-}
-
-/* CONTAINER */
-.container{
-  max-width:1200px;
-  margin:auto;
 }
 
 /* HEADER */
@@ -26,7 +20,6 @@ body{
   padding:12px;
   display:flex;
   justify-content:space-between;
-  font-size:14px;
 }
 
 /* TIMELINE */
@@ -37,12 +30,14 @@ body{
 
 .slider{
   display:flex;
-  gap:8px;
   overflow-x:auto;
+  gap:8px;
 }
 
 .time{
-  padding:10px 14px;
+  min-width:70px;
+  text-align:center;
+  padding:10px;
   background:#0003;
   border-radius:10px;
   cursor:pointer;
@@ -61,24 +56,17 @@ body{
   padding:12px;
 }
 
-@media(min-width:768px){
-  .grid{grid-template-columns:repeat(3,1fr);}
-}
-
-@media(min-width:1200px){
-  .grid{grid-template-columns:repeat(4,1fr);}
-}
-
 /* CARD */
 .card{
   position:relative;
   border-radius:16px;
   overflow:hidden;
+  cursor:pointer;
 }
 
 .card img{
   width:100%;
-  height:180px;
+  height:160px;
   object-fit:cover;
 }
 
@@ -93,9 +81,9 @@ body{
   background:#000a;
 }
 
-.status.green{background:#1f7a1f;}
-.status.red{background:#a02020;}
-.status.yellow{background:#aa8800;}
+.green{background:#1f7a1f;}
+.red{background:#a02020;}
+.yellow{background:#aa8800;}
 
 .dot{
   position:absolute;
@@ -116,14 +104,39 @@ body{
   width:100%;
   padding:10px;
   background:linear-gradient(to top,#000c,transparent);
-  font-size:13px;
+}
+
+/* MODAL */
+.modal{
+  position:fixed;
+  inset:0;
+  background:#000;
+  display:none;
+  z-index:9999;
+}
+
+.modal.active{display:block;}
+
+.header-modal{
+  display:flex;
+  justify-content:space-between;
+  padding:12px;
+  background:#111;
+}
+
+.btn{
+  margin:15px;
+  padding:15px;
+  background:#ddd;
+  color:black;
+  border-radius:10px;
+  text-align:center;
+  cursor:pointer;
 }
 </style>
 </head>
 
 <body>
-
-<div class="container">
 
 <div class="top">
   <div>Dubrovka Lounge</div>
@@ -137,52 +150,46 @@ body{
 
 <div id="grid" class="grid"></div>
 
+<!-- MODAL -->
+<div id="modal" class="modal">
+  <div class="header-modal">
+    <div onclick="closeModal()">←</div>
+    <div id="modalTitle"></div>
+    <div onclick="closeModal()">✕</div>
+  </div>
+
+  <img id="modalImg" src="https://via.placeholder.com/400x250">
+
+  <div class="btn">Забронировать →</div>
 </div>
 
 <script>
 const API="https://dubrovka-webapp-production.up.railway.app";
 
+const slider=document.getElementById("slider");
+const grid=document.getElementById("grid");
+
 /* СТОЛЫ */
 const TABLES=[
- {id:"1",cap:7,img:"table1.jpg"},
- {id:"2",cap:5,img:"table2.jpg"},
- {id:"3",cap:5,img:"table3.jpg"},
- {id:"4",cap:5,img:"table4.jpg"},
- {id:"5",cap:5,img:"table5.jpg"},
- {id:"6",cap:3,img:"table6.jpg"},
- {id:"vip",cap:"VIP",img:"vip.jpg"}
+ {id:"1",cap:7,img:"https://via.placeholder.com/300x200"},
+ {id:"2",cap:5,img:"https://via.placeholder.com/300x200"},
+ {id:"3",cap:5,img:"https://via.placeholder.com/300x200"},
+ {id:"4",cap:5,img:"https://via.placeholder.com/300x200"},
+ {id:"5",cap:5,img:"https://via.placeholder.com/300x200"},
+ {id:"6",cap:3,img:"https://via.placeholder.com/300x200"}
 ];
 
 let selectedTime=null;
-let bookings=[];
+let busyTimesByTable={};
 
-/* ===== ВРЕМЯ (СЛАЙДЕР) ===== */
-for(let h=12;h<24;h++){
- let t=h+":00";
-
- let el=document.createElement("div");
- el.className="time";
- el.innerText=t;
-
- el.onclick=()=>{
-  selectedTime=t;
-  document.querySelectorAll(".time").forEach(x=>x.classList.remove("active"));
-  el.classList.add("active");
-
-  renderTables();
- };
-
- slider.appendChild(el);
-}
-
-/* ===== ДЛИТЕЛЬНОСТЬ ===== */
-function duration(g=2){
- if(g<=2) return 90;
- if(g<=4) return 120;
+/* ===== ТВОЯ ДЛИТЕЛЬНОСТЬ ===== */
+function getDuration(guests=2){
+ if(guests<=2) return 90;
+ if(guests<=4) return 120;
  return 240;
 }
 
-/* ===== ПЕРЕВОД В МИНУТЫ ===== */
+/* ===== ВРЕМЯ ===== */
 function toMin(t){
  let [h,m]=t.split(":");
  return h*60+ +m;
@@ -194,52 +201,76 @@ function minToTime(m){
  return `${String(h).padStart(2,"0")}:${String(min).padStart(2,"0")}`;
 }
 
-/* ===== СТАТУС ===== */
+/* ===== ТВОЯ ЛОГИКА СЛОТА ===== */
+function getSlotStatus(time, busyTimes){
+
+ let start=toMin(time);
+ let duration=getDuration(2);
+ let end=start+duration;
+
+ // пересечение = занято
+ for(let bt of busyTimes){
+  let s=toMin(bt);
+  let e=s+getDuration(5);
+
+  if(start < e && end > s){
+    return {status:"busy",from:bt,to:minToTime(e)};
+  }
+ }
+
+ // ближайшая бронь
+ let next=null;
+
+ for(let bt of busyTimes){
+  let s=toMin(bt);
+  if(s>start){
+    if(!next || s<toMin(next)) next=bt;
+  }
+ }
+
+ if(next){
+  let gap=toMin(next)-end;
+
+  if(gap<90){
+    return {status:"warning",to:next};
+  }
+
+  return {status:"free_until",to:next};
+ }
+
+ return {status:"free"};
+}
+
+/* ===== СТАТУС ДЛЯ КАРТОЧКИ ===== */
 function getStatus(tableId){
 
- if(!selectedTime) return {
-  text:"Выберите время",
-  color:""
- };
+ if(!selectedTime){
+  return {text:"Выберите время"};
+ }
 
- if(tableId==="vip"){
+ let busyTimes=busyTimesByTable[tableId] || [];
+
+ let result=getSlotStatus(selectedTime,busyTimes);
+
+ if(result.status==="busy"){
   return {
-    text:"Через администратора",
+    text:`Занят с ${result.from}`,
+    color:"red"
+  };
+ }
+
+ if(result.status==="warning"){
+  return {
+    text:`⚠ До ${result.to}`,
     color:"yellow"
   };
  }
 
- let startUser=toMin(selectedTime);
- let endUser=startUser+duration(2);
-
- let tableBookings=bookings.filter(b=>b.table==tableId);
-
- for(let b of tableBookings){
-  let start=toMin(b.time);
-  let end=start+duration(5);
-
-  // занят
-  if(startUser < end && endUser > start){
-    return {
-      text:`Занят с ${b.time} до ${minToTime(end)}`,
-      color:"red"
-    };
-  }
-
-  // предупреждение (<90 мин)
-  if(startUser < start){
-    let gap=start - endUser;
-    if(gap < 90){
-      return {
-        text:`⚠ До ${b.time}`,
-        color:"yellow"
-      };
-    }
-    return {
-      text:`Свободно до ${b.time}`,
-      color:"green"
-    };
-  }
+ if(result.status==="free_until"){
+  return {
+    text:`Свободно до ${result.to}`,
+    color:"green"
+  };
  }
 
  return {
@@ -250,6 +281,7 @@ function getStatus(tableId){
 
 /* ===== РЕНДЕР ===== */
 function renderTables(){
+
  grid.innerHTML="";
 
  TABLES.forEach(t=>{
@@ -260,34 +292,66 @@ function renderTables(){
 
   el.innerHTML=`
     <img src="${t.img}">
-    <div class="status ${st.color}">${st.text}</div>
-    <div class="dot ${st.color}"></div>
+    <div class="status ${st.color||""}">${st.text}</div>
+    <div class="dot ${st.color||""}"></div>
     <div class="info">№${t.id} 👥 ${t.cap}</div>
   `;
+
+  el.onclick=()=>openModal(t);
 
   grid.appendChild(el);
  });
 }
 
-/* ===== ЗАГРУЗКА БРОНЕЙ ===== */
-async function loadBookings(){
- try{
-  let res=await fetch(API+"/all_bookings");
-  bookings=await res.json();
- }catch(e){
-  console.log("нет API, используем тест");
+/* ===== ЗАГРУЗКА ===== */
+async function loadBusy(){
 
-  // ТЕСТ
-  bookings=[
-    {table:"1",time:"18:00"},
-    {table:"2",time:"19:00"},
-    {table:"3",time:"20:00"}
-  ];
+ for(let t of TABLES){
+  try{
+    let res=await fetch(`${API}/busy_times?table=${t.id}`);
+    let data=await res.json();
+    busyTimesByTable[t.id]=data;
+  }catch{
+    busyTimesByTable[t.id]=[];
+  }
  }
+
+ renderTables();
+}
+
+/* ===== СЛАЙДЕР ===== */
+for(let h=12;h<24;h++){
+ let t=h+":00";
+
+ let el=document.createElement("div");
+ el.className="time";
+ el.innerText=t;
+
+ el.onclick=()=>{
+  selectedTime=t;
+
+  document.querySelectorAll(".time").forEach(x=>x.classList.remove("active"));
+  el.classList.add("active");
+
+  renderTables();
+ };
+
+ slider.appendChild(el);
+}
+
+/* ===== MODAL ===== */
+function openModal(table){
+ document.getElementById("modal").classList.add("active");
+ document.getElementById("modalTitle").innerText="Стол "+table.id;
+ document.getElementById("modalImg").src=table.img;
+}
+
+function closeModal(){
+ document.getElementById("modal").classList.remove("active");
 }
 
 /* INIT */
-loadBookings().then(renderTables);
+loadBusy();
 </script>
 
 </body>
