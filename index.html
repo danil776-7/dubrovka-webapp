@@ -3,84 +3,71 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dubrovka Lounge</title>
+<title>Dubrovka Booking</title>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-
 body{
+  margin:0;
   font-family:-apple-system;
   background:#0a0a0f;
-  color:#fff;
+  color:white;
 }
 
 /* VIDEO */
-.video-background{
+.video{
   position:fixed;
   width:100%;
   height:100%;
   object-fit:cover;
   z-index:-1;
-  opacity:0.5;
+  opacity:0.4;
 }
 
-/* CONTAINER */
-.container{
-  max-width:500px;
-  margin:auto;
-  padding:20px;
+/* HEADER */
+.header{
+  padding:15px;
+  text-align:center;
 }
 
-/* LOGO */
-.logo-container{text-align:center;margin-bottom:20px;}
-.logo-img{
-  width:80px;height:80px;border-radius:50%;
-  border:2px solid #d4af37;
+.logo{
+  font-size:24px;
+  color:#d4af37;
 }
-.logo-text{font-size:24px;color:#d4af37;font-weight:700;}
 
-/* CARD */
-.card{
-  background:rgba(10,10,15,0.85);
-  padding:20px;
-  border-radius:20px;
-  border:1px solid rgba(212,175,55,0.3);
+/* TIME */
+.times{
+  display:flex;
+  overflow-x:auto;
+  gap:10px;
+  padding:10px;
+}
+
+.time{
+  padding:10px;
+  background:#1a1a22;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+.time.active{
+  background:#d4af37;
+  color:black;
 }
 
 /* TABLES */
-.tables-grid{
+.tables{
   display:grid;
   grid-template-columns:repeat(2,1fr);
   gap:12px;
+  padding:15px;
 }
 
-.table-card{
+.table{
   background:#1a1a22;
   border-radius:14px;
-  overflow:hidden;
-  cursor:pointer;
-  transition:0.2s;
-}
-
-.table-card:hover{transform:translateY(-2px);}
-
-.card-img{
-  height:100px;
-  background:linear-gradient(135deg,#333,#111);
-}
-
-.card-body{padding:10px;font-size:13px;}
-
-/* VIP */
-.vip-btn{
-  margin-top:12px;
-  padding:14px;
-  background:#1a1a22;
-  border-radius:12px;
-  text-align:center;
-  border:1px solid rgba(212,175,55,0.2);
+  padding:15px;
   cursor:pointer;
 }
 
@@ -90,272 +77,154 @@ body{
   inset:0;
   background:#000;
   display:none;
-  z-index:9999;
 }
 
 .modal.active{display:block;}
 
-.modal-header{
-  display:flex;
-  align-items:center;
-  padding:10px;
-}
-
-.back-btn{
-  padding:8px 12px;
-  background:#222;
-  border-radius:10px;
+.back{
+  padding:15px;
   cursor:pointer;
 }
-
-.gallery{
-  display:flex;
-  overflow-x:auto;
-  scroll-snap-type:x mandatory;
-}
-
-.gallery img{
-  width:100%;
-  height:250px;
-  object-fit:cover;
-  scroll-snap-align:center;
-}
-
-.modal-body{padding:15px;}
-
-/* TIME */
-.time-slot{
-  padding:8px;
-  margin:5px;
-  background:#222;
-  border-radius:10px;
-  display:inline-block;
-}
-
-.time-slot.selected{background:#d4af37;color:black;}
-.time-slot.busy{opacity:0.3;}
-.time-slot.warning{background:orange;}
 </style>
 </head>
 
 <body>
 
-<video class="video-background" autoplay muted loop playsinline>
+<video class="video" autoplay muted loop>
   <source src="bg.mp4">
 </video>
 
-<div class="container">
-
-<div class="logo-container">
-  <img src="logo.png" class="logo-img">
-  <div class="logo-text">DUBROVKA</div>
+<div class="header">
+  <div class="logo">DUBROVKA</div>
 </div>
 
-<div class="card">
+<!-- TIME -->
+<div id="times" class="times"></div>
 
-<div id="tablesGrid" class="tables-grid"></div>
-
-<div class="vip-btn" onclick="alert('VIP через администратора')">
-VIP ЗАЛ
-</div>
-
-</div>
-</div>
+<!-- TABLES -->
+<div id="tables" class="tables"></div>
 
 <!-- MODAL -->
 <div id="modal" class="modal">
-
-  <div class="modal-header">
-    <div class="back-btn" onclick="closeModal()">← Назад</div>
-  </div>
-
-  <div class="gallery" id="gallery"></div>
-
-  <div class="modal-body">
-    <h2 id="title"></h2>
-    <p id="desc"></p>
-
-    <div id="times"></div>
-    <div id="warning"></div>
-
-    <input id="guests" type="number" value="1">
-    <input id="name" placeholder="Имя">
-    <input id="phone" placeholder="+7XXXXXXXXXX">
-
-    <button onclick="book()">Забронировать</button>
-  </div>
-
+  <div class="back" onclick="closeModal()">← Назад</div>
+  <div id="modalContent"></div>
 </div>
 
 <script>
 const API="https://dubrovka-webapp-production.up.railway.app";
 
-const TABLE_CAPACITY={"1":7,"2":5,"3":5,"4":5,"5":5,"6":3};
+const TABLES=[
+ {id:"1",cap:7},
+ {id:"2",cap:5},
+ {id:"3",cap:5},
+ {id:"4",cap:5},
+ {id:"5",cap:5},
+ {id:"6",cap:3}
+];
 
-const tableDescriptions={
- "1":"Приватная зона 👥7",
- "2":"Приватная зона 👥5",
- "3":"Приватная зона 👥5",
- "4":"Приватная зона 👥5",
- "5":"Открытая зона 👥5",
- "6":"Компакт 👥3"
-};
-
-/* DURATION */
-function getBookingDurationMinutes(g){
- if(g<=2) return 90;
- if(g<=4) return 120;
- return 240;
-}
-
-/* TIME LOGIC (FULL) */
-function toMin(t){let[a,b]=t.split(":");return a*60+ +b;}
-
-function getSlotStatus(time,busyTimes,guests){
- let duration=getBookingDurationMinutes(guests);
- let start=toMin(time);
- let end=start+duration;
-
- for(let bt of busyTimes){
-  let s=toMin(bt);
-  let e=s+120;
-  if(start<e && end>s) return {status:"blocked"};
- }
-
- let next=null;
- for(let bt of busyTimes){
-  let s=toMin(bt);
-  if(s>start && (!next||s<toMin(next))) next=bt;
- }
-
- if(next){
-  let gap=toMin(next)-end;
-  if(gap<90) return {status:"warning",leave:next};
- }
-
- return {status:"free"};
-}
-
-let selectedTable=null;
 let selectedTime=null;
+let selectedTable=null;
 let busyTimes=[];
-let currentDate=new Date().toISOString().split("T")[0];
-
-/* TABLES */
-function renderTables(){
- let grid=document.getElementById("tablesGrid");
-
- for(let i=1;i<=6;i++){
-  let el=document.createElement("div");
-  el.className="table-card";
-
-  el.innerHTML=`
-   <div class="card-img"></div>
-   <div class="card-body">
-    Стол ${i}<br>👥 ${TABLE_CAPACITY[i]}
-   </div>
-  `;
-
-  el.onclick=()=>openTable(i);
-
-  grid.appendChild(el);
- }
-}
-
-/* OPEN */
-function openTable(id){
- selectedTable=String(id);
-
- document.getElementById("modal").classList.add("active");
- document.getElementById("title").innerText="Стол "+id;
- document.getElementById("desc").innerText=tableDescriptions[id];
-
- renderGallery();
- loadTimes();
-}
-
-/* CLOSE */
-function closeModal(){
- document.getElementById("modal").classList.remove("active");
- selectedTime=null;
-}
-
-/* GALLERY */
-function renderGallery(){
- document.getElementById("gallery").innerHTML=`
-  <img src="https://via.placeholder.com/400x250">
-  <img src="https://via.placeholder.com/400x250">
- `;
-}
 
 /* TIMES */
-async function loadTimes(){
- let res=await fetch(`${API}/busy_times?date=${currentDate}&table=${selectedTable}`);
- busyTimes=await res.json();
-
- let container=document.getElementById("times");
- container.innerHTML="";
+function renderTimes(){
+ let c=document.getElementById("times");
 
  for(let h=12;h<24;h++){
   let t=h+":00";
 
-  let status=getSlotStatus(t,busyTimes,2);
-
   let el=document.createElement("div");
-  el.className="time-slot";
+  el.className="time";
   el.innerText=t;
 
-  if(status.status==="blocked") el.classList.add("busy");
-  if(status.status==="warning") el.classList.add("warning");
-
   el.onclick=()=>{
-   if(status.status==="blocked") return;
-
    selectedTime=t;
-
-   document.querySelectorAll(".time-slot").forEach(x=>x.classList.remove("selected"));
-   el.classList.add("selected");
-
-   if(status.status==="warning"){
-    document.getElementById("warning").innerText=
-     "⚠️ Освободите до "+status.leave;
-   }else{
-    document.getElementById("warning").innerText="";
-   }
+   document.querySelectorAll(".time").forEach(x=>x.classList.remove("active"));
+   el.classList.add("active");
   };
 
-  container.appendChild(el);
+  c.appendChild(el);
  }
+}
+
+/* TABLES */
+function renderTables(){
+ let c=document.getElementById("tables");
+
+ TABLES.forEach(t=>{
+  let el=document.createElement("div");
+  el.className="table";
+  el.innerText=`Стол ${t.id} 👥 ${t.cap}`;
+
+  el.onclick=()=>openTable(t.id);
+
+  c.appendChild(el);
+ });
+}
+
+/* OPEN TABLE */
+async function openTable(id){
+ if(!selectedTime) return alert("Сначала выбери время");
+
+ selectedTable=id;
+
+ let res=await fetch(`${API}/busy_times?date=${getDate()}&table=${id}`);
+ busyTimes=await res.json();
+
+ let html=`<h2>Стол ${id}</h2>`;
+
+ html+=`<div>`;
+ for(let h=12;h<24;h++){
+  let t=h+":00";
+
+  let busy=busyTimes.includes(t);
+
+  html+=`<div onclick="selectTime('${t}')" style="
+    padding:8px;
+    margin:5px;
+    background:${busy?'#333':'#d4af37'};
+    color:${busy?'#888':'black'};
+  ">${t}</div>`;
+ }
+ html+=`</div>`;
+
+ html+=`
+  <input id="name" placeholder="Имя">
+  <input id="phone" placeholder="+7">
+  <button onclick="book()">Забронировать</button>
+ `;
+
+ document.getElementById("modalContent").innerHTML=html;
+ document.getElementById("modal").classList.add("active");
+}
+
+function closeModal(){
+ document.getElementById("modal").classList.remove("active");
 }
 
 /* BOOK */
 async function book(){
- if(!selectedTime) return alert("Выберите время");
-
  await fetch(API+"/booking",{
   method:"POST",
   headers:{"Content-Type":"application/json"},
   body:JSON.stringify({
    table:selectedTable,
    time:selectedTime,
-   date:currentDate,
+   date:getDate(),
    guests:2
   })
  });
 
- alert("Бронь создана");
+ alert("Готово");
  closeModal();
 }
 
+function getDate(){
+ return new Date().toISOString().split("T")[0];
+}
+
+renderTimes();
 renderTables();
-
-/* AUTO REFRESH */
-setInterval(()=>{
- if(selectedTable){
-  loadTimes();
- }
-},10000);
-
 </script>
 
 </body>
