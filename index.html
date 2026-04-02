@@ -12,89 +12,88 @@
 
 body{
   font-family:-apple-system,Arial;
-  background:#0a0a0f;
+  background:#3b1509;
   color:#fff;
 }
 
-/* VIDEO */
-.video-bg{
-  position:fixed;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  z-index:-1;
-  opacity:0.4;
+/* TOP BAR */
+.top{
+  background:#eee;color:#111;
+  padding:10px 14px;
+  display:flex;justify-content:space-between;
 }
 
-/* CONTAINER */
-.container{
-  max-width:900px;
-  margin:auto;
-  padding:15px;
+/* TIMELINE */
+.timeline{
+  background:#4a1c0c;
+  padding:12px;
 }
 
-/* LOGO */
-.logo{
+.slider{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+}
+
+.time{
+  min-width:70px;
+  padding:10px;
+  border-radius:10px;
+  background:#0003;
   text-align:center;
-  margin-bottom:20px;
+  cursor:pointer;
 }
 
-.logo h1{
-  color:#d4af37;
-  font-size:28px;
+.time.active{
+  background:#fff;
+  color:#000;
 }
 
-.logo p{
-  font-size:12px;
-  color:#d4af37;
+/* FILTERS */
+.filters{
+  display:flex;
+  gap:8px;
+  padding:10px;
+}
+
+.filter{
+  padding:8px 12px;
+  border-radius:20px;
+  border:1px solid #fff2;
+  cursor:pointer;
 }
 
 /* GRID */
 .grid{
   display:grid;
-  grid-template-columns:repeat(2,1fr);
+  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
   gap:12px;
-}
-
-@media(min-width:768px){
-  .grid{grid-template-columns:repeat(3,1fr);}
+  padding:12px;
 }
 
 /* CARD */
 .card{
-  position:relative;
-  border-radius:18px;
+  background:#2c1d18;
+  border-radius:12px;
   overflow:hidden;
   cursor:pointer;
-  background:#111;
 }
 
 .card img{
   width:100%;
-  height:160px;
+  height:140px;
   object-fit:cover;
 }
 
-.overlay{
-  position:absolute;
-  inset:0;
-  background:linear-gradient(to top,#000b,transparent);
-}
-
-/* STATUS */
 .status{
   position:absolute;
-  top:10px;
-  left:10px;
-  padding:6px 10px;
-  border-radius:8px;
+  top:8px;
+  left:8px;
+  background:#000a;
+  padding:5px 8px;
+  border-radius:6px;
   font-size:12px;
 }
-
-.green{background:#1f7a1f}
-.red{background:#a02020}
-.yellow{background:#ffc107;color:#000}
 
 .dot{
   position:absolute;
@@ -103,78 +102,70 @@ body{
   width:8px;height:8px;border-radius:50%;
 }
 
-.dot.green{background:#4cff4c}
-.dot.red{background:#ff4c4c}
-.dot.yellow{background:#ffc107}
+.green{background:#4cff4c}
+.red{background:#ff4c4c}
+.yellow{background:#ffc107}
 
-/* INFO */
-.info{
-  position:absolute;
-  bottom:0;
-  width:100%;
+.bottom{
   padding:10px;
-  font-size:14px;
 }
 
 /* MODAL */
 .modal{
   position:fixed;
   inset:0;
-  background:#000;
+  background:rgba(0,0,0,0.9);
   display:none;
-  z-index:9999;
+  justify-content:center;
+  align-items:center;
 }
 
-.modal.active{display:block}
+.modal.active{display:flex}
+
+.box{
+  width:360px;
+  background:#111;
+  border-radius:14px;
+  overflow:hidden;
+}
 
 .header{
   display:flex;
   justify-content:space-between;
-  padding:15px;
-  background:#111;
+  padding:12px;
+  background:#1a1a1a;
 }
 
-/* GALLERY */
-.gallery{
-  display:flex;
-  overflow:hidden;
+.btn{
+  margin:15px;
+  padding:14px;
+  background:#eee;
+  color:#000;
+  border-radius:10px;
+  text-align:center;
+  cursor:pointer;
 }
 
-.gallery img{
-  width:100%;
-  height:240px;
-  object-fit:cover;
-}
-
-/* TIME */
+/* TIME GRID */
 .time-grid{
   display:flex;
   flex-wrap:wrap;
   gap:8px;
-  padding:15px;
+  padding:12px;
 }
 
 .slot{
   padding:10px;
-  border-radius:10px;
+  border-radius:8px;
   border:1px solid #444;
   cursor:pointer;
-  min-width:65px;
+  width:70px;
   text-align:center;
 }
 
-.slot.active{background:#d4af37;color:#000}
-.slot.busy{opacity:0.3;pointer-events:none;text-decoration:line-through}
+.slot.active{background:#fff;color:#000}
+.slot.busy{opacity:.3;pointer-events:none;text-decoration:line-through}
 .slot.warning{background:#ffc107;color:#000}
-
-/* WARNING */
-.warning{
-  display:none;
-  margin:10px;
-  padding:10px;
-  background:#ffc10722;
-  border-left:3px solid #ffc107;
-}
 
 /* INPUT */
 input{
@@ -184,75 +175,64 @@ input{
   border-radius:10px;
   border:none;
 }
-
-/* BTN */
-.btn{
-  margin:15px;
-  padding:15px;
-  background:#d4af37;
-  color:#000;
-  border-radius:12px;
-  text-align:center;
-  cursor:pointer;
-}
 </style>
 </head>
 
 <body>
 
-<video class="video-bg" autoplay muted loop>
-  <source src="bg.mp4">
-</video>
+<div class="top">
+  <div>Dubrovka</div>
+  <div>+7‒913‒432‒01‒01</div>
+</div>
 
-<div class="container">
+<div class="timeline">
+  <div class="slider" id="slider"></div>
+</div>
 
-<div class="logo">
-  <h1>DUBROVKA</h1>
-  <p>LOUNGE & BAR</p>
+<div class="filters">
+  <div class="filter">Все</div>
 </div>
 
 <div id="grid" class="grid"></div>
 
-</div>
-
 <!-- TABLE -->
 <div id="tableModal" class="modal">
-<div class="header">
-  <div onclick="closeTable()">←</div>
-  <div id="tableTitle"></div>
-  <div onclick="closeTable()">✕</div>
-</div>
-
-<div class="gallery" id="gallery"></div>
-
-<div class="btn" onclick="openTime()">Забронировать</div>
+  <div class="box">
+    <div class="header">
+      <div>Стол <span id="title"></span></div>
+      <div onclick="closeTable()">✕</div>
+    </div>
+    <img id="img" style="width:100%;height:200px;object-fit:cover">
+    <div style="padding:12px">Нет броней</div>
+    <div class="btn" onclick="openTime()">Забронировать →</div>
+  </div>
 </div>
 
 <!-- TIME -->
 <div id="timeModal" class="modal">
-<div class="header">
-  <div onclick="backToTable()">←</div>
-  <div>Дата и время</div>
-  <div onclick="closeTime()">✕</div>
-</div>
-
-<div id="warning" class="warning"></div>
-<div id="timeGrid" class="time-grid"></div>
+  <div class="box">
+    <div class="header">
+      <div>Выбор времени</div>
+      <div onclick="closeTime()">✕</div>
+    </div>
+    <div id="timeGrid" class="time-grid"></div>
+  </div>
 </div>
 
 <!-- FORM -->
 <div id="formModal" class="modal">
-<div class="header">
-  <div onclick="backToTime()">←</div>
-  <div>Бронирование</div>
-  <div onclick="closeForm()">✕</div>
-</div>
+  <div class="box">
+    <div class="header">
+      <div>Бронь</div>
+      <div onclick="closeForm()">✕</div>
+    </div>
 
-<input id="name" placeholder="Имя">
-<input id="phone" placeholder="+7XXXXXXXXXX">
-<input id="guests" type="number" value="2">
+    <input id="name" placeholder="Имя">
+    <input id="phone" placeholder="+7XXXXXXXXXX">
+    <input id="guests" value="2">
 
-<div class="btn" onclick="book()">Подтвердить</div>
+    <div class="btn" onclick="book()">Подтвердить</div>
+  </div>
 </div>
 
 <script>
@@ -260,63 +240,53 @@ const API="https://dubrovka-webapp-production.up.railway.app";
 
 /* TABLES */
 const TABLES=[
- {id:"1",cap:7,img:["table1.jpg"]},
- {id:"2",cap:5,img:["table2.jpg"]},
- {id:"3",cap:5,img:["table3.jpg"]},
- {id:"4",cap:5,img:["table4.jpg"]},
- {id:"5",cap:5,img:["table5.jpg"]},
- {id:"6",cap:3,img:["table6.jpg"]},
- {id:"vip",cap:"VIP",img:["vip.jpg"]}
+ {id:"1",cap:7,img:"https://images.unsplash.com/photo-1552566626-52f8b828add9"},
+ {id:"2",cap:5,img:"https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c"},
+ {id:"3",cap:5,img:"https://images.unsplash.com/photo-1559339352-11d035aa65de"},
+ {id:"4",cap:5,img:"https://images.unsplash.com/photo-1559339352-11d035aa65de"},
+ {id:"5",cap:5,img:"https://images.unsplash.com/photo-1559339352-11d035aa65de"},
+ {id:"6",cap:3,img:"https://images.unsplash.com/photo-1559339352-11d035aa65de"}
 ];
 
-let selectedTable=null;
 let selectedTime=null;
+let selectedTable=null;
 let busy={};
 
-/* UTILS */
-const toMin=t=>{let[a,b]=t.split(":");return a*60+ +b}
-const minToTime=m=>`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`
-const duration=g=>g<=2?90:g<=4?120:240;
-
-/* STATUS */
-function getStatus(id){
- if(!selectedTime)return {text:"Выберите время",cls:""};
-
- let times=busy[id]||[];
- let start=toMin(selectedTime);
- let end=start+duration(2);
-
- for(let bt of times){
-  let s=toMin(bt),e=s+120;
-  if(start<e && end>s){
-    return {text:"Занят",cls:"red"};
-  }
- }
-
- let next=null;
- for(let bt of times){
-  let s=toMin(bt);
-  if(s>start && (!next||s<toMin(next))) next=bt;
- }
-
- if(next){
-  let gap=toMin(next)-end;
-  if(gap<90) return {text:"⚠ до "+next,cls:"yellow"};
-  return {text:"Свободно до "+next,cls:"green"};
- }
-
- return {text:"Свободно",cls:"green"};
+/* TIME SLIDER */
+for(let h=12;h<24;h++){
+ let t=h+":00";
+ let el=document.createElement("div");
+ el.className="time";
+ el.innerText=t;
+ el.onclick=()=>{
+  selectedTime=t;
+  document.querySelectorAll(".time").forEach(x=>x.classList.remove("active"));
+  el.classList.add("active");
+  render();
+ };
+ slider.appendChild(el);
 }
 
 /* LOAD */
 async function load(){
  for(let t of TABLES){
-  try{
-   let r=await fetch(`${API}/busy_times?table=${t.id}`);
-   busy[t.id]=await r.json();
-  }catch{busy[t.id]=[]}
+  let r=await fetch(`${API}/busy_times?table=${t.id}`);
+  busy[t.id]=await r.json();
  }
  render();
+}
+
+/* STATUS */
+function getStatus(id){
+ if(!selectedTime) return {text:"Выберите время"};
+
+ let times=busy[id]||[];
+
+ if(times.includes(selectedTime)){
+  return {text:"Занят",cls:"red"};
+ }
+
+ return {text:"Свободно",cls:"green"};
 }
 
 /* GRID */
@@ -324,16 +294,21 @@ function render(){
  grid.innerHTML="";
  TABLES.forEach(t=>{
   let st=getStatus(t.id);
+
   let el=document.createElement("div");
   el.className="card";
+
   el.innerHTML=`
-    <img src="${t.img[0]}">
-    <div class="overlay"></div>
-    <div class="status ${st.cls}">${st.text}</div>
-    <div class="dot ${st.cls}"></div>
-    <div class="info">Стол ${t.id} 👥 ${t.cap}</div>
+    <div style="position:relative">
+      <img src="${t.img}">
+      <div class="status">${st.text}</div>
+      <div class="dot ${st.cls}"></div>
+    </div>
+    <div class="bottom">№${t.id} 👥 ${t.cap}</div>
   `;
+
   el.onclick=()=>openTable(t);
+
   grid.appendChild(el);
  });
 }
@@ -341,96 +316,63 @@ function render(){
 /* TABLE */
 function openTable(t){
  selectedTable=t.id;
+ title.innerText=t.id;
+ img.src=t.img;
  tableModal.classList.add("active");
- tableTitle.innerText="Стол "+t.id;
- gallery.innerHTML=t.img.map(i=>`<img src="${i}">`).join("");
 }
 
 function closeTable(){tableModal.classList.remove("active")}
 
 /* TIME */
-async function openTime(){
+function openTime(){
  tableModal.classList.remove("active");
  timeModal.classList.add("active");
 
- renderTime();
-}
-
-function renderTime(){
  timeGrid.innerHTML="";
- warning.style.display="none";
-
- let times=[];
  for(let h=12;h<24;h++){
-  times.push(`${String(h).padStart(2,'0')}:00`);
-  times.push(`${String(h).padStart(2,'0')}:30`);
- }
+  let t=h+":00";
 
- let busyTimes=busy[selectedTable]||[];
-
- times.forEach(t=>{
   let el=document.createElement("div");
   el.className="slot";
   el.innerText=t;
 
-  if(busyTimes.includes(t)) el.classList.add("busy");
+  if((busy[selectedTable]||[]).includes(t)){
+    el.classList.add("busy");
+  }
 
   el.onclick=()=>{
     selectedTime=t;
-
-    document.querySelectorAll(".slot").forEach(x=>x.classList.remove("active","warning"));
-    el.classList.add("active");
-
-    let st=getStatus(selectedTable);
-
-    if(st.cls==="yellow"){
-      warning.style.display="block";
-      warning.innerText="Освободите до "+t;
-      el.classList.add("warning");
-    }
-
-    setTimeout(()=>{
-      timeModal.classList.remove("active");
-      formModal.classList.add("active");
-    },200);
+    formModal.classList.add("active");
+    timeModal.classList.remove("active");
   };
 
   timeGrid.appendChild(el);
- });
+ }
 }
 
 function closeTime(){timeModal.classList.remove("active")}
-function backToTable(){closeTime();tableModal.classList.add("active")}
 
 /* FORM */
-function backToTime(){formModal.classList.remove("active");timeModal.classList.add("active")}
 function closeForm(){formModal.classList.remove("active")}
 
 /* BOOK */
 async function book(){
- let data={
-  table:selectedTable,
-  time:selectedTime,
-  date:new Date().toISOString().split("T")[0],
-  name:name.value,
-  phone:phone.value,
-  guests:parseInt(guests.value)
- };
-
  await fetch(API+"/booking",{
   method:"POST",
   headers:{"Content-Type":"application/json"},
-  body:JSON.stringify(data)
+  body:JSON.stringify({
+    table:selectedTable,
+    time:selectedTime,
+    name:name.value,
+    phone:phone.value,
+    guests:guests.value,
+    date:new Date().toISOString().split("T")[0]
+  })
  });
-
  alert("Бронь создана");
  location.reload();
 }
 
-/* AUTO REFRESH */
-setInterval(load,10000);
-
-/* INIT */
 load();
 </script>
 
