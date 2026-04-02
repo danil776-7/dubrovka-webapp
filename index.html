@@ -14,6 +14,12 @@ body {
   color:#fff;
 }
 
+.container {
+  max-width:900px;
+  margin:auto;
+  padding:15px;
+}
+
 /* GLASS */
 .glass {
   background: rgba(255,255,255,0.05);
@@ -21,13 +27,7 @@ body {
   border-radius:20px;
   border:1px solid rgba(255,255,255,0.08);
   padding:20px;
-}
-
-/* HEADER */
-.header {
-  display:flex;
-  justify-content:space-between;
-  padding:20px;
+  margin-bottom:15px;
 }
 
 /* TIME */
@@ -38,8 +38,8 @@ body {
 }
 
 .time-slot {
-  min-width:80px;
-  padding:12px;
+  min-width:75px;
+  padding:10px;
   border-radius:12px;
   background:rgba(255,255,255,0.05);
   text-align:center;
@@ -55,22 +55,24 @@ body {
   opacity:0.3;
 }
 
-/* HALL MAP */
+/* MAP */
 .hall-map {
   position:relative;
-  height:350px;
+  height:420px;
 }
 
 .table {
   position:absolute;
-  width:70px;
-  height:70px;
-  border-radius:50%;
+  width:80px;
+  height:80px;
+  border-radius:16px;
   display:flex;
+  flex-direction:column;
   align-items:center;
   justify-content:center;
+  font-size:12px;
+  background:rgba(255,255,255,0.05);
   cursor:pointer;
-  background:rgba(255,255,255,0.06);
 }
 
 .table.selected {
@@ -79,7 +81,7 @@ body {
 }
 
 .table.booked {
-  opacity:0.3;
+  opacity:0.25;
 }
 
 /* FORM */
@@ -99,99 +101,124 @@ button {
   background:linear-gradient(135deg,#d4af37,#facc15);
   font-weight:bold;
 }
+
 </style>
 </head>
 
 <body>
 
-<div class="header">
-  <div>DUBROVKA</div>
+<div class="container">
+
+<div class="glass">
   <div id="date"></div>
 </div>
 
 <div class="glass">
-  <div>Время</div>
+  <div>Выберите время</div>
   <div id="times" class="time-scroll"></div>
 </div>
 
-<div class="glass" style="margin-top:20px;">
+<div class="glass">
   <div>Карта зала</div>
   <div id="hall" class="hall-map"></div>
 </div>
 
-<div class="glass" style="margin-top:20px;">
+<div class="glass">
   <input id="name" placeholder="Имя">
-  <input id="phone" placeholder="Телефон">
+  <input id="phone" placeholder="+7XXXXXXXXXX">
   <input id="guests" type="number" value="1">
   <button id="book">Забронировать</button>
+</div>
+
 </div>
 
 <script>
 const API="https://dubrovka-webapp-production.up.railway.app";
 
+const TABLES_CONFIG = [
+  { id: "1", number: 1, capacity: 7, x: 1, y: 1 },
+  { id: "2", number: 2, capacity: 5, x: 2, y: 1 },
+  { id: "3", number: 3, capacity: 5, x: 3, y: 1 },
+  { id: "4", number: 4, capacity: 5, x: 4, y: 1 },
+  { id: "5", number: 5, capacity: 5, x: 1, y: 2 },
+  { id: "6", number: 6, capacity: 3, x: 2, y: 2 },
+  { id: "7", number: 7, capacity: 5, x: 3, y: 2 },
+  { id: "8", number: 8, capacity: 5, x: 4, y: 2 },
+  { id: "9", number: 9, capacity: 5, x: 1, y: 3 },
+  { id: "10", number: 10, capacity: 5, x: 2, y: 3 },
+  { id: "11", number: 11, capacity: 5, x: 3, y: 3 },
+  { id: "12", number: 12, capacity: 7, x: 4, y: 3 }
+];
+
+const TABLES = TABLES_CONFIG.map(t => ({
+  ...t,
+  x: (t.x - 1) * 100 + 20,
+  y: (t.y - 1) * 100 + 20
+}));
+
 let selectedTime=null;
 let selectedTable=null;
 let bookings=[];
-let busyTimes={};
+let currentDate=null;
 
-// Позиции столов (визуальная карта)
-const TABLES=[
- {id:"1",x:20,y:20,cap:6},
- {id:"2",x:120,y:20,cap:4},
- {id:"3",x:220,y:20,cap:4},
- {id:"4",x:20,y:120,cap:6},
- {id:"5",x:120,y:120,cap:4},
- {id:"6",x:220,y:120,cap:4}
-];
-
-// ======================
-// ДАТА
-// ======================
+// DATE
 function setDate(){
   let d=new Date();
+  currentDate=d.toISOString().split("T")[0];
   document.getElementById("date").innerText=d.toLocaleDateString();
 }
-setDate();
 
-// ======================
-// ВРЕМЯ
-// ======================
+// TIME
 function generateTimes(){
-  let times=[];
+  let arr=[];
   for(let h=12;h<26;h++){
     for(let m=0;m<60;m+=10){
       let hh=h>=24?h-24:h;
-      times.push(`${String(hh).padStart(2,"0")}:${String(m).padStart(2,"0")}`);
+      arr.push(`${String(hh).padStart(2,"0")}:${String(m).padStart(2,"0")}`);
     }
   }
-  return times;
+  return arr;
 }
 
 function renderTimes(){
-  let container=document.getElementById("times");
-  container.innerHTML="";
+  let c=document.getElementById("times");
+  c.innerHTML="";
+
   generateTimes().forEach(t=>{
     let el=document.createElement("div");
     el.className="time-slot";
     el.innerText=t;
 
-    if(busyTimes[t]) el.classList.add("busy");
-
     el.onclick=()=>{
-      if(el.classList.contains("busy")) return;
       selectedTime=t;
       document.querySelectorAll(".time-slot").forEach(e=>e.classList.remove("selected"));
       el.classList.add("selected");
       renderTables();
     };
 
-    container.appendChild(el);
+    c.appendChild(el);
   });
 }
 
-// ======================
-// КАРТА ЗАЛА
-// ======================
+// TABLE BUSY LOGIC
+function isTableBusy(id){
+  if(!selectedTime) return false;
+
+  return bookings.some(b=>{
+    if(b.table!=id || b.date!=currentDate) return false;
+
+    let [h,m]=b.time.split(":").map(Number);
+    let start=h*60+m;
+    let end=start + (b.duration||2)*60;
+
+    let [sh,sm]=selectedTime.split(":").map(Number);
+    let current=sh*60+sm;
+
+    return current>=start && current<end;
+  });
+}
+
+// RENDER TABLES
 function renderTables(){
   let hall=document.getElementById("hall");
   hall.innerHTML="";
@@ -201,13 +228,19 @@ function renderTables(){
     el.className="table";
     el.style.left=t.x+"px";
     el.style.top=t.y+"px";
-    el.innerText=t.id;
+
+    el.innerHTML=`
+      <div>${t.number}</div>
+      <div>👥 ${t.capacity}</div>
+    `;
 
     if(isTableBusy(t.id)) el.classList.add("booked");
 
     el.onclick=()=>{
       if(el.classList.contains("booked")) return;
+
       selectedTable=t.id;
+
       document.querySelectorAll(".table").forEach(e=>e.classList.remove("selected"));
       el.classList.add("selected");
     };
@@ -216,42 +249,41 @@ function renderTables(){
   });
 }
 
-function isTableBusy(id){
-  if(!selectedTime) return false;
-  return bookings.some(b=>b.table==id && b.time==selectedTime);
-}
-
-// ======================
 // API
-// ======================
 async function loadBookings(){
   let res=await fetch(API+"/all_bookings");
   bookings=await res.json();
 }
 
-// ======================
-// ДЛИТЕЛЬНОСТЬ
-// ======================
+// DURATION
 function getDuration(g){
-  if(g>=5) return 3;
-  return 2;
+  return g>=5 ? 3 : 2;
 }
 
-// ======================
-// БРОНЬ
-// ======================
+// CAPACITY CHECK
+function canFit(tableId, guests){
+  let t=TABLES.find(x=>x.id==tableId);
+  return guests<=t.capacity;
+}
+
+// BOOK
 document.getElementById("book").onclick=async()=>{
   let name=document.getElementById("name").value;
   let phone=document.getElementById("phone").value;
   let guests=parseInt(document.getElementById("guests").value);
 
-  if(!selectedTable||!selectedTime) return alert("Выберите время и стол");
+  if(!selectedTime || !selectedTable) return alert("Выберите время и стол");
+
+  if(!canFit(selectedTable, guests)){
+    return alert("Слишком много гостей для стола");
+  }
 
   let data={
     name,
     phone,
     guests,
     table:selectedTable,
+    date:currentDate,
     time:selectedTime,
     duration:getDuration(guests)
   };
@@ -266,8 +298,9 @@ document.getElementById("book").onclick=async()=>{
   init();
 };
 
-// ======================
+// INIT
 async function init(){
+  setDate();
   await loadBookings();
   renderTimes();
   renderTables();
