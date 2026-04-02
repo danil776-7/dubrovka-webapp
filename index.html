@@ -3,282 +3,312 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Booking</title>
+<title>Dubrovka Lounge</title>
+
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
-body {
-  margin:0;
-  background:#0b0b0f;
-  color:white;
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
   font-family:-apple-system;
+  background:#0a0a0f;
+  color:#fff;
 }
 
-.container {
-  padding:15px;
+/* VIDEO */
+.video-background{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  z-index:-1;
+  opacity:0.5;
 }
 
-/* TIME */
-.time-scroll {
-  display:flex;
-  overflow-x:auto;
-  gap:10px;
-  margin-bottom:15px;
+/* CONTAINER */
+.container{
+  max-width:500px;
+  margin:auto;
+  padding:20px;
 }
 
-.time-slot {
-  padding:10px 14px;
-  border-radius:10px;
-  background:#1a1a22;
-  cursor:pointer;
+/* LOGO */
+.logo-container{
+  text-align:center;
+  margin-bottom:20px;
 }
 
-.time-slot.selected {
-  background:white;
-  color:black;
+.logo-img{
+  width:80px;
+  height:80px;
+  border-radius:50%;
+  border:2px solid #d4af37;
 }
 
-/* GRID */
-.tables-grid {
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:12px;
+.logo-text{
+  font-size:24px;
+  color:#d4af37;
+  font-weight:700;
+}
+
+.logo-subtitle{
+  font-size:11px;
+  color:#d4af37;
 }
 
 /* CARD */
-.card {
-  background:#1a1a22;
+.card{
+  background:rgba(10,10,15,0.85);
+  padding:20px;
+  border-radius:20px;
+  border:1px solid rgba(212,175,55,0.3);
+}
+
+/* TABLE CARDS */
+.tables-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+  margin-bottom:15px;
+}
+
+.table-card{
+  background:rgba(20,20,30,0.9);
   border-radius:14px;
   overflow:hidden;
   cursor:pointer;
+  position:relative;
 }
 
-.card-img {
-  height:120px;
+.table-card.selected{
+  border:2px solid #d4af37;
+}
+
+.table-card.booked{
+  opacity:0.4;
+}
+
+.card-img{
+  height:100px;
   background:linear-gradient(135deg,#333,#111);
 }
 
-.card-body {
-  padding:10px;
-}
-
-.status {
+.status{
   position:absolute;
-  top:10px;
-  left:10px;
+  top:8px;
+  left:8px;
   background:rgba(0,0,0,0.6);
   padding:4px 8px;
   border-radius:8px;
-  font-size:12px;
+  font-size:11px;
 }
 
-.dot {
+.dot{
   position:absolute;
-  top:10px;
-  right:10px;
+  top:8px;
+  right:8px;
   width:8px;
   height:8px;
   border-radius:50%;
   background:#2ecc71;
 }
 
-.booked .dot {
-  background:red;
+.table-card.booked .dot{background:red;}
+
+.card-body{
+  padding:10px;
+  font-size:13px;
 }
 
-/* MODAL */
-.modal {
-  position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  background:#111;
-  border-radius:20px 20px 0 0;
-  padding:20px;
-  display:none;
-}
-
-.modal.active {
-  display:block;
-}
-
-button {
-  width:100%;
-  padding:15px;
-  border-radius:12px;
-  border:none;
+/* TIME */
+.time-slots{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
   margin-top:10px;
-  background:white;
+}
+
+.time-slot{
+  padding:8px 10px;
+  background:#222;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+.time-slot.selected{
+  background:#d4af37;
+  color:black;
+}
+
+.time-slot.busy{
+  opacity:0.3;
+}
+
+/* INPUTS */
+input{
+  width:100%;
+  padding:12px;
+  margin-top:8px;
+  border-radius:10px;
+  border:none;
+}
+
+/* BUTTON */
+button{
+  width:100%;
+  padding:14px;
+  margin-top:10px;
+  border:none;
+  border-radius:12px;
+  background:#d4af37;
+  color:black;
+  font-weight:700;
 }
 </style>
 </head>
 
 <body>
 
+<video class="video-background" autoplay muted loop playsinline>
+  <source src="bg.mp4">
+</video>
+
 <div class="container">
 
-<div id="times" class="time-scroll"></div>
-
-<div id="tables" class="tables-grid"></div>
-
+<div class="logo-container">
+  <img src="logo.png" class="logo-img">
+  <div class="logo-text">DUBROVKA</div>
+  <div class="logo-subtitle">LOUNGE & BAR</div>
 </div>
 
-<!-- MODAL -->
-<div id="modal" class="modal">
-  <div id="modalContent"></div>
+<div class="card">
+
+<div id="tablesGrid" class="tables-grid"></div>
+
+<div id="tableInfo">Выберите стол</div>
+
+<input id="date" type="date">
+<div id="timeSlotsContainer" class="time-slots"></div>
+
+<input id="guests" type="number" value="1">
+<input id="name" placeholder="Имя">
+<input id="phone" placeholder="+7XXXXXXXXXX">
+
+<button id="bookBtn">Забронировать</button>
+
+</div>
 </div>
 
 <script>
 const API="https://dubrovka-webapp-production.up.railway.app";
 
-const TABLES_CONFIG = [
-  { id:"1", number:1, capacity:7 },
-  { id:"2", number:2, capacity:5 },
-  { id:"3", number:3, capacity:5 },
-  { id:"4", number:4, capacity:5 },
-  { id:"5", number:5, capacity:5 },
-  { id:"6", number:6, capacity:3 },
-  { id:"7", number:7, capacity:5 },
-  { id:"8", number:8, capacity:5 },
-  { id:"9", number:9, capacity:5 },
-  { id:"10", number:10, capacity:5 },
-  { id:"11", number:11, capacity:5 },
-  { id:"12", number:12, capacity:7 }
-];
+const TABLE_CAPACITY={
+ "1":7,"2":5,"3":5,"4":5,"5":5,"6":3
+};
 
+const tableDescriptions={
+ "1":"Приватная зона 👥7",
+ "2":"Приватная зона 👥5",
+ "3":"Приватная зона 👥5",
+ "4":"Приватная зона 👥5",
+ "5":"Открытая зона 👥5",
+ "6":"Компакт 👥3"
+};
+
+let selectedTable=null;
 let selectedTime=null;
-let bookings=[];
+let busyTimes=[];
 let currentDate=new Date().toISOString().split("T")[0];
 
-// TIME
-function generateTimes(){
-  let arr=[];
-  for(let h=12;h<26;h++){
-    for(let m=0;m<60;m+=30){
-      let hh=h>=24?h-24:h;
-      arr.push(`${String(hh).padStart(2,"0")}:${String(m).padStart(2,"0")}`);
-    }
-  }
-  return arr;
-}
-
-function renderTimes(){
-  let c=document.getElementById("times");
-  c.innerHTML="";
-
-  generateTimes().forEach(t=>{
-    let el=document.createElement("div");
-    el.className="time-slot";
-    el.innerText=t;
-
-    el.onclick=()=>{
-      selectedTime=t;
-      document.querySelectorAll(".time-slot").forEach(e=>e.classList.remove("selected"));
-      el.classList.add("selected");
-      renderTables();
-    };
-
-    c.appendChild(el);
-  });
-}
-
-// BUSY
-function isBusy(tableId){
-  if(!selectedTime) return false;
-
-  return bookings.some(b=>{
-    if(b.table!=tableId || b.date!=currentDate) return false;
-
-    let [h,m]=b.time.split(":").map(Number);
-    let start=h*60+m;
-    let end=start+(b.duration||2)*60;
-
-    let [sh,sm]=selectedTime.split(":").map(Number);
-    let cur=sh*60+sm;
-
-    return cur>=start && cur<end;
-  });
-}
+document.getElementById("date").value=currentDate;
 
 // TABLES
 function renderTables(){
-  let c=document.getElementById("tables");
-  c.innerHTML="";
+ let grid=document.getElementById("tablesGrid");
+ grid.innerHTML="";
 
-  TABLES_CONFIG.forEach(t=>{
-    let busy=isBusy(t.id);
+ for(let i=1;i<=6;i++){
+  let el=document.createElement("div");
+  el.className="table-card";
 
-    let el=document.createElement("div");
-    el.className="card "+(busy?"booked":"");
-
-    el.innerHTML=`
-      <div class="card-img">
-        <div class="status">${busy?"Занят":"Свободно"}</div>
-        <div class="dot"></div>
-      </div>
-      <div class="card-body">
-        <div>№${t.number} стол</div>
-        <div style="font-size:12px;color:#aaa;">👥 ${t.capacity}</div>
-      </div>
-    `;
-
-    el.onclick=()=>{
-      if(busy) return;
-      openModal(t);
-    };
-
-    c.appendChild(el);
-  });
-}
-
-// MODAL
-function openModal(table){
-  let m=document.getElementById("modal");
-  let c=document.getElementById("modalContent");
-
-  c.innerHTML=`
-    <h3>Стол №${table.number}</h3>
-    <p>Вместимость: ${table.capacity}</p>
-    <button onclick="book('${table.id}')">Забронировать</button>
+  el.innerHTML=`
+   <div class="card-img">
+    <div class="status">Свободен</div>
+    <div class="dot"></div>
+   </div>
+   <div class="card-body">
+    Стол ${i}<br>👥 ${TABLE_CAPACITY[i]}
+   </div>
   `;
 
-  m.classList.add("active");
+  el.onclick=()=>{
+   selectedTable=String(i);
+   document.getElementById("tableInfo").innerText=tableDescriptions[i];
+
+   document.querySelectorAll(".table-card").forEach(t=>t.classList.remove("selected"));
+   el.classList.add("selected");
+
+   loadTimes();
+  };
+
+  grid.appendChild(el);
+ }
+}
+
+// TIMES
+async function loadTimes(){
+ let res=await fetch(`${API}/busy_times?date=${currentDate}&table=${selectedTable}`);
+ busyTimes=await res.json();
+
+ let container=document.getElementById("timeSlotsContainer");
+ container.innerHTML="";
+
+ for(let h=12;h<24;h++){
+  let t=`${h}:00`;
+
+  let el=document.createElement("div");
+  el.className="time-slot";
+  el.innerText=t;
+
+  if(busyTimes.includes(t)){
+   el.classList.add("busy");
+  }
+
+  el.onclick=()=>{
+   if(el.classList.contains("busy")) return;
+   selectedTime=t;
+
+   document.querySelectorAll(".time-slot").forEach(x=>x.classList.remove("selected"));
+   el.classList.add("selected");
+  };
+
+  container.appendChild(el);
+ }
 }
 
 // BOOK
-window.book=async(tableId)=>{
-  if(!selectedTime) return alert("Выбери время");
+document.getElementById("bookBtn").onclick=async()=>{
+ if(!selectedTable||!selectedTime) return alert("Выбери стол и время");
 
-  await fetch(API+"/booking",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      table:tableId,
-      time:selectedTime,
-      date:currentDate,
-      guests:2
-    })
-  });
+ await fetch(API+"/booking",{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({
+   table:selectedTable,
+   time:selectedTime,
+   date:currentDate,
+   guests:2
+  })
+ });
 
-  alert("Готово");
-  document.getElementById("modal").classList.remove("active");
-  init();
+ alert("Бронь создана");
 };
 
-// API
-async function load(){
-  let res=await fetch(API+"/all_bookings");
-  bookings=await res.json();
-}
-
 // INIT
-async function init(){
-  await load();
-  renderTimes();
-  renderTables();
-}
-
-init();
+renderTables();
 </script>
 
 </body>
