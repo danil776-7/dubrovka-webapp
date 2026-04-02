@@ -3,41 +3,172 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dubrovka</title>
+<title>Dubrovka Lounge</title>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
-body{margin:0;font-family:-apple-system;background:#2b1208;color:white;}
-.top{background:#eee;color:black;padding:12px;display:flex;justify-content:space-between;}
-.timeline{background:#3b1509;padding:15px;}
-.slider{display:flex;overflow-x:auto;gap:8px;}
-.time{min-width:70px;text-align:center;padding:10px;background:#0003;border-radius:10px;cursor:pointer;}
-.time.active{background:white;color:black;}
+*{margin:0;padding:0;box-sizing:border-box;}
 
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:12px;}
-.card{position:relative;border-radius:16px;overflow:hidden;cursor:pointer;}
-.card img{width:100%;height:160px;object-fit:cover;}
+body{
+  font-family:-apple-system,Arial;
+  background:#2b1208;
+  color:white;
+}
 
-.status{position:absolute;top:8px;left:8px;padding:5px 8px;border-radius:6px;font-size:12px;}
-.green{background:#1f7a1f;} .red{background:#a02020;} .yellow{background:#aa8800;}
+/* HEADER */
+.header{
+  background:#eee;
+  color:black;
+  padding:12px;
+  display:flex;
+  justify-content:space-between;
+}
 
-.info{position:absolute;bottom:0;width:100%;padding:10px;background:linear-gradient(to top,#000c,transparent);}
+/* TIMELINE */
+.timeline{
+  background:#3b1509;
+  padding:15px;
+}
 
-.modal{position:fixed;inset:0;background:#000;display:none;z-index:9999;}
+.slider{
+  display:flex;
+  overflow-x:auto;
+  gap:8px;
+}
+
+.time{
+  min-width:70px;
+  padding:10px;
+  text-align:center;
+  background:#0003;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+.time.active{
+  background:white;
+  color:black;
+}
+
+/* GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+  padding:12px;
+}
+
+.card{
+  position:relative;
+  border-radius:16px;
+  overflow:hidden;
+  cursor:pointer;
+}
+
+.card img{
+  width:100%;
+  height:160px;
+  object-fit:cover;
+}
+
+/* STATUS */
+.status{
+  position:absolute;
+  top:8px;
+  left:8px;
+  padding:6px 10px;
+  border-radius:8px;
+  font-size:12px;
+}
+
+.green{background:#1f7a1f;}
+.red{background:#a02020;}
+.yellow{background:#aa8800;}
+
+.dot{
+  position:absolute;
+  top:10px;
+  right:10px;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+}
+
+.dot.green{background:#4cff4c;}
+.dot.red{background:#ff4c4c;}
+.dot.yellow{background:#ffc107;}
+
+.info{
+  position:absolute;
+  bottom:0;
+  width:100%;
+  padding:10px;
+  background:linear-gradient(to top,#000c,transparent);
+}
+
+/* MODALS */
+.modal{
+  position:fixed;
+  inset:0;
+  background:#000;
+  display:none;
+  z-index:9999;
+}
+
 .modal.active{display:block;}
 
-.header-modal{display:flex;justify-content:space-between;padding:12px;background:#111;}
+.modal-header{
+  display:flex;
+  justify-content:space-between;
+  padding:14px;
+  background:#111;
+}
 
-.btn{margin:15px;padding:15px;background:#ddd;color:black;border-radius:10px;text-align:center;cursor:pointer;}
+.btn{
+  margin:15px;
+  padding:15px;
+  background:#ddd;
+  color:black;
+  border-radius:10px;
+  text-align:center;
+  cursor:pointer;
+}
 
-input{width:90%;margin:10px;padding:12px;border-radius:10px;border:none;}
+/* TIME GRID */
+.time-grid{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  padding:15px;
+}
+
+.slot{
+  width:70px;
+  padding:12px;
+  text-align:center;
+  border:1px solid #555;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+.slot.busy{opacity:0.3;pointer-events:none;}
+.slot.warning{background:#ffc107;color:black;}
+.slot.active{background:white;color:black;}
+
+.warning{
+  padding:10px;
+  background:#ffc10733;
+  margin:10px;
+  border-left:3px solid #ffc107;
+  display:none;
+}
 </style>
 </head>
 
 <body>
 
-<div class="top">
+<div class="header">
   <div>Dubrovka Lounge</div>
   <div>+7‒913‒432‒01‒01</div>
 </div>
@@ -50,38 +181,49 @@ input{width:90%;margin:10px;padding:12px;border-radius:10px;border:none;}
 <div id="grid" class="grid"></div>
 
 <!-- TABLE MODAL -->
-<div id="modal" class="modal">
-  <div class="header-modal">
-    <div onclick="closeModal()">←</div>
-    <div id="modalTitle"></div>
-    <div onclick="closeModal()">✕</div>
+<div id="tableModal" class="modal">
+  <div class="modal-header">
+    <div onclick="closeTable()">←</div>
+    <div id="tableTitle"></div>
+    <div onclick="closeTable()">✕</div>
   </div>
 
-  <img id="modalImg" src="https://via.placeholder.com/400x250">
+  <img id="tableImg" style="width:100%;height:220px;object-fit:cover">
 
-  <div class="btn" onclick="openBooking()">Забронировать →</div>
+  <div style="padding:10px">Нет броней</div>
+
+  <div class="btn" onclick="openTime()">Забронировать →</div>
 </div>
 
-<!-- BOOKING MODAL -->
-<div id="bookingModal" class="modal">
-  <div class="header-modal">
-    <div onclick="closeBooking()">←</div>
-    <div>Бронирование</div>
-    <div onclick="closeBooking()">✕</div>
+<!-- TIME MODAL -->
+<div id="timeModal" class="modal">
+  <div class="modal-header">
+    <div onclick="backToTable()">←</div>
+    <div>Дата и время</div>
+    <div onclick="closeTime()">✕</div>
   </div>
 
-  <input id="name" placeholder="Имя">
-  <input id="phone" placeholder="+7XXXXXXXXXX">
-  <input id="guests" type="number" value="2">
+  <div id="warning" class="warning"></div>
+  <div id="timeGrid" class="time-grid"></div>
+</div>
+
+<!-- FORM MODAL -->
+<div id="formModal" class="modal">
+  <div class="modal-header">
+    <div onclick="backToTime()">←</div>
+    <div>Бронирование</div>
+    <div onclick="closeForm()">✕</div>
+  </div>
+
+  <input id="name" placeholder="Имя" style="margin:10px;padding:12px;width:90%">
+  <input id="phone" placeholder="+7XXXXXXXXXX" style="margin:10px;padding:12px;width:90%">
+  <input id="guests" type="number" value="2" style="margin:10px;padding:12px;width:90%">
 
   <div class="btn" onclick="book()">Подтвердить</div>
 </div>
 
 <script>
 const API="https://dubrovka-webapp-production.up.railway.app";
-
-const slider=document.getElementById("slider");
-const grid=document.getElementById("grid");
 
 const TABLES=[
  {id:"1",cap:7,img:"https://via.placeholder.com/300"},
@@ -92,23 +234,21 @@ const TABLES=[
  {id:"6",cap:3,img:"https://via.placeholder.com/300"}
 ];
 
-let selectedTime=null;
 let selectedTable=null;
-let busyTimes={};
+let selectedTime=null;
+let busyTimes=[];
 
 /* ===== TIME ===== */
 for(let h=12;h<24;h++){
- let t=h+":00";
  let el=document.createElement("div");
-
  el.className="time";
- el.innerText=t;
+ el.innerText=h+":00";
 
  el.onclick=()=>{
-  selectedTime=t;
+  selectedTime=h+":00";
   document.querySelectorAll(".time").forEach(x=>x.classList.remove("active"));
   el.classList.add("active");
-  render();
+  renderTables();
  };
 
  slider.appendChild(el);
@@ -117,14 +257,16 @@ for(let h=12;h<24;h++){
 /* ===== UTILS ===== */
 function toMin(t){let [h,m]=t.split(":");return h*60+ +m;}
 function duration(g){return g<=2?90:g<=4?120:240;}
+function minToTime(m){let h=Math.floor(m/60);let min=m%60;return `${h}:${min}`}
 
 /* ===== STATUS ===== */
 function getStatus(table){
  if(!selectedTime) return {text:"Выберите время"};
 
- let times=busyTimes[table]||[];
  let start=toMin(selectedTime);
  let end=start+duration(2);
+
+ let times=busyTimes[table]||[];
 
  for(let t of times){
   let s=toMin(t);
@@ -139,9 +281,8 @@ function getStatus(table){
 }
 
 /* ===== RENDER ===== */
-function render(){
+function renderTables(){
  grid.innerHTML="";
-
  TABLES.forEach(t=>{
   let st=getStatus(t.id);
 
@@ -151,88 +292,102 @@ function render(){
   el.innerHTML=`
     <img src="${t.img}">
     <div class="status ${st.color||""}">${st.text}</div>
+    <div class="dot ${st.color||""}"></div>
     <div class="info">№${t.id} 👥 ${t.cap}</div>
   `;
 
-  el.onclick=()=>openModal(t);
+  el.onclick=()=>openTable(t);
 
   grid.appendChild(el);
  });
 }
 
 /* ===== LOAD ===== */
-async function load(){
+async function loadBusy(){
  for(let t of TABLES){
   try{
    let res=await fetch(`${API}/busy_times?table=${t.id}`);
    busyTimes[t.id]=await res.json();
-  }catch{
-   busyTimes[t.id]=[];
-  }
+  }catch{busyTimes[t.id]=[];}
  }
- render();
+ renderTables();
 }
 
 /* ===== MODALS ===== */
-function openModal(t){
+function openTable(t){
  selectedTable=t.id;
- modal.classList.add("active");
- modalTitle.innerText="Стол "+t.id;
- modalImg.src=t.img;
+ tableModal.classList.add("active");
+ tableTitle.innerText="СТОЛ "+t.id;
+ tableImg.src=t.img;
 }
 
-function closeModal(){modal.classList.remove("active");}
+function closeTable(){tableModal.classList.remove("active");}
 
-function openBooking(){
- modal.classList.remove("active");
- bookingModal.classList.add("active");
+async function openTime(){
+ tableModal.classList.remove("active");
+ timeModal.classList.add("active");
+
+ let res=await fetch(`${API}/busy_times?table=${selectedTable}`);
+ busyTimes[selectedTable]=await res.json();
+
+ renderTime();
 }
 
-function closeBooking(){bookingModal.classList.remove("active");}
+/* ===== TIME GRID ===== */
+function renderTime(){
+ let html="";
+ let times=busyTimes[selectedTable]||[];
+
+ for(let h=12;h<24;h++){
+  let t=h+":00";
+
+  let busy=times.includes(t);
+
+  html+=`<div class="slot ${busy?'busy':''}" onclick="selectTime('${t}')">${h}</div>`;
+ }
+
+ timeGrid.innerHTML=html;
+}
+
+function selectTime(t){
+ selectedTime=t;
+
+ document.querySelectorAll(".slot").forEach(x=>x.classList.remove("active"));
+ event.target.classList.add("active");
+
+ formModal.classList.add("active");
+ timeModal.classList.remove("active");
+}
 
 /* ===== BOOK ===== */
 async function book(){
-
- if(!selectedTime || !selectedTable){
-  alert("Выберите время и стол");
-  return;
- }
-
  let data={
+  table:selectedTable,
+  time:selectedTime,
   name:name.value,
   phone:phone.value,
   guests:parseInt(guests.value),
-  table:selectedTable,
-  time:selectedTime,
   date:new Date().toISOString().split("T")[0]
  };
 
- try{
-  let res=await fetch(API+"/booking",{
-   method:"POST",
-   headers:{"Content-Type":"application/json"},
-   body:JSON.stringify(data)
-  });
+ let res=await fetch(API+"/booking",{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify(data)
+ });
 
-  let result=await res.json();
-
-  if(result.error){
-    alert("Стол уже занят");
-    return;
-  }
-
-  alert("Бронь создана ✅");
-
-  bookingModal.classList.remove("active");
-  load();
-
- }catch{
-  alert("Ошибка сервера");
- }
+ alert("Бронь создана");
+ location.reload();
 }
 
+/* NAV */
+function closeTime(){timeModal.classList.remove("active")}
+function closeForm(){formModal.classList.remove("active")}
+function backToTable(){timeModal.classList.remove("active");tableModal.classList.add("active")}
+function backToTime(){formModal.classList.remove("active");timeModal.classList.add("active")}
+
 /* INIT */
-load();
+loadBusy();
 </script>
 
 </body>
