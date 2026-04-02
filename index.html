@@ -7,24 +7,44 @@
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#2b1208;color:#fff;font-family:sans-serif}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto;
+  background:#2b1208;color:#fff;
+}
+
+/* HEADER */
+.top{
+  background:#eee;color:#000;padding:12px;
+  display:flex;justify-content:space-between
+}
+
+/* TIMELINE */
+.timeline{
+  background:#3b1509;padding:12px;
+  display:flex;gap:8px;overflow-x:auto
+}
+.time-chip{
+  min-width:80px;text-align:center;padding:10px;
+  border-radius:10px;background:#0003;cursor:pointer
+}
+.time-chip.active{background:#fff;color:#000}
 
 /* GRID */
 .grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
   gap:12px;padding:12px
 }
 .card{
   border-radius:16px;overflow:hidden;cursor:pointer;
   position:relative
 }
-.card img{width:100%;height:150px;object-fit:cover}
+.card img{width:100%;height:160px;object-fit:cover}
 .card-info{position:absolute;bottom:0;padding:10px}
 
 /* MODAL */
 .modal{
-  position:fixed;inset:0;background:#000c;
+  position:fixed;inset:0;background:rgba(0,0,0,.9);
   opacity:0;pointer-events:none;transition:.3s
 }
 .modal.active{opacity:1;pointer-events:auto}
@@ -32,7 +52,8 @@ body{background:#2b1208;color:#fff;font-family:sans-serif}
 .box{
   position:absolute;left:50%;top:50%;
   transform:translate(-50%,-40%) scale(.95);
-  opacity:0;background:#111;border-radius:14px;width:380px;
+  opacity:0;
+  background:#111;border-radius:14px;width:420px;
   transition:.3s
 }
 .modal.active .box{
@@ -45,7 +66,7 @@ body{background:#2b1208;color:#fff;font-family:sans-serif}
   display:flex;justify-content:space-between
 }
 
-/* TIME */
+/* TIME GRID */
 .time-grid{
   display:flex;flex-wrap:wrap;gap:8px;padding:12px
 }
@@ -58,9 +79,9 @@ body{background:#2b1208;color:#fff;font-family:sans-serif}
 .slot:hover{transform:scale(1.05)}
 .slot.active{background:#fff;color:#000}
 .slot.range{background:#444}
-.slot.busy{opacity:.35}
+.slot.busy{opacity:.3}
 
-/* BTN */
+/* BUTTON */
 .btn{
   margin:12px;padding:16px;border-radius:12px;
   text-align:center;background:#fff;color:#000;
@@ -81,9 +102,16 @@ input{
 
 <body>
 
+<div class="top">
+  <b>Dubrovka Lounge</b>
+  <div>+7‒913‒432‒01‒01</div>
+</div>
+
+<div id="timeline" class="timeline"></div>
+
 <div id="grid" class="grid"></div>
 
-<!-- TABLE -->
+<!-- TABLE MODAL -->
 <div id="tableModal" class="modal">
   <div class="box">
     <div class="header">
@@ -95,10 +123,9 @@ input{
   </div>
 </div>
 
-<!-- TIME -->
+<!-- TIME MODAL -->
 <div id="timeModal" class="modal">
   <div class="box">
-
     <div class="header">
       <div>Дата и время</div>
       <div onclick="closeTime()">✕</div>
@@ -138,12 +165,13 @@ const API="https://dubrovka-webapp-production.up.railway.app";
 
 /* TABLES */
 const TABLES=[
- {id:"1",img:"https://images.unsplash.com/photo-1552566626-52f8b828add9"},
- {id:"2",img:"https://images.unsplash.com/photo-1555396273-367ea4eb4db5"},
- {id:"3",img:"https://images.unsplash.com/photo-1565299624946-b28f40a0ae38"},
- {id:"4",img:"https://images.unsplash.com/photo-1541542684-4a0f6a1d1a66"},
- {id:"5",img:"https://images.unsplash.com/photo-1559339352-11d035aa65de"},
- {id:"6",img:"https://images.unsplash.com/photo-1559339352-11d035aa65de"}
+ {id:"1",img:"table1.jpg"},
+ {id:"2",img:"table2.jpg"},
+ {id:"3",img:"table3.jpg"},
+ {id:"4",img:"table4.jpg"},
+ {id:"5",img:"table5.jpg"},
+ {id:"6",img:"table6.jpg"},
+ {id:"vip",img:"vip.jpg"}
 ];
 
 let selectedTable=null;
@@ -151,18 +179,34 @@ let selectedFrom=null;
 let selectedTo=null;
 let busyMap={};
 
+/* UTILS */
+const toMin=t=>{
+  let[a,b]=t.split(":").map(Number);
+  return a*60+b;
+};
+
 /* FAST LOAD */
 async function loadBusy(){
-  let res=await Promise.all(
-    TABLES.map(t=>fetch(`${API}/busy_times?table=${t.id}`).then(r=>r.json()).catch(()=>[]))
+  const results = await Promise.all(
+    TABLES.map(t =>
+      fetch(`${API}/busy_times?table=${t.id}`)
+        .then(r=>r.json())
+        .catch(()=>[])
+    )
   );
-  TABLES.forEach((t,i)=>busyMap[t.id]=res[i]);
+
+  TABLES.forEach((t,i)=>busyMap[t.id]=results[i]);
 }
 
-/* UTILS */
-function toMin(t){
-  let [h,m]=t.split(":").map(Number);
-  return h*60+m;
+/* TIMELINE */
+for(let h=12;h<24;h++){
+  ["00","30"].forEach(m=>{
+    let t=`${h}:${m}`;
+    let el=document.createElement("div");
+    el.className="time-chip";
+    el.innerText=t;
+    timeline.appendChild(el);
+  });
 }
 
 /* RENDER */
@@ -171,7 +215,10 @@ function render(){
   TABLES.forEach(t=>{
     let el=document.createElement("div");
     el.className="card";
-    el.innerHTML=`<img src="${t.img}"><div class="card-info">№${t.id}</div>`;
+    el.innerHTML=`
+      <img src="${t.img}">
+      <div class="card-info">№${t.id}</div>
+    `;
     el.onclick=()=>openTable(t);
     grid.appendChild(el);
   });
@@ -205,29 +252,28 @@ function openTime(){
 }
 function closeTime(){timeModal.classList.remove("active")}
 
-/* TIME GRID FIXED */
+/* GRID TIME (FIXED) */
 function renderTimeGrid(){
   timeGrid.innerHTML="";
 
   for(let h=12;h<24;h++){
     ["00","30"].forEach(m=>{
       let t=`${String(h).padStart(2,'0')}:${m}`;
+
       let el=document.createElement("div");
       el.className="slot";
       el.innerText=t;
 
-      // busy только визуально
       if(busyMap[selectedTable]?.includes(t)){
         el.classList.add("busy");
       }
 
       el.onclick=()=>{
 
-        // НОВЫЙ ВЫБОР
         if(!selectedFrom){
           selectedFrom=t;
           from.innerText=t;
-          reset();
+          resetSlots();
           el.classList.add("active");
           return;
         }
@@ -237,19 +283,19 @@ function renderTimeGrid(){
           if(toMin(t) <= toMin(selectedFrom)){
             selectedFrom=t;
             from.innerText=t;
-            reset();
+            resetSlots();
             el.classList.add("active");
             return;
           }
 
           selectedTo=t;
           to.innerText=t;
-          highlight();
+
+          highlightRange();
           continueBtn.classList.remove("disabled");
           return;
         }
 
-        // ПЕРЕВЫБОР
         selectedFrom=t;
         selectedTo=null;
 
@@ -258,7 +304,7 @@ function renderTimeGrid(){
 
         continueBtn.classList.add("disabled");
 
-        reset();
+        resetSlots();
         el.classList.add("active");
       };
 
@@ -267,21 +313,21 @@ function renderTimeGrid(){
   }
 }
 
-function reset(){
+function resetSlots(){
   document.querySelectorAll(".slot").forEach(x=>{
     x.classList.remove("active","range");
   });
 }
 
-function highlight(){
+function highlightRange(){
   document.querySelectorAll(".slot").forEach(el=>{
     let t=el.innerText;
 
-    if(toMin(t)>toMin(selectedFrom) && toMin(t)<toMin(selectedTo)){
+    if(toMin(t) > toMin(selectedFrom) && toMin(t) < toMin(selectedTo)){
       el.classList.add("range");
     }
 
-    if(t===selectedTo){
+    if(t === selectedTo){
       el.classList.add("active");
     }
   });
@@ -297,7 +343,7 @@ continueBtn.onclick=()=>{
 /* FORM */
 function closeForm(){formModal.classList.remove("active")}
 
-/* PHONE FIX */
+/* PHONE MASK */
 phone.oninput=()=>{
   let v=phone.value.replace(/\D/g,"").substring(0,11);
   if(!v.startsWith("7")) v="7"+v;
@@ -319,7 +365,7 @@ async function book(){
   }
 
   if(phone.value.length < 16){
-    alert("Введите номер");
+    alert("Введите корректный номер");
     return;
   }
 
@@ -339,7 +385,7 @@ async function book(){
     formModal.classList.remove("active");
 
   }catch{
-    alert("Ошибка");
+    alert("Ошибка соединения");
   }
 }
 
