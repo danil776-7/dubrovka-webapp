@@ -3,155 +3,100 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dubrovka Lounge</title>
+<title>Dubrovka PRO</title>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-
 body{
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto;
-  background:#2b1208;
-  color:#fff;
+  font-family:-apple-system,BlinkMacSystemFont;
+  background:#2b1208;color:#fff;
 }
 
 /* HEADER */
 .header{
-  background:#eee;
-  color:#000;
+  background:#eee;color:#000;
   padding:12px 16px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
+  display:flex;justify-content:space-between
 }
 
 /* GRID */
 .grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
-  gap:12px;
-  padding:12px;
+  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:12px;padding:12px
 }
 
 .card{
-  border-radius:14px;
-  overflow:hidden;
-  cursor:pointer;
-  position:relative;
-  transition:.3s;
+  border-radius:14px;overflow:hidden;
+  position:relative;cursor:pointer
 }
-.card:hover{transform:scale(1.03)}
-
 .card img{
-  width:100%;
-  height:160px;
-  object-fit:cover;
+  width:100%;height:160px;object-fit:cover
 }
 
-.card-info{
-  position:absolute;
-  bottom:0;
-  width:100%;
-  padding:10px;
-  background:linear-gradient(transparent,rgba(0,0,0,0.8));
+.overlay{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  justify-content:space-between;padding:10px;
+  background:linear-gradient(transparent,rgba(0,0,0,.8))
 }
+
+/* STATUS */
+.status{
+  padding:4px 8px;border-radius:8px;
+  font-size:12px;width:max-content
+}
+.free{background:#1faa5c}
+.partial{background:#cfa72a}
+.busy{background:#c0392b}
 
 /* MODAL */
 .modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.8);
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  opacity:0;
-  pointer-events:none;
-  transition:.3s;
+  position:fixed;inset:0;background:#000c;
+  display:none;justify-content:center;align-items:center
 }
-.modal.active{
-  opacity:1;
-  pointer-events:auto;
-}
+.modal.active{display:flex}
 
 .box{
-  width:420px;
-  background:#111;
-  border-radius:14px;
-  overflow:hidden;
-  transform:translateY(20px);
-  transition:.3s;
-}
-.modal.active .box{
-  transform:translateY(0);
+  width:420px;background:#111;border-radius:14px
 }
 
 .header-modal{
-  padding:14px;
-  background:#1c1c1c;
-  display:flex;
-  justify-content:space-between;
+  padding:14px;background:#1c1c1c;
+  display:flex;justify-content:space-between
 }
 
 /* TIME GRID */
 .time-grid{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  padding:12px;
+  display:flex;flex-wrap:wrap;
+  gap:8px;padding:12px
 }
 
 .slot{
-  width:70px;
-  padding:12px;
-  text-align:center;
-  border-radius:8px;
-  background:#1c1c1c;
-  border:1px solid #333;
-  cursor:pointer;
-  transition:.2s;
+  width:70px;padding:12px;text-align:center;
+  border-radius:8px;background:#1c1c1c;
+  border:1px solid #333;cursor:pointer
 }
-.slot:hover{transform:scale(1.05)}
-
-.slot.active{
-  background:#fff;
-  color:#000;
-}
-
-.slot.range{
-  background:#444;
-}
+.slot.active{background:#fff;color:#000}
+.slot.range{background:#444}
+.slot.busy{opacity:.3;pointer-events:none}
 
 /* BUTTON */
 .btn{
-  margin:12px;
-  padding:14px;
-  text-align:center;
-  background:#fff;
-  color:#000;
-  border-radius:10px;
-  font-weight:600;
-  cursor:pointer;
-  transition:.2s;
+  margin:12px;padding:14px;text-align:center;
+  background:#fff;color:#000;border-radius:10px;
+  cursor:pointer
 }
 .btn.disabled{
-  background:#555;
-  color:#aaa;
-  cursor:not-allowed;
+  background:#555;color:#aaa
 }
 
 /* INPUT */
 input{
   width:calc(100% - 24px);
-  margin:8px 12px;
-  padding:14px;
-  border-radius:10px;
-  border:1px solid #333;
-  background:#1c1c1c;
-  color:#fff;
-}
-
-/* MOBILE */
-@media(max-width:500px){
-  .box{width:95%}
+  margin:8px 12px;padding:14px;
+  border-radius:10px;border:1px solid #333;
+  background:#1c1c1c;color:#fff
 }
 </style>
 </head>
@@ -164,18 +109,6 @@ input{
 </div>
 
 <div id="grid" class="grid"></div>
-
-<!-- TABLE -->
-<div id="tableModal" class="modal">
-  <div class="box">
-    <div class="header-modal">
-      <div>Стол №<span id="tableId"></span></div>
-      <div onclick="closeTable()">✕</div>
-    </div>
-    <img id="tableImg" style="width:100%;height:200px;object-fit:cover">
-    <div class="btn" onclick="openTime()">Забронировать</div>
-  </div>
-</div>
 
 <!-- TIME -->
 <div id="timeModal" class="modal">
@@ -206,9 +139,12 @@ input{
       <div onclick="closeForm()">✕</div>
     </div>
 
-    <input id="name" placeholder="Имя">
+    <input placeholder="Имя">
+
     <input id="phone" placeholder="+7 XXX XXX XX XX" maxlength="18">
-    <input id="guests" type="number" min="1" max="20" value="2">
+
+    <!-- 🔥 ЛИМИТ ГОСТЕЙ -->
+    <input id="guests" type="number" min="1" max="8" value="2">
 
     <div class="btn" onclick="book()">Подтвердить</div>
   </div>
@@ -217,47 +153,70 @@ input{
 <script>
 
 /* TABLES */
-const TABLES=[
- {id:1,img:"https://images.unsplash.com/photo-1552566626-52f8b828add9"},
- {id:2,img:"https://images.unsplash.com/photo-1555396273-367ea4eb4db5"},
- {id:3,img:"https://images.unsplash.com/photo-1565299624946-b28f40a0ae38"},
- {id:4,img:"https://images.unsplash.com/photo-1541542684-4a0f6a1d1a66"},
- {id:5,img:"https://images.unsplash.com/photo-1559339352-11d035aa65de"},
- {id:6,img:"https://images.unsplash.com/photo-1559339352-11d035aa65de"},
- {id:"VIP",img:"https://images.unsplash.com/photo-1559339352-11d035aa65de"}
-];
+const TABLES=[1,2,3,4,5,6,"VIP"];
+
+/* ЗАНЯТОСТЬ */
+const BUSY={
+  1:[["18:00","20:00"]],
+  2:[["17:30","19:00"]],
+  3:[["19:00","22:00"]],
+  4:[],
+  5:[["16:00","18:00"]],
+  6:[["20:00","23:00"]],
+  VIP:[["18:00","23:00"]]
+};
 
 let selectedTable=null;
 let selectedFrom=null;
 let selectedTo=null;
 
+/* STATUS */
+function getStatus(table){
+  const busy=BUSY[table]||[];
+
+  if(busy.length===0){
+    return {class:"free",text:"Свободно"};
+  }
+
+  if(busy.length>=2){
+    return {class:"busy",text:"Занято"};
+  }
+
+  return {
+    class:"partial",
+    text:`Свободно до ${busy[0][0]}`
+  };
+}
+
 /* RENDER */
 function render(){
   grid.innerHTML="";
+
   TABLES.forEach(t=>{
+    let s=getStatus(t);
+
     let el=document.createElement("div");
     el.className="card";
+
     el.innerHTML=`
-      <img src="${t.img}">
-      <div class="card-info">Стол ${t.id}</div>
+      <img src="https://images.unsplash.com/photo-1552566626-52f8b828add9">
+      <div class="overlay">
+        <div class="status ${s.class}">${s.text}</div>
+        <div>Стол ${t}</div>
+      </div>
     `;
-    el.onclick=()=>openTable(t);
+
+    el.onclick=()=>{
+      selectedTable=t;
+      openTime();
+    };
+
     grid.appendChild(el);
   });
 }
 
-/* TABLE */
-function openTable(t){
-  selectedTable=t.id;
-  tableId.innerText=t.id;
-  tableImg.src=t.img;
-  tableModal.classList.add("active");
-}
-function closeTable(){tableModal.classList.remove("active")}
-
 /* TIME */
 function openTime(){
-  closeTable();
   timeModal.classList.add("active");
 
   selectedFrom=null;
@@ -268,11 +227,12 @@ function openTime(){
 
   continueBtn.classList.add("disabled");
 
-  dateInput.value=new Date().toISOString().split("T")[0];
-
   renderTimeGrid();
 }
-function closeTime(){timeModal.classList.remove("active")}
+
+function closeTime(){
+  timeModal.classList.remove("active");
+}
 
 /* TIME GRID */
 function renderTimeGrid(){
@@ -285,6 +245,10 @@ function renderTimeGrid(){
       let el=document.createElement("div");
       el.className="slot";
       el.innerText=t;
+
+      if(isBusy(t)){
+        el.classList.add("busy");
+      }
 
       el.onclick=()=>{
 
@@ -310,7 +274,6 @@ function renderTimeGrid(){
           to.innerText=t;
 
           highlight();
-
           continueBtn.classList.remove("disabled");
           return;
         }
@@ -332,6 +295,11 @@ function renderTimeGrid(){
   }
 }
 
+function isBusy(t){
+  const busy=BUSY[selectedTable]||[];
+  return busy.some(([s,e])=>t>=s && t<e);
+}
+
 function reset(){
   document.querySelectorAll(".slot").forEach(x=>{
     x.classList.remove("active","range");
@@ -344,7 +312,7 @@ function highlight(){
     if(t > selectedFrom && t < selectedTo){
       el.classList.add("range");
     }
-    if(t === selectedTo){
+    if(t===selectedTo){
       el.classList.add("active");
     }
   });
@@ -358,25 +326,33 @@ continueBtn.onclick=()=>{
 }
 
 /* FORM */
-function closeForm(){formModal.classList.remove("active")}
+function closeForm(){
+  formModal.classList.remove("active");
+}
 
-/* PHONE MASK */
+/* LIMIT ГОСТЕЙ */
+guests.oninput=()=>{
+  if(guests.value>8) guests.value=8;
+  if(guests.value<1) guests.value=1;
+}
+
+/* PHONE */
 phone.oninput=()=>{
   let v=phone.value.replace(/\D/g,"").substring(0,11);
   if(!v.startsWith("7")) v="7"+v;
 
   let f="+7";
-  if(v.length>1) f+=" "+v.substring(1,4);
-  if(v.length>4) f+=" "+v.substring(4,7);
-  if(v.length>7) f+=" "+v.substring(7,9);
-  if(v.length>9) f+=" "+v.substring(9,11);
+  if(v.length>1) f+=" "+v.slice(1,4);
+  if(v.length>4) f+=" "+v.slice(4,7);
+  if(v.length>7) f+=" "+v.slice(7,9);
+  if(v.length>9) f+=" "+v.slice(9,11);
 
   phone.value=f;
 }
 
 /* BOOK */
 function book(){
-  alert(`Бронь:\nСтол: ${selectedTable}\n${selectedFrom}-${selectedTo}`);
+  alert("Бронь создана");
 }
 
 /* INIT */
