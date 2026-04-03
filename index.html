@@ -733,27 +733,31 @@ body {
 <script>
 // Telegram WebApp
 const tg = window.Telegram.WebApp;
+let userChatId = null;
+
 if (tg) {
   tg.expand();
-  tg.enableClosingConfirmation();
+  if (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) {
+    userChatId = tg.initDataUnsafe.user.id;
+  }
   if (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) {
     document.getElementById("modalName").value = tg.initDataUnsafe.user.first_name;
   }
 }
 
 // ================= API НАСТРОЙКИ =================
-// !!! ВСТАВЬТЕ ВАШ API URL АДМИН ПАНЕЛИ !!!
-const API_URL = "https://pro.restoplace.ws/api/bookings";
+// Используем ваш Railway API
+const API_URL = "https://dubrovka-webapp-production.up.railway.app";
 
 // ================= ДАННЫЕ СТОЛОВ =================
 const TABLES = [
-  { id: 1, number: 1, zone: "main", zoneName: "Основной зал", capacity: 4, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
-  { id: 2, number: 2, zone: "main", zoneName: "Основной зал", capacity: 4, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
-  { id: 3, number: 3, zone: "main", zoneName: "Основной зал", capacity: 4, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
-  { id: 4, number: 4, zone: "main", zoneName: "Основной зал", capacity: 4, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
-  { id: 5, number: 5, zone: "main", zoneName: "Основной зал", capacity: 4, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
-  { id: 6, number: 6, zone: "main", zoneName: "Основной зал", capacity: 4, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
-  { id: 7, number: "VIP", zone: "vip", zoneName: "VIP комната", capacity: 10, isVip: true, image: "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=300" }
+  { id: "1", number: 1, zone: "main", zoneName: "Основной зал", capacity: 7, name: "Стол №1", image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: "2", number: 2, zone: "main", zoneName: "Основной зал", capacity: 5, name: "Стол №2", image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: "3", number: 3, zone: "main", zoneName: "Основной зал", capacity: 5, name: "Стол №3", image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: "4", number: 4, zone: "main", zoneName: "Основной зал", capacity: 5, name: "Стол №4", image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: "5", number: 5, zone: "main", zoneName: "Основной зал", capacity: 5, name: "Стол №5", image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: "6", number: 6, zone: "main", zoneName: "Основной зал", capacity: 3, name: "Стол №6", image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: "VIP", number: "VIP", zone: "vip", zoneName: "VIP комната", capacity: 20, isVip: true, image: "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=300" }
 ];
 
 // ================= ПЕРЕМЕННЫЕ =================
@@ -763,6 +767,7 @@ let currentZone = "all";
 let selectedStartTime = null;
 let selectedEndTime = null;
 let ALL_TIMES = [];
+let busyTimes = {};
 
 // DOM элементы
 const track = document.getElementById("track");
@@ -821,6 +826,7 @@ function generateAllTimes() {
 
 function updateTimeMarkers() {
   const markersDiv = document.getElementById("timeMarkers");
+  if (!markersDiv) return;
   const startHour = getStartHour();
   const maxHour = getMaxHour();
   const hours = [];
@@ -831,43 +837,33 @@ function updateTimeMarkers() {
   markersDiv.innerHTML = hours.map(h => `<span>${h}</span>`).join('');
 }
 
-// ================= ПОЛУЧЕНИЕ БРОНЕЙ С СЕРВЕРА =================
-let BOOKINGS = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [] };
-
-async function loadBookingsFromServer() {
-  try {
-    const today = new Date().toISOString().split('T')[0];
-    const response = await fetch(`${API_URL}?date=${today}`);
-    if (response.ok) {
-      const data = await response.json();
-      // Очищаем существующие брони
-      for (let i = 1; i <= 7; i++) BOOKINGS[i] = [];
-      // Заполняем из ответа сервера
-      if (Array.isArray(data)) {
-        data.forEach(booking => {
-          const tableId = parseInt(booking.tableId);
-          if (BOOKINGS[tableId]) {
-            BOOKINGS[tableId].push({ start: booking.startTime, end: booking.endTime });
-          }
-        });
+// ================= ЗАГРУЗКА БРОНЕЙ С СЕРВЕРА =================
+async function loadBusyTimes() {
+  const today = new Date().toISOString().split('T')[0];
+  busyTimes = {};
+  
+  for (const table of TABLES) {
+    if (table.isVip) continue;
+    try {
+      const response = await fetch(`${API_URL}/busy_times?date=${today}&table=${table.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        busyTimes[table.id] = Array.isArray(data) ? data : [];
+      } else {
+        busyTimes[table.id] = [];
       }
+    } catch (error) {
+      console.log(`Ошибка загрузки для стола ${table.id}`);
+      busyTimes[table.id] = [];
     }
-  } catch (error) {
-    console.log("Не удалось загрузить брони с сервера, используем локальные");
   }
 }
 
 // ================= ПРОВЕРКА СВОБОДНЫХ СТОЛОВ =================
 function isTableFreeAtTime(tableId, timeStr) {
-  if (tableId === 7) return true;
-  const bookings = BOOKINGS[tableId] || [];
-  const timeMinutes = toMinutes(timeStr);
-  for (const booking of bookings) {
-    const startMin = toMinutes(booking.start);
-    const endMin = toMinutes(booking.end);
-    if (timeMinutes >= startMin && timeMinutes < endMin) return false;
-  }
-  return true;
+  if (tableId === "VIP") return true;
+  const busy = busyTimes[tableId] || [];
+  return !busy.includes(timeStr);
 }
 
 function getFreeTables() {
@@ -879,7 +875,7 @@ function getFreeTables() {
 
 // ================= ДОСТУПНЫЕ ВРЕМЕНА ДЛЯ БРОНИ =================
 function getAvailableStartTimes(tableId, baseTime) {
-  const bookings = BOOKINGS[tableId] || [];
+  const busy = busyTimes[tableId] || [];
   const available = [];
   const baseMin = toMinutes(baseTime);
   
@@ -887,23 +883,13 @@ function getAvailableStartTimes(tableId, baseTime) {
     const startSlot = ALL_TIMES[i];
     const startMin = toMinutes(startSlot);
     if (startMin < baseMin) continue;
-    
-    let conflict = false;
-    for (const booking of bookings) {
-      const bookingStart = toMinutes(booking.start);
-      const bookingEnd = toMinutes(booking.end);
-      if (startMin >= bookingStart && startMin < bookingEnd) {
-        conflict = true;
-        break;
-      }
-    }
-    if (!conflict) available.push(startSlot);
+    if (!busy.includes(startSlot)) available.push(startSlot);
   }
   return available;
 }
 
 function getAvailableEndTimes(tableId, startTime) {
-  const bookings = BOOKINGS[tableId] || [];
+  const busy = busyTimes[tableId] || [];
   const startMin = toMinutes(startTime);
   const available = [];
   
@@ -911,17 +897,7 @@ function getAvailableEndTimes(tableId, startTime) {
     const endSlot = ALL_TIMES[i];
     const endMin = toMinutes(endSlot);
     if (endMin <= startMin) continue;
-    
-    let conflict = false;
-    for (const booking of bookings) {
-      const bookingStart = toMinutes(booking.start);
-      const bookingEnd = toMinutes(booking.end);
-      if (!(endMin <= bookingStart || startMin >= bookingEnd)) {
-        conflict = true;
-        break;
-      }
-    }
-    if (!conflict) available.push(endSlot);
+    if (!busy.includes(endSlot)) available.push(endSlot);
   }
   return available;
 }
@@ -945,48 +921,57 @@ function updateTimeFromPercent(percent) {
 }
 
 function setPointerPosition(clientX) {
+  if (!track) return;
   const rect = track.getBoundingClientRect();
   let pos = clientX - rect.left;
   if (pos < 0) pos = 0;
   if (pos > rect.width) pos = rect.width;
   
   const percent = pos / rect.width;
-  pointer.style.left = `${percent * 100}%`;
-  fill.style.width = `${percent * 100}%`;
+  if (pointer) pointer.style.left = `${percent * 100}%`;
+  if (fill) fill.style.width = `${percent * 100}%`;
   updateTimeFromPercent(percent);
 }
 
 let isDragging = false;
 
-pointer.onmousedown = (e) => {
-  isDragging = true;
-  document.onmousemove = (moveEvent) => setPointerPosition(moveEvent.clientX);
-  document.onmouseup = () => {
-    isDragging = false;
-    document.onmousemove = null;
-    document.onmouseup = null;
+if (pointer) {
+  pointer.onmousedown = (e) => {
+    isDragging = true;
+    document.onmousemove = (moveEvent) => setPointerPosition(moveEvent.clientX);
+    document.onmouseup = () => {
+      isDragging = false;
+      document.onmousemove = null;
+      document.onmouseup = null;
+    };
+    e.preventDefault();
   };
-  e.preventDefault();
-};
+}
 
-track.onclick = (e) => setPointerPosition(e.clientX);
+if (track) {
+  track.onclick = (e) => setPointerPosition(e.clientX);
+}
 
-pointer.ontouchstart = (e) => {
-  isDragging = true;
-  setPointerPosition(e.touches[0].clientX);
-  document.ontouchmove = (moveEvent) => setPointerPosition(moveEvent.touches[0].clientX);
-  document.ontouchend = () => {
-    isDragging = false;
-    document.ontouchmove = null;
-    document.ontouchend = null;
+if (pointer) {
+  pointer.ontouchstart = (e) => {
+    isDragging = true;
+    setPointerPosition(e.touches[0].clientX);
+    document.ontouchmove = (moveEvent) => setPointerPosition(moveEvent.touches[0].clientX);
+    document.ontouchend = () => {
+      isDragging = false;
+      document.ontouchmove = null;
+      document.ontouchend = null;
+    };
+    e.preventDefault();
   };
-  e.preventDefault();
-};
+}
 
-track.ontouchstart = (e) => {
-  setPointerPosition(e.touches[0].clientX);
-  e.preventDefault();
-};
+if (track) {
+  track.ontouchstart = (e) => {
+    setPointerPosition(e.touches[0].clientX);
+    e.preventDefault();
+  };
+}
 
 // ================= ОТРИСОВКА СТОЛОВ =================
 function renderFreeTables() {
@@ -1036,7 +1021,7 @@ function renderFreeTables() {
   document.querySelectorAll('.table-card').forEach(card => {
     card.addEventListener('click', (e) => {
       e.stopPropagation();
-      const tableId = parseInt(card.dataset.id);
+      const tableId = card.dataset.id;
       const isVip = card.dataset.isvip === 'true';
       const table = TABLES.find(t => t.id === tableId);
       
@@ -1096,50 +1081,38 @@ function closeBookingModal() { bookingModal.classList.remove("active"); }
 function openVipModal() { vipModal.classList.add("active"); }
 function closeVipModal() { vipModal.classList.remove("active"); }
 
-startTimeSelect.onchange = () => {
-  selectedStartTime = startTimeSelect.value;
-  updateEndTimeOptions();
-};
-
-endTimeSelect.onchange = () => {
-  selectedEndTime = endTimeSelect.value;
-  durationInfo.textContent = `${selectedStartTime} — ${selectedEndTime}`;
-};
-
-modalPhone.oninput = () => {
-  let v = modalPhone.value.replace(/\D/g, "").substring(0, 11);
-  if (!v.startsWith("7")) v = "7" + v;
-  modalPhone.value = "+" + v;
-};
-
-modalGuests.oninput = () => {
-  if (selectedTable && parseInt(modalGuests.value) > selectedTable.capacity) {
-    modalGuests.value = selectedTable.capacity;
-  }
-  modalHookahWarning.style.display = parseInt(modalGuests.value) >= 5 ? "block" : "none";
-};
-
-// ================= ОТПРАВКА БРОНИ В АДМИН ПАНЕЛЬ =================
-async function sendBookingToAdmin(bookingData) {
-  try {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(bookingData),
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    return await response.json();
-  } catch (error) {
-    console.error("Ошибка отправки:", error);
-    throw error;
-  }
+if (startTimeSelect) {
+  startTimeSelect.onchange = () => {
+    selectedStartTime = startTimeSelect.value;
+    updateEndTimeOptions();
+  };
 }
 
+if (endTimeSelect) {
+  endTimeSelect.onchange = () => {
+    selectedEndTime = endTimeSelect.value;
+    durationInfo.textContent = `${selectedStartTime} — ${selectedEndTime}`;
+  };
+}
+
+if (modalPhone) {
+  modalPhone.oninput = () => {
+    let v = modalPhone.value.replace(/\D/g, "").substring(0, 11);
+    if (!v.startsWith("7")) v = "7" + v;
+    modalPhone.value = "+" + v;
+  };
+}
+
+if (modalGuests) {
+  modalGuests.oninput = () => {
+    if (selectedTable && parseInt(modalGuests.value) > selectedTable.capacity) {
+      modalGuests.value = selectedTable.capacity;
+    }
+    modalHookahWarning.style.display = parseInt(modalGuests.value) >= 5 ? "block" : "none";
+  };
+}
+
+// ================= ОТПРАВКА БРОНИ =================
 async function confirmBooking() {
   if (!selectedTable) return;
   
@@ -1155,39 +1128,40 @@ async function confirmBooking() {
   
   const today = new Date().toISOString().split('T')[0];
   const bookingData = {
-    tableId: selectedTable.id,
-    tableNumber: selectedTable.number,
-    date: today,
-    startTime: selectedStartTime,
-    endTime: selectedEndTime,
-    customerName: name,
+    name: name,
     phone: phone,
     guests: guests,
-    status: "active",
-    createdAt: new Date().toISOString(),
-    source: "telegram_webapp"
+    table: selectedTable.id,
+    date: today,
+    time: selectedStartTime,
+    chat_id: userChatId ? String(userChatId) : ""
   };
   
   try {
-    const result = await sendBookingToAdmin(bookingData);
+    const response = await fetch(`${API_URL}/booking`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(bookingData),
+    });
     
-    // Локальное сохранение брони
-    if (!BOOKINGS[selectedTable.id]) BOOKINGS[selectedTable.id] = [];
-    BOOKINGS[selectedTable.id].push({ start: selectedStartTime, end: selectedEndTime });
-    BOOKINGS[selectedTable.id].sort((a, b) => toMinutes(a.start) - toMinutes(b.start));
+    const result = await response.json();
     
-    alert(`✅ Бронь создана!\n\nСтол №${selectedTable.number}\nВремя: ${selectedStartTime} — ${selectedEndTime}\nГости: ${guests}\nИмя: ${name}`);
-    
-    if (tg) {
-      tg.sendData(JSON.stringify({ action: "booking_created", ...bookingData }));
+    if (response.ok && result.ok) {
+      alert(`✅ Бронь создана!\n\nСтол №${selectedTable.number}\nВремя: ${selectedStartTime} — ${selectedEndTime}\nГости: ${guests}\nИмя: ${name}`);
+      
+      if (tg) {
+        tg.sendData(JSON.stringify({ action: "booking_created", ...bookingData }));
+      }
+      
+      closeBookingModal();
+      await loadBusyTimes();
+      renderFreeTables();
+    } else {
+      alert("❌ Ошибка при создании брони: " + (result.detail || "Попробуйте другое время"));
     }
-    
-    closeBookingModal();
-    renderFreeTables();
-    
   } catch (error) {
-    alert("❌ Ошибка при создании брони. Попробуйте позже или позвоните нам.");
     console.error(error);
+    alert("❌ Ошибка соединения. Попробуйте позже или позвоните нам.");
   }
 }
 
@@ -1207,26 +1181,34 @@ document.getElementById("currentDate").textContent = `Сегодня, ${today.ge
 function toggleAudio() {
   const video = document.getElementById('bgVideo');
   const btn = document.getElementById('audioToggle');
-  video.muted = !video.muted;
-  btn.innerHTML = video.muted ? '🔇' : '🔊';
+  if (video) {
+    video.muted = !video.muted;
+    btn.innerHTML = video.muted ? '🔇' : '🔊';
+  }
 }
 
-bookingModal.addEventListener('click', (e) => { if (e.target === bookingModal) closeBookingModal(); });
-vipModal.addEventListener('click', (e) => { if (e.target === vipModal) closeVipModal(); });
+if (bookingModal) {
+  bookingModal.addEventListener('click', (e) => { if (e.target === bookingModal) closeBookingModal(); });
+}
+if (vipModal) {
+  vipModal.addEventListener('click', (e) => { if (e.target === vipModal) closeVipModal(); });
+}
 
 // ИНИЦИАЛИЗАЦИЯ
 async function init() {
   ALL_TIMES = generateAllTimes();
   updateTimeMarkers();
   selectedTime = ALL_TIMES[0] || "12:00";
-  currentTimeDisplay.textContent = selectedTime;
+  if (currentTimeDisplay) currentTimeDisplay.textContent = selectedTime;
   
-  await loadBookingsFromServer();
+  await loadBusyTimes();
   renderFreeTables();
   
   setTimeout(() => {
-    const rect = track.getBoundingClientRect();
-    if (rect.width > 0) setPointerPosition(rect.left);
+    if (track) {
+      const rect = track.getBoundingClientRect();
+      if (rect.width > 0) setPointerPosition(rect.left);
+    }
   }, 100);
 }
 
