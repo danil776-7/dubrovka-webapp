@@ -2,378 +2,911 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dubrovka PRO FULL</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>Dubrovka PRO - Бронирование столов</title>
 
 <style>
 
 /* ================= RESET ================= */
-*{margin:0;padding:0;box-sizing:border-box}
-body{
- font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto;
- background:#2b1208;color:#fff;
- overflow-x:hidden;
- user-select:none;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: #2b1208;
+  color: #fff;
+  overflow-x: hidden;
 }
 
 /* ================= HEADER ================= */
-.header{
- background:#eee;color:#000;
- padding:12px 16px;
- display:flex;justify-content:space-between;
- align-items:center;
+.header {
+  background: #eee;
+  color: #000;
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header-phone {
+  background: #2b1208;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
 }
 
 /* ================= TIMELINE ================= */
-.timeline{
- background:#3b1509;
- padding:20px;
+.timeline-section {
+  background: #3b1509;
+  padding: 20px;
+  border-bottom: 1px solid #5a2a1a;
 }
 
-.timeline-label{
- text-align:center;
- font-weight:600;
- margin-bottom:10px;
+.timeline-label {
+  text-align: center;
+  font-weight: 700;
+  margin-bottom: 12px;
+  font-size: 18px;
+  color: #ffd966;
 }
 
-.timeline-track{
- position:relative;
- height:6px;
- background:#6b3a2a;
- border-radius:10px;
+.timeline-track-container {
+  position: relative;
+  margin: 10px 0;
 }
 
-.timeline-fill{
- position:absolute;
- height:100%;
- background:#fff;
- border-radius:10px;
- width:0%;
+.timeline-track {
+  position: relative;
+  height: 8px;
+  background: #6b3a2a;
+  border-radius: 10px;
+  cursor: pointer;
 }
 
-.timeline-pointer{
- position:absolute;
- top:-5px;
- width:16px;height:16px;
- background:#fff;
- border-radius:50%;
- cursor:pointer;
+.timeline-fill {
+  position: absolute;
+  height: 100%;
+  background: #ffd966;
+  border-radius: 10px;
+  width: 0%;
+  transition: width 0.05s ease;
+}
+
+.timeline-pointer {
+  position: absolute;
+  top: -8px;
+  width: 24px;
+  height: 24px;
+  background: #fff;
+  border-radius: 50%;
+  cursor: grab;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  border: 2px solid #ffd966;
+  transition: left 0.05s ease;
+}
+
+.timeline-pointer:active {
+  cursor: grabbing;
+}
+
+.time-markers {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding: 0 5px;
+  color: #c98a5a;
+  font-size: 11px;
+}
+
+.current-time-display {
+  text-align: center;
+  font-size: 28px;
+  font-weight: bold;
+  color: #ffd966;
+  margin-top: 10px;
+  letter-spacing: 2px;
 }
 
 /* ================= GRID ================= */
-.grid{
- display:grid;
- grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
- gap:12px;padding:16px;
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px;
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 /* ================= CARD ================= */
-.card{
- position:relative;
- border-radius:14px;
- overflow:hidden;
- cursor:pointer;
- transition:.2s;
-}
-.card:hover{transform:scale(1.02)}
-.card.disabled{
- opacity:.35;
- pointer-events:none;
+.card {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  background: #3b1509;
+  border: 1px solid #5a2a1a;
 }
 
-.card img{
- width:100%;
- height:160px;
- object-fit:cover;
+.card:hover:not(.disabled) {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  border-color: #ffd966;
 }
 
-.overlay{
- position:absolute;
- inset:0;
- padding:10px;
- display:flex;
- flex-direction:column;
- justify-content:space-between;
- background:linear-gradient(transparent,rgba(0,0,0,.85));
+.card.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
-.badge{
- padding:4px 8px;
- border-radius:8px;
- font-size:12px;
- width:max-content;
+.card img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
 }
 
-.free{background:#1faa5c}
-.partial{background:#cfa72a}
-.busy{background:#c0392b}
+.overlay {
+  position: absolute;
+  inset: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: linear-gradient(transparent, rgba(0,0,0,0.85));
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.free {
+  background: #1faa5c;
+  color: white;
+}
+
+.partial {
+  background: #cfa72a;
+  color: #2b1208;
+}
+
+.busy {
+  background: #c0392b;
+  color: white;
+}
+
+.table-name {
+  font-weight: 700;
+  font-size: 16px;
+  margin-top: 8px;
+}
+
+.table-capacity {
+  font-size: 11px;
+  opacity: 0.8;
+  margin-top: 4px;
+}
 
 /* ================= MODAL ================= */
-.modal{
- position:fixed;
- inset:0;
- background:rgba(0,0,0,.85);
- display:flex;
- justify-content:center;
- align-items:center;
- opacity:0;
- pointer-events:none;
- transition:.25s;
-}
-.modal.active{
- opacity:1;
- pointer-events:auto;
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.25s;
+  z-index: 1000;
 }
 
-.box{
- width:420px;
- background:#111;
- border-radius:14px;
- overflow:hidden;
- transform:translateY(20px);
- transition:.25s;
-}
-.modal.active .box{
- transform:translateY(0);
+.modal.active {
+  opacity: 1;
+  pointer-events: auto;
 }
 
-.modal-header{
- padding:14px;
- background:#1c1c1c;
- display:flex;
- justify-content:space-between;
+.modal-box {
+  width: 450px;
+  max-width: 94%;
+  background: #1a0e08;
+  border-radius: 20px;
+  overflow: hidden;
+  transform: translateY(20px);
+  transition: 0.25s;
+  border: 1px solid #ffd966;
 }
 
-/* ================= FORM ================= */
-input{
- width:calc(100% - 24px);
- margin:8px 12px;
- padding:14px;
- border-radius:10px;
- border:1px solid #333;
- background:#1c1c1c;
- color:#fff;
+.modal.active .modal-box {
+  transform: translateY(0);
 }
 
-.btn{
- margin:12px;
- padding:14px;
- text-align:center;
- border-radius:10px;
- background:#fff;
- color:#000;
- cursor:pointer;
-}
-.btn.disabled{
- background:#555;color:#aaa;
- pointer-events:none;
+.modal-header {
+  padding: 16px 20px;
+  background: #2b1208;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #5a2a1a;
+  font-weight: 600;
+  font-size: 18px;
 }
 
-/* ================= MOBILE ================= */
-@media(max-width:500px){
- .box{width:95%}
+.modal-header span {
+  cursor: pointer;
+  font-size: 24px;
+  color: #ffd966;
 }
 
+.modal-body {
+  padding: 20px;
+}
+
+.info-row {
+  background: #2b1208;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+/* Выбор интервала времени */
+.time-interval {
+  margin: 20px 0;
+}
+
+.interval-label {
+  font-size: 13px;
+  color: #ffd966;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.interval-row {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.interval-select {
+  flex: 1;
+  background: #2b1208;
+  border: 1px solid #5a2a1a;
+  border-radius: 12px;
+  padding: 12px;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.interval-select:focus {
+  outline: none;
+  border-color: #ffd966;
+}
+
+.interval-duration {
+  font-size: 12px;
+  color: #c98a5a;
+}
+
+input, .input-field {
+  width: 100%;
+  margin: 10px 0;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #5a2a1a;
+  background: #2b1208;
+  color: #fff;
+  font-size: 14px;
+}
+
+input:focus {
+  outline: none;
+  border-color: #ffd966;
+}
+
+input::placeholder {
+  color: #8a5a4a;
+}
+
+.btn {
+  margin: 15px 0 5px;
+  padding: 14px;
+  text-align: center;
+  border-radius: 12px;
+  background: #ffd966;
+  color: #2b1208;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn:hover {
+  background: #ffed9e;
+  transform: scale(1.01);
+}
+
+.btn.disabled {
+  background: #5a4a3a;
+  color: #aaa;
+  pointer-events: none;
+}
+
+.hookah-warning {
+  background: rgba(255, 217, 102, 0.15);
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  text-align: center;
+  margin-top: 12px;
+  color: #ffd966;
+}
+
+/* ================= FOOTER ================= */
+.footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 11px;
+  color: #8a5a4a;
+  border-top: 1px solid #5a2a1a;
+  margin-top: 20px;
+}
+
+@media (max-width: 550px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+    padding: 12px;
+  }
+  .card img {
+    height: 110px;
+  }
+  .current-time-display {
+    font-size: 22px;
+  }
+}
 </style>
 </head>
 
 <body>
 
 <div class="header">
- <b>DUBROVKA</b>
- <div>+7‒913‒432‒01‒01</div>
+  <b>🍷 DUBROVKA LOUNGE & BAR</b>
+  <div class="header-phone">+7‒913‒432‒01‒01</div>
 </div>
 
-<!-- TIMELINE -->
-<div class="timeline">
- <div id="timeLabel" class="timeline-label">12:00</div>
-
- <div id="track" class="timeline-track">
-   <div id="fill" class="timeline-fill"></div>
-   <div id="pointer" class="timeline-pointer"></div>
- </div>
+<!-- TIMELINE СЛАЙДЕР -->
+<div class="timeline-section">
+  <div class="timeline-label">⏰ ПЕРЕМЕСТИТЕ ПОЛЗУНОК, ЧТОБЫ ВЫБРАТЬ ВРЕМЯ</div>
+  
+  <div class="timeline-track-container">
+    <div id="track" class="timeline-track">
+      <div id="fill" class="timeline-fill"></div>
+      <div id="pointer" class="timeline-pointer"></div>
+    </div>
+    <div class="time-markers">
+      <span>12:00</span>
+      <span>14:00</span>
+      <span>16:00</span>
+      <span>18:00</span>
+      <span>20:00</span>
+      <span>22:00</span>
+      <span>00:00</span>
+    </div>
+  </div>
+  
+  <div id="currentTimeDisplay" class="current-time-display">12:00</div>
+  <div style="text-align: center; font-size: 12px; margin-top: 5px; color: #c98a5a;">
+    📍 Свободные столы подсвечиваются зеленым
+  </div>
 </div>
 
-<!-- TABLES -->
+<!-- СЕТКА СТОЛОВ -->
 <div id="grid" class="grid"></div>
 
-<!-- FORM -->
+<!-- МОДАЛЬНОЕ ОКНО БРОНИРОВАНИЯ -->
 <div id="formModal" class="modal">
- <div class="box">
-   <div class="modal-header">
-     <div>Бронирование</div>
-     <div onclick="closeForm()">✕</div>
-   </div>
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>📅 Бронирование стола</div>
+      <span onclick="closeForm()">✕</span>
+    </div>
+    <div class="modal-body">
+      <div class="info-row">
+        <span>🍽️ Стол:</span>
+        <span id="modalTableName" style="color: #ffd966; font-weight: bold;">—</span>
+      </div>
+      
+      <!-- ВЫБОР ИНТЕРВАЛА ВРЕМЕНИ -->
+      <div class="time-interval">
+        <label class="interval-label">⏱️ ВЫБЕРИТЕ ВРЕМЯ БРОНИРОВАНИЯ</label>
+        <div class="interval-row">
+          <select id="startTimeSelect" class="interval-select"></select>
+          <span style="color: #ffd966;">→</span>
+          <select id="endTimeSelect" class="interval-select"></select>
+        </div>
+        <div class="interval-duration" id="durationInfo">Длительность: 2 часа</div>
+      </div>
+      
+      <input type="text" id="customerName" placeholder="👤 ВАШЕ ИМЯ" autocomplete="name">
+      <input type="tel" id="customerPhone" placeholder="📞 ТЕЛЕФОН (+7 XXX XXX XX XX)" maxlength="18">
+      <input type="number" id="guestsCount" min="1" max="10" value="2" placeholder="👥 КОЛИЧЕСТВО ГОСТЕЙ">
+      
+      <div id="hookahWarning" class="hookah-warning" style="display: none;">
+        💨 Для компаний от 5 человек обязательно бронирование 2 кальянов
+      </div>
+      
+      <div id="bookBtn" class="btn">ЗАБРОНИРОВАТЬ</div>
+    </div>
+  </div>
+</div>
 
-   <input placeholder="Имя">
-
-   <input id="phone" placeholder="+7 XXX XXX XX XX" maxlength="18">
-
-   <input id="guests" type="number" min="1" max="8" value="2">
-
-   <div class="btn" onclick="book()">Подтвердить</div>
- </div>
+<div class="footer">
+  📍 Ермакова 11, Новокузнецк | 🕒 Работаем ежедневно с 12:00 до 02:00
 </div>
 
 <script>
 
-/* ================= DATA ================= */
-const TABLES=[1,2,3,4,5,6,"VIP"];
+/* ================= КОНФИГУРАЦИЯ ================= */
+const TABLES = [
+  { id: 1, name: "Стол 1", capacity: 4, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: 2, name: "Стол 2", capacity: 2, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: 3, name: "Стол 3", capacity: 6, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: 4, name: "Стол 4", capacity: 4, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: 5, name: "Стол 5", capacity: 8, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: 6, name: "Стол 6", capacity: 2, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: 7, name: "Стол 7", capacity: 4, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: 8, name: "Стол 8", capacity: 6, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: 9, name: "Стол 9", capacity: 4, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: 10, name: "Стол 10", capacity: 4, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: 11, name: "VIP Стол", capacity: 8, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" }
+];
 
-const BUSY={
- 1:[["18:00","20:00"]],
- 2:[["17:30","19:00"]],
- 3:[["19:00","23:00"]],
- 4:[],
- 5:[["16:00","18:00"]],
- 6:[["20:00","23:00"]],
- VIP:[["18:00","23:00"]]
+// Брони (занятые интервалы для каждого стола)
+// Формат: { start: "14:00", end: "16:00" }
+const BOOKINGS = {
+  1: [{ start: "18:00", end: "20:00" }, { start: "21:30", end: "23:30" }],
+  2: [{ start: "17:30", end: "19:30" }],
+  3: [{ start: "19:00", end: "22:00" }],
+  4: [],
+  5: [{ start: "16:00", end: "18:00" }],
+  6: [{ start: "20:00", end: "22:00" }],
+  7: [{ start: "15:00", end: "17:00" }],
+  8: [{ start: "22:00", end: "00:00" }],
+  9: [],
+  10: [{ start: "14:00", end: "16:00" }],
+  11: [{ start: "18:00", end: "23:00" }]
 };
 
-/* ================= STATE ================= */
-let selectedTime="12:00";
-let selectedTable=null;
+/* ================= ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ================= */
+let selectedTime = "12:00";      // выбранное время ползунком
+let selectedTable = null;         // выбранный стол для брони
+let availableStartTimes = [];     // доступные времена начала для выбранного стола
+let selectedStartTime = null;
+let selectedEndTime = null;
 
-/* ================= UTILS ================= */
-function toMin(t){
- let[a,b]=t.split(":").map(Number);
- return a*60+b;
+// DOM элементы
+const grid = document.getElementById("grid");
+const track = document.getElementById("track");
+const fill = document.getElementById("fill");
+const pointer = document.getElementById("pointer");
+const currentTimeDisplay = document.getElementById("currentTimeDisplay");
+const formModal = document.getElementById("formModal");
+const modalTableName = document.getElementById("modalTableName");
+const startTimeSelect = document.getElementById("startTimeSelect");
+const endTimeSelect = document.getElementById("endTimeSelect");
+const durationInfo = document.getElementById("durationInfo");
+const customerName = document.getElementById("customerName");
+const customerPhone = document.getElementById("customerPhone");
+const guestsCount = document.getElementById("guestsCount");
+const hookahWarning = document.getElementById("hookahWarning");
+const bookBtn = document.getElementById("bookBtn");
+
+/* ================= УТИЛИТЫ ================= */
+function toMinutes(timeStr) {
+  const [h, m] = timeStr.split(":").map(Number);
+  return h * 60 + m;
 }
 
-/* ================= STATUS ================= */
-function getStatus(table,time){
-
- let busy=BUSY[table]||[];
-
- if(!busy.length){
-  return ["free","Свободно"];
- }
-
- let current=busy.find(([s,e])=>{
-  return toMin(time)>=toMin(s) && toMin(time)<toMin(e);
- });
-
- if(current){
-  return ["busy","Занято"];
- }
-
- let next=busy.find(([s])=>toMin(s)>toMin(time));
-
- if(next){
-  return ["partial","Свободно до "+next[0]];
- }
-
- return ["free","Свободно"];
+function formatTime(minutes) {
+  const h = Math.floor(minutes / 60) % 24;
+  const m = minutes % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-/* ================= RENDER ================= */
-function render(){
- grid.innerHTML="";
-
- TABLES.forEach(t=>{
-
-  let [cls,text]=getStatus(t,selectedTime);
-
-  let el=document.createElement("div");
-  el.className="card "+(cls==="busy"?"disabled":"");
-
-  el.innerHTML=`
-    <img src="https://images.unsplash.com/photo-1552566626-52f8b828add9">
-    <div class="overlay">
-      <div class="badge ${cls}">${text}</div>
-      <div>Стол ${t}</div>
-    </div>
-  `;
-
-  if(cls!=="busy"){
-    el.onclick=()=>{
-      selectedTable=t;
-      openForm();
-    };
+// Генерация всех времен с шагом 30 минут (12:00 до 02:00 следующего дня)
+function generateAllTimeSlots() {
+  const slots = [];
+  for (let h = 12; h < 26; h++) {
+    const displayHour = h >= 24 ? h - 24 : h;
+    slots.push(`${String(displayHour).padStart(2, "0")}:00`);
+    slots.push(`${String(displayHour).padStart(2, "0")}:30`);
   }
-
-  grid.appendChild(el);
- });
+  return slots;
 }
 
-/* ================= TIMELINE ================= */
-let pointer=document.getElementById("pointer");
-let track=document.getElementById("track");
-let fill=document.getElementById("fill");
+const ALL_TIME_SLOTS = generateAllTimeSlots();
 
-function updateTime(percent){
-
- let total=12*60 + percent*12*60;
-
- let h=Math.floor(total/60);
- let m=Math.floor((total%60)/30)*30;
-
- selectedTime=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-
- timeLabel.innerText=selectedTime;
-
- render();
+// Проверка, свободен ли стол в выбранное время (для отображения статуса)
+function isTableFreeAtTime(tableId, timeStr) {
+  const bookings = BOOKINGS[tableId] || [];
+  const timeMinutes = toMinutes(timeStr);
+  
+  for (const booking of bookings) {
+    const startMin = toMinutes(booking.start);
+    const endMin = toMinutes(booking.end);
+    if (timeMinutes >= startMin && timeMinutes < endMin) {
+      return false;
+    }
+  }
+  return true;
 }
 
-function setPointer(x){
-
- let rect=track.getBoundingClientRect();
- let pos=x-rect.left;
-
- if(pos<0)pos=0;
- if(pos>rect.width)pos=rect.width;
-
- let percent=pos/rect.width;
-
- pointer.style.left=(percent*100)+"%";
- fill.style.width=(percent*100)+"%";
-
- updateTime(percent);
+// Получить статус стола для отображения в карточке
+function getTableStatus(tableId, timeStr) {
+  const isFree = isTableFreeAtTime(tableId, timeStr);
+  if (!isFree) return { type: "busy", text: "🔴 ЗАНЯТ" };
+  
+  // Проверяем, скоро ли начнется бронь
+  const bookings = BOOKINGS[tableId] || [];
+  const timeMinutes = toMinutes(timeStr);
+  let nextBookingStart = null;
+  
+  for (const booking of bookings) {
+    const startMin = toMinutes(booking.start);
+    if (startMin > timeMinutes) {
+      if (nextBookingStart === null || startMin < nextBookingStart) {
+        nextBookingStart = startMin;
+      }
+    }
+  }
+  
+  if (nextBookingStart && (nextBookingStart - timeMinutes) <= 90) {
+    return { type: "partial", text: `🟡 СВОБ. ДО ${formatTime(nextBookingStart)}` };
+  }
+  
+  return { type: "free", text: "🟢 СВОБОДЕН" };
 }
 
-pointer.onmousedown=()=>{
- document.onmousemove=(e)=>setPointer(e.clientX);
- document.onmouseup=()=>document.onmousemove=null;
+// Получить доступные времена начала брони для стола (с учетом 2-часовых интервалов)
+function getAvailableStartTimesForTable(tableId, baseTime) {
+  const bookings = BOOKINGS[tableId] || [];
+  const available = [];
+  
+  for (let i = 0; i < ALL_TIME_SLOTS.length; i++) {
+    const startSlot = ALL_TIME_SLOTS[i];
+    const startMin = toMinutes(startSlot);
+    const endMin = startMin + 120; // 2 часа
+    
+    // Проверяем пересечение с существующими бронями
+    let conflict = false;
+    for (const booking of bookings) {
+      const bookingStart = toMinutes(booking.start);
+      const bookingEnd = toMinutes(booking.end);
+      if (!(endMin <= bookingStart || startMin >= bookingEnd)) {
+        conflict = true;
+        break;
+      }
+    }
+    
+    // Также проверяем, что начало не раньше выбранного времени
+    if (!conflict && startMin >= toMinutes(baseTime)) {
+      available.push(startSlot);
+    }
+  }
+  
+  return available;
+}
+
+// Обновить select'ы времени в модалке
+function updateTimeSelects() {
+  if (!selectedTable) return;
+  
+  availableStartTimes = getAvailableStartTimesForTable(selectedTable.id, selectedTime);
+  
+  startTimeSelect.innerHTML = "";
+  if (availableStartTimes.length === 0) {
+    startTimeSelect.innerHTML = '<option disabled>Нет доступного времени</option>';
+    endTimeSelect.innerHTML = '<option disabled>—</option>';
+    bookBtn.classList.add("disabled");
+    return;
+  }
+  
+  availableStartTimes.forEach(time => {
+    const option = document.createElement("option");
+    option.value = time;
+    option.textContent = time;
+    startTimeSelect.appendChild(option);
+  });
+  
+  selectedStartTime = availableStartTimes[0];
+  startTimeSelect.value = selectedStartTime;
+  
+  // Обновляем конечное время (начало + 2 часа)
+  updateEndTimeOptions();
+}
+
+function updateEndTimeOptions() {
+  if (!selectedStartTime) return;
+  
+  const startMin = toMinutes(selectedStartTime);
+  const defaultEndMin = startMin + 120;
+  selectedEndTime = formatTime(defaultEndMin);
+  
+  endTimeSelect.innerHTML = "";
+  const option = document.createElement("option");
+  option.value = selectedEndTime;
+  option.textContent = `${selectedEndTime} (2 часа)`;
+  endTimeSelect.appendChild(option);
+  
+  durationInfo.textContent = `Длительность: 2 часа (до ${selectedEndTime})`;
+  bookBtn.classList.remove("disabled");
+}
+
+/* ================= ОТРИСОВКА СТОЛОВ ================= */
+function renderTables() {
+  grid.innerHTML = "";
+  
+  TABLES.forEach(table => {
+    const status = getTableStatus(table.id, selectedTime);
+    const isDisabled = status.type === "busy";
+    
+    const card = document.createElement("div");
+    card.className = `card ${isDisabled ? "disabled" : ""}`;
+    
+    card.innerHTML = `
+      <img src="${table.image}" alt="${table.name}">
+      <div class="overlay">
+        <div class="badge ${status.type}">${status.text}</div>
+        <div class="table-name">🍽️ ${table.name}</div>
+        <div class="table-capacity">👥 до ${table.capacity} чел.</div>
+      </div>
+    `;
+    
+    if (!isDisabled) {
+      card.onclick = () => {
+        selectedTable = table;
+        modalTableName.textContent = `${table.name} (${table.capacity} чел.)`;
+        
+        // Обновляем доступные времена
+        updateTimeSelects();
+        
+        // Устанавливаем значения по умолчанию
+        guestsCount.value = Math.min(2, table.capacity);
+        guestsCount.max = table.capacity;
+        
+        openForm();
+      };
+    }
+    
+    grid.appendChild(card);
+  });
+}
+
+/* ================= СЛАЙДЕР ВРЕМЕНИ ================= */
+function updateTimeFromPercent(percent) {
+  // 12:00 до 02:00 = 14 часов = 840 минут
+  const totalMinutes = 12 * 60 + percent * 840;
+  let hours = Math.floor(totalMinutes / 60);
+  let minutes = Math.floor((totalMinutes % 60) / 30) * 30;
+  
+  if (hours >= 24) hours -= 24;
+  
+  selectedTime = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+  currentTimeDisplay.textContent = selectedTime;
+  
+  // Перерисовываем столы с новым временем
+  renderTables();
+}
+
+function setPointerPosition(clientX) {
+  const rect = track.getBoundingClientRect();
+  let pos = clientX - rect.left;
+  
+  if (pos < 0) pos = 0;
+  if (pos > rect.width) pos = rect.width;
+  
+  const percent = pos / rect.width;
+  
+  pointer.style.left = `${percent * 100}%`;
+  fill.style.width = `${percent * 100}%`;
+  
+  updateTimeFromPercent(percent);
+}
+
+// Инициализация слайдера
+function initSlider() {
+  const rect = track.getBoundingClientRect();
+  if (rect.width > 0) {
+    setPointerPosition(rect.left);
+  } else {
+    setTimeout(() => {
+      const newRect = track.getBoundingClientRect();
+      if (newRect.width > 0) setPointerPosition(newRect.left);
+    }, 100);
+  }
+}
+
+let isDragging = false;
+
+pointer.onmousedown = (e) => {
+  isDragging = true;
+  document.onmousemove = (moveEvent) => {
+    if (isDragging) setPointerPosition(moveEvent.clientX);
+  };
+  document.onmouseup = () => {
+    isDragging = false;
+    document.onmousemove = null;
+    document.onmouseup = null;
+  };
+  e.preventDefault();
 };
 
-track.onclick=(e)=>setPointer(e.clientX);
-
-/* ================= FORM ================= */
-function openForm(){
- formModal.classList.add("active");
-}
-function closeForm(){
- formModal.classList.remove("active");
-}
-
-/* ================= PHONE ================= */
-phone.oninput=()=>{
- let v=phone.value.replace(/\D/g,"").substring(0,11);
- if(!v.startsWith("7")) v="7"+v;
-
- let f="+7";
- if(v.length>1) f+=" "+v.slice(1,4);
- if(v.length>4) f+=" "+v.slice(4,7);
- if(v.length>7) f+=" "+v.slice(7,9);
- if(v.length>9) f+=" "+v.slice(9,11);
-
- phone.value=f;
+track.onclick = (e) => {
+  setPointerPosition(e.clientX);
 };
 
-/* ================= LIMIT ================= */
-guests.oninput=()=>{
- if(guests.value>8) guests.value=8;
- if(guests.value<1) guests.value=1;
+// Touch support для мобильных
+pointer.ontouchstart = (e) => {
+  isDragging = true;
+  const touch = e.touches[0];
+  setPointerPosition(touch.clientX);
+  document.ontouchmove = (moveEvent) => {
+    if (isDragging) setPointerPosition(moveEvent.touches[0].clientX);
+  };
+  document.ontouchend = () => {
+    isDragging = false;
+    document.ontouchmove = null;
+    document.ontouchend = null;
+  };
+  e.preventDefault();
 };
 
-/* ================= BOOK ================= */
-function book(){
- alert(`Стол ${selectedTable}\nВремя ${selectedTime}`);
+track.ontouchstart = (e) => {
+  const touch = e.touches[0];
+  setPointerPosition(touch.clientX);
+  e.preventDefault();
+};
+
+/* ================= МОДАЛЬНОЕ ОКНО ================= */
+function openForm() {
+  formModal.classList.add("active");
 }
 
-/* ================= INIT ================= */
-setPointer(track.getBoundingClientRect().left);
-render();
+function closeForm() {
+  formModal.classList.remove("active");
+  selectedTable = null;
+}
+
+/* ================= ФОРМАТИРОВАНИЕ ТЕЛЕФОНА ================= */
+customerPhone.oninput = () => {
+  let v = customerPhone.value.replace(/\D/g, "").substring(0, 11);
+  if (!v.startsWith("7")) v = "7" + v;
+  
+  let formatted = "+7";
+  if (v.length > 1) formatted += " " + v.slice(1, 4);
+  if (v.length > 4) formatted += " " + v.slice(4, 7);
+  if (v.length > 7) formatted += " " + v.slice(7, 9);
+  if (v.length > 9) formatted += " " + v.slice(9, 11);
+  
+  customerPhone.value = formatted;
+};
+
+/* ================= ЛИМИТ ГОСТЕЙ ================= */
+guestsCount.oninput = () => {
+  if (selectedTable) {
+    if (guestsCount.value > selectedTable.capacity) guestsCount.value = selectedTable.capacity;
+    if (guestsCount.value < 1) guestsCount.value = 1;
+  }
+  
+  if (parseInt(guestsCount.value) >= 5) {
+    hookahWarning.style.display = "block";
+  } else {
+    hookahWarning.style.display = "none";
+  }
+};
+
+/* ================= ВЫБОР ВРЕМЕНИ В МОДАЛКЕ ================= */
+startTimeSelect.onchange = () => {
+  selectedStartTime = startTimeSelect.value;
+  updateEndTimeOptions();
+};
+
+/* ================= БРОНИРОВАНИЕ ================= */
+function bookTable() {
+  if (!selectedTable) {
+    alert("Ошибка: стол не выбран");
+    return;
+  }
+  
+  if (!selectedStartTime) {
+    alert("Выберите время начала бронирования");
+    return;
+  }
+  
+  const name = customerName.value.trim();
+  const phone = customerPhone.value.trim();
+  let guests = parseInt(guestsCount.value);
+  
+  if (!name) {
+    alert("Введите ваше имя");
+    return;
+  }
+  
+  if (!phone || phone.length < 10) {
+    alert("Введите корректный номер телефона");
+    return;
+  }
+  
+  if (isNaN(guests) || guests < 1) guests = 2;
+  if (guests > selectedTable.capacity) {
+    alert(`Максимум гостей для ${selectedTable.name}: ${selectedTable.capacity}`);
+    return;
+  }
+  
+  if (guests >= 5) {
+    const confirmHookah = confirm("💨 Для компании от 5 человек обязательно бронирование 2 кальянов. Подтверждаете?");
+    if (!confirmHookah) return;
+  }
+  
+  // Создаем бронь
+  const newBooking = {
+    start: selectedStartTime,
+    end: selectedEndTime
+  };
+  
+  if (!BOOKINGS[selectedTable.id]) {
+    BOOKINGS[selectedTable.id] = [];
+  }
+  
+  BOOKINGS[selectedTable.id].push(newBooking);
+  BOOKINGS[selectedTable.id].sort((a, b) => toMinutes(a.start) - toMinutes(b.start));
+  
+  alert(`✅ Бронь создана!\n\nСтол: ${selectedTable.name}\nДата: Сегодня\nВремя: ${selectedStartTime} - ${selectedEndTime}\nГости: ${guests}\nИмя: ${name}\nТелефон: ${phone}\n\nПодтверждение отправлено!`);
+  
+  // Сброс
+  closeForm();
+  customerName.value = "";
+  customerPhone.value = "";
+  guestsCount.value = "2";
+  hookahWarning.style.display = "none";
+  
+  // Перерисовываем столы
+  renderTables();
+}
+
+bookBtn.onclick = bookTable;
+
+/* ================= ИНИЦИАЛИЗАЦИЯ ================= */
+window.addEventListener("load", () => {
+  renderTables();
+  initSlider();
+});
+
+// Обработка resize окна
+window.addEventListener("resize", () => {
+  const rect = track.getBoundingClientRect();
+  if (rect.width > 0 && pointer.style.left) {
+    const percent = parseFloat(pointer.style.left) / 100;
+    const newLeft = percent * rect.width;
+    const fakeEvent = { clientX: rect.left + newLeft };
+    setPointerPosition(fakeEvent.clientX);
+  }
+});
 
 </script>
 
