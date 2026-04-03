@@ -2,718 +2,1402 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dubrovka PRO Admin</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+<meta name="google" content="notranslate">
+<title>DUBROVKA Lounge & Bar - Бронирование</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', Arial, sans-serif;
-  background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
-  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+  background: #0a0a0f;
+  color: #ffffff;
   min-height: 100vh;
 }
 
-/* Стили для страницы входа */
-.login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
-}
-
-.login-card {
-  background: rgba(20, 20, 30, 0.95);
-  backdrop-filter: blur(10px);
-  padding: 40px;
-  border-radius: 24px;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+.video-background {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
-  max-width: 400px;
-  animation: fadeInUp 0.5s ease-out;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+  opacity: 0.3;
 }
 
-.login-logo {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.login-logo h2 {
-  color: #d4af37;
-  font-size: 28px;
-  margin-bottom: 5px;
-}
-
-.login-logo p {
-  color: #888;
-  font-size: 14px;
-}
-
-.login-input {
-  width: 100%;
-  padding: 14px 16px;
-  margin: 10px 0;
-  border-radius: 12px;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  background: rgba(30, 30, 40, 0.9);
-  color: #fff;
-  font-size: 15px;
-  transition: all 0.3s ease;
-}
-
-.login-input:focus {
-  outline: none;
-  border-color: #d4af37;
-  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
-}
-
-.login-btn {
-  width: 100%;
-  padding: 14px;
-  margin-top: 20px;
-  background: linear-gradient(135deg, #d4af37 0%, #b88d2a 100%);
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  font-weight: 700;
-  font-size: 16px;
-  color: #0a0a0f;
-  transition: all 0.3s ease;
-}
-
-.login-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
-}
-
-.login-error {
-  background: rgba(220, 53, 69, 0.2);
-  border: 1px solid rgba(220, 53, 69, 0.3);
-  color: #ff6b6b;
-  padding: 12px;
-  border-radius: 12px;
-  margin-top: 15px;
-  text-align: center;
-  font-size: 14px;
-  display: none;
-  animation: shake 0.5s ease;
-}
-
-/* Стили для основной админки */
-.admin-container {
-  display: flex;
-  height: 100vh;
-  display: none;
-}
-
-.sidebar {
-  width: 260px;
-  background: rgba(10, 10, 15, 0.95);
-  backdrop-filter: blur(10px);
-  padding: 20px;
-  border-right: 1px solid rgba(212, 175, 55, 0.2);
-}
-
-.logo {
-  color: #d4af37;
-  font-size: 22px;
-  font-weight: 700;
-  margin-bottom: 30px;
-  text-align: center;
-  padding-bottom: 15px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-}
-
-.menu div {
-  padding: 12px 15px;
-  margin-bottom: 8px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-weight: 500;
-}
-
-.menu div:hover {
-  background: rgba(212, 175, 55, 0.15);
-}
-
-.menu .active {
-  background: linear-gradient(135deg, #d4af37 0%, #b88d2a 100%);
-  color: #0a0a0f;
-}
-
-.user-info {
-  position: absolute;
-  bottom: 30px;
+.audio-toggle {
+  position: fixed;
+  bottom: 20px;
   left: 20px;
-  right: 20px;
-  padding: 15px;
-  background: rgba(30, 30, 40, 0.9);
-  border-radius: 12px;
-  font-size: 12px;
-  color: #888;
-}
-
-.logout-btn {
-  width: 100%;
-  padding: 8px;
-  margin-top: 10px;
-  background: rgba(220, 53, 69, 0.2);
-  border: 1px solid rgba(220, 53, 69, 0.3);
-  border-radius: 8px;
-  color: #ff6b6b;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  color: #d4af37;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  z-index: 100;
+  backdrop-filter: blur(5px);
+  font-size: 20px;
 }
 
-.logout-btn:hover {
-  background: rgba(220, 53, 69, 0.4);
-}
-
-.content {
-  flex: 1;
-  padding: 20px;
-  overflow: auto;
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+  position: relative;
+  z-index: 1;
+  padding-bottom: 90px;
 }
 
 .header {
   display: flex;
-  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
   flex-wrap: wrap;
+  gap: 15px;
   margin-bottom: 20px;
-  background: rgba(20, 20, 30, 0.8);
-  padding: 15px;
-  border-radius: 16px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
 }
 
-.header input, .header select {
-  padding: 10px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  background: rgba(30, 30, 40, 0.9);
-  color: #fff;
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-img {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #d4af37;
+  background: #1a1a1a;
+}
+
+.logo-text {
+  font-size: 20px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #d4af37 0%, #f5e5a3 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.logo-subtitle {
+  font-size: 10px;
+  color: #d4af37;
+  letter-spacing: 1.5px;
+}
+
+.contact-info {
+  text-align: right;
+}
+
+.contact-info .phone {
   font-size: 14px;
-  flex: 1;
+  font-weight: 600;
+  color: #d4af37;
 }
 
-.header button {
-  padding: 10px 20px;
-  background: rgba(212, 175, 55, 0.2);
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  border-radius: 12px;
+.contact-info .address {
+  font-size: 10px;
+  color: #888;
+  margin-top: 3px;
+}
+
+.booking-section {
+  background: rgba(20, 20, 30, 0.6);
+  border-radius: 20px;
+  padding: 16px;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.booking-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  color: #d4af37;
+}
+
+.date-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.date-label {
+  font-size: 13px;
+  color: #888;
+}
+
+.date-value {
+  font-size: 14px;
+  font-weight: 600;
   color: #d4af37;
   cursor: pointer;
-  transition: all 0.2s ease;
+  background: rgba(30,30,40,0.8);
+  padding: 8px 12px;
+  border-radius: 30px;
+  border: 1px solid rgba(212,175,55,0.3);
 }
 
-.header button:hover {
-  background: rgba(212, 175, 55, 0.4);
+.date-value:hover {
+  background: rgba(212,175,55,0.2);
 }
 
-.grid {
+.calendar-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.95);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: 0.2s;
+}
+
+.calendar-modal.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.calendar-content {
+  background: #1a1a1f;
+  border-radius: 24px;
+  padding: 20px;
+  width: 90%;
+  max-width: 400px;
+  border: 1px solid rgba(212,175,55,0.3);
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.calendar-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  text-align: center;
 }
 
-.card {
-  background: rgba(20, 20, 30, 0.9);
-  padding: 18px;
+.calendar-day {
+  padding: 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  background: rgba(30,30,40,0.8);
+}
+
+.calendar-day.selected {
+  background: #d4af37;
+  color: #0a0a0f;
+}
+
+.calendar-day.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.timeline-section {
+  background: rgba(30, 30, 40, 0.8);
   border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 20px;
   border: 1px solid rgba(212, 175, 55, 0.2);
-  transition: all 0.2s ease;
 }
 
-.card.new {
-  border: 1px solid #d4af37;
-  box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
-}
-
-.time {
-  font-size: 20px;
-  color: #d4af37;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.time-interval {
-  display: inline-block;
-  background: rgba(212, 175, 55, 0.15);
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  color: #d4af37;
-  margin-bottom: 8px;
-}
-
-.name {
-  font-size: 18px;
+.timeline-label {
+  text-align: center;
   font-weight: 600;
-  margin: 8px 0 4px;
+  margin-bottom: 12px;
+  color: #d4af37;
+  font-size: 13px;
 }
 
-.phone {
+.timeline-track-container {
+  position: relative;
+  margin: 15px 0 10px;
+  padding: 0 2px;
+}
+
+.timeline-track {
+  position: relative;
+  height: 6px;
+  background: #3a2a1a;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.timeline-fill {
+  position: absolute;
+  height: 100%;
+  background: #d4af37;
+  border-radius: 10px;
+  width: 0%;
+}
+
+.timeline-pointer {
+  position: absolute;
+  top: -9px;
+  width: 24px;
+  height: 24px;
+  background: #fff;
+  border-radius: 50%;
+  cursor: grab;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  border: 2px solid #d4af37;
+  transition: left 0.05s ease;
+}
+
+.time-markers {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding: 0 2px;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.time-markers span {
   color: #888;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.current-time-display {
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  color: #d4af37;
+  margin-top: 12px;
+}
+
+.duration-selector {
+  margin: 15px 0;
+}
+
+.duration-label {
   font-size: 13px;
+  color: #888;
   margin-bottom: 8px;
+}
+
+.duration-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.duration-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 30px;
+  background: rgba(30,30,40,0.9);
+  border: 1px solid rgba(212,175,55,0.3);
+  color: #fff;
+  cursor: pointer;
+  text-align: center;
+}
+
+.duration-btn.active {
+  background: #d4af37;
+  color: #0a0a0f;
+}
+
+.filters {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  padding-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  background: none;
+  border: none;
+  padding: 5px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #888;
+  cursor: pointer;
+  position: relative;
+}
+
+.filter-btn.active {
+  color: #d4af37;
+}
+
+.filter-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -13px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #d4af37;
+}
+
+.tables-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.zone-group {
+  margin-bottom: 5px;
+}
+
+.zone-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #d4af37;
+  margin-bottom: 10px;
+  padding-left: 4px;
+  border-left: 3px solid #d4af37;
+}
+
+.tables-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.table-card {
+  background: rgba(30, 30, 40, 0.9);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  overflow: hidden;
+  position: relative;
+}
+
+.table-card:hover:not(.busy) {
+  border-color: #d4af37;
+  transform: translateY(-2px);
+}
+
+.table-card.busy {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: rgba(50, 50, 60, 0.8);
+}
+
+.table-card.recommended {
+  border: 2px solid #d4af37;
+  box-shadow: 0 0 15px rgba(212,175,55,0.3);
+}
+
+.table-card.selected {
+  border-color: #d4af37;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(184, 141, 42, 0.1));
+}
+
+.table-img {
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
 }
 
 .table-info {
-  display: flex;
-  gap: 12px;
-  margin: 8px 0;
-  font-size: 13px;
-  color: #aaa;
+  padding: 10px;
+  text-align: center;
 }
 
-.status {
-  font-size: 11px;
-  padding: 4px 10px;
+.table-number {
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 3px;
+}
+
+.table-zone {
+  font-size: 9px;
+  color: #888;
+  margin-bottom: 3px;
+}
+
+.table-capacity {
+  font-size: 10px;
+  color: #aaa;
+  margin-bottom: 6px;
+}
+
+.table-status {
+  font-size: 9px;
+  padding: 3px 8px;
   border-radius: 20px;
   display: inline-block;
-  margin-bottom: 10px;
-  font-weight: 500;
 }
 
-.status.active {
-  background: rgba(212, 175, 55, 0.2);
-  color: #d4af37;
-}
-
-.status.completed {
+.status-free {
   background: rgba(46, 204, 113, 0.2);
   color: #2ecc71;
 }
 
-.status.cancelled {
+.status-busy {
   background: rgba(231, 76, 60, 0.2);
   color: #e74c3c;
 }
 
-.done-btn {
-  width: 100%;
-  padding: 10px;
-  margin-top: 12px;
-  background: linear-gradient(135deg, #d4af37 0%, #b88d2a 100%);
-  border: none;
-  border-radius: 12px;
+.table-until {
+  font-size: 9px;
+  color: #ffc107;
+  margin-top: 4px;
+}
+
+.recommend-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: #d4af37;
   color: #0a0a0f;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  font-size: 8px;
+  padding: 2px 6px;
+  border-radius: 20px;
 }
 
-.done-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 10px rgba(212, 175, 55, 0.4);
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  opacity: 0;
+  visibility: hidden;
+  transition: 0.2s;
 }
 
-.date-title {
-  margin: 20px 0 12px;
-  font-size: 18px;
+.modal.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-content {
+  background: #1a1a1f;
+  border-radius: 24px;
+  width: 92%;
+  max-width: 450px;
+  max-height: 85vh;
+  overflow-y: auto;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.modal-header {
+  padding: 16px;
+  background: rgba(30, 30, 40, 0.9);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+}
+
+.modal-header h3 {
+  font-size: 17px;
   color: #d4af37;
-  font-weight: 600;
-  padding-left: 8px;
-  border-left: 3px solid #d4af37;
 }
 
-.error-message {
-  background: rgba(231, 76, 60, 0.2);
-  padding: 20px;
-  border-radius: 12px;
-  color: #e74c3c;
-  text-align: center;
-  margin: 20px;
-  border: 1px solid rgba(231, 76, 60, 0.3);
-}
-
-.loading {
-  text-align: center;
-  padding: 40px;
+.close-modal {
+  font-size: 22px;
+  cursor: pointer;
   color: #888;
 }
 
-.stats {
+.modal-body {
+  padding: 16px;
+}
+
+.table-detail {
+  background: rgba(30, 30, 40, 0.8);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 18px;
   display: flex;
-  gap: 15px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.stat-card {
-  background: rgba(20, 20, 30, 0.8);
-  padding: 12px 20px;
+.modal-input, .modal-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
   border-radius: 12px;
-  border: 1px solid rgba(212, 175, 55, 0.2);
+  font-size: 13px;
+  margin-bottom: 10px;
+  background: rgba(30, 30, 40, 0.9);
+  color: #fff;
 }
 
-.stat-card span {
+.modal-textarea {
+  resize: vertical;
+  min-height: 60px;
+  font-family: inherit;
+}
+
+.modal-book-btn {
+  width: 100%;
+  padding: 13px;
+  background: linear-gradient(135deg, #d4af37 0%, #b88d2a 100%);
+  color: #0a0a0f;
+  border: none;
+  border-radius: 30px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.cancel-booking-btn {
+  width: 100%;
+  padding: 13px;
+  background: rgba(231, 76, 60, 0.2);
+  border: 1px solid #e74c3c;
+  border-radius: 30px;
+  color: #e74c3c;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.menu-modal-content {
+  max-width: 500px;
+}
+
+.menu-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid rgba(212,175,55,0.2);
+}
+
+.menu-item-img {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.menu-item-info {
+  flex: 1;
+}
+
+.menu-item-price {
   color: #d4af37;
-  font-size: 20px;
   font-weight: 700;
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.menu-item-select {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(212,175,55,0.2);
+  border: 1px solid #d4af37;
+  color: #d4af37;
+  cursor: pointer;
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
+.preorder-list {
+  margin: 10px 0;
+  padding: 10px;
+  background: rgba(30,30,40,0.8);
+  border-radius: 12px;
 }
 
-@media (max-width: 768px) {
-  .sidebar {
-    width: 200px;
-  }
-  .grid {
-    grid-template-columns: 1fr;
+.preorder-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+}
+
+.footer {
+  margin-top: 25px;
+  text-align: center;
+  font-size: 9px;
+  color: #666;
+  padding-bottom: 15px;
+}
+
+.my-bookings-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #d4af37;
+  color: #0a0a0f;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 90;
+  font-weight: bold;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+@media (max-width: 550px) {
+  .tables-row {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
 }
 </style>
 </head>
 
 <body>
+<video class="video-background" id="bgVideo" autoplay muted loop playsinline>
+  <source src="bg.mp4" type="video/mp4">
+</video>
 
-<!-- Страница входа -->
-<div id="loginPage" class="login-container">
-  <div class="login-card">
-    <div class="login-logo">
-      <h2>🍷 Dubrovka PRO</h2>
-      <p>Административная панель</p>
+<div class="audio-toggle" id="audioToggle" onclick="toggleAudio()">🔇</div>
+<div class="my-bookings-btn" onclick="showMyBookings()">📋</div>
+
+<div class="container">
+  <div class="header">
+    <div class="logo-container">
+      <img src="logo.png" alt="DUBROVKA" class="logo-img" onerror="this.style.display='none'">
+      <div>
+        <div class="logo-text">DUBROVKA</div>
+        <div class="logo-subtitle">LOUNGE & BAR</div>
+      </div>
     </div>
-    <input type="text" id="loginUsername" class="login-input" placeholder="Логин" autocomplete="off">
-    <input type="password" id="loginPassword" class="login-input" placeholder="Пароль">
-    <button class="login-btn" onclick="attemptLogin()">Войти</button>
-    <div id="loginError" class="login-error"></div>
+    <div class="contact-info">
+      <div class="phone">+7‒913‒432‒01‒01</div>
+      <div class="address">📍 Ермакова 11, Новокузнецк</div>
+    </div>
+  </div>
+
+  <div class="booking-section">
+    <div class="booking-title">🍷 Забронировать</div>
+    
+    <div class="date-row">
+      <span class="date-label">Выберите дату:</span>
+      <span class="date-value" id="currentDate" onclick="openCalendar()">Сегодня</span>
+    </div>
+    
+    <div class="timeline-section">
+      <div class="timeline-label">⏰ ВЫБЕРИТЕ ВРЕМЯ</div>
+      <div class="timeline-track-container">
+        <div id="track" class="timeline-track">
+          <div id="fill" class="timeline-fill"></div>
+          <div id="pointer" class="timeline-pointer"></div>
+        </div>
+        <div class="time-markers" id="timeMarkers"></div>
+      </div>
+      <div id="currentTimeDisplay" class="current-time-display">12:00</div>
+    </div>
+    
+    <div class="duration-selector">
+      <div class="duration-label">⏱ ДЛИТЕЛЬНОСТЬ</div>
+      <div class="duration-buttons">
+        <div class="duration-btn" data-duration="1">1 час</div>
+        <div class="duration-btn active" data-duration="2">2 часа</div>
+        <div class="duration-btn" data-duration="3">3 часа</div>
+      </div>
+    </div>
+    
+    <div class="filters">
+      <button class="filter-btn active" data-zone="all">Все залы</button>
+      <button class="filter-btn" data-zone="main">Основной зал</button>
+      <button class="filter-btn" data-zone="vip">VIP комната</button>
+    </div>
+    
+    <div id="tablesContainer" class="tables-grid">
+      <div class="loading-spinner">Загрузка столов...</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <a class="map-btn" href="https://2gis.ru/novokuznetsk/geo/70000001067987554" target="_blank">🗺 ОТКРЫТЬ В 2ГИС</a>
+    <div class="work-hours">🕒 Пн—Чт: 11:00–01:00 | Пт: 11:00–02:00<br>Сб: 12:00–02:00 | Вс: 12:00–01:00</div>
   </div>
 </div>
 
-<!-- Основная админка -->
-<div id="adminPanel" class="admin-container">
-  <div class="sidebar">
-    <div class="logo">🍷 Dubrovka PRO</div>
-    <div class="menu">
-      <div class="active" onclick="showToday(this)">📅 Сегодня</div>
-      <div onclick="showCalendar(this)">🗓 Календарь</div>
+<!-- Модалка бронирования -->
+<div id="bookingModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Забронировать стол</h3>
+      <span class="close-modal" onclick="closeBookingModal()">✕</span>
     </div>
-    <div class="user-info">
-      👤 Администратор
-      <button class="logout-btn" onclick="logout()">Выйти</button>
+    <div class="modal-body">
+      <div class="table-detail">
+        <span class="table-num" id="modalTableNum">Стол №1</span>
+      </div>
+      
+      <input type="text" id="modalName" class="modal-input" placeholder="👤 ВАШЕ ИМЯ">
+      <input type="tel" id="modalPhone" class="modal-input" placeholder="📞 ТЕЛЕФОН (+7XXXXXXXXXX)" maxlength="12">
+      <input type="number" id="modalGuests" class="modal-input" min="1" max="20" value="2" placeholder="👥 КОЛИЧЕСТВО ГОСТЕЙ">
+      <textarea id="modalComment" class="modal-textarea" placeholder="💬 ОСОБЫЕ ПОЖЕЛАНИЯ (аллергии, особые даты, расположение стола...)"></textarea>
+      
+      <div class="menu-modal-content" style="margin: 10px 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <span style="color:#d4af37;">🍽 ПРЕДЗАКАЗ ЕДЫ</span>
+          <button class="menu-item-select" style="width:auto; padding:5px 10px;" onclick="openMenuModal()">Выбрать блюда</button>
+        </div>
+        <div id="preorderList" class="preorder-list" style="display:none;"></div>
+      </div>
+      
+      <div id="modalHookahWarning" class="hookah-warning" style="display:none;">💨 Для компаний от 5 человек обязательно бронирование 2 кальянов</div>
+      
+      <button class="modal-book-btn" onclick="confirmBooking()">ЗАБРОНИРОВАТЬ</button>
     </div>
   </div>
+</div>
 
-  <div class="content">
-    <div class="header">
-      <input type="text" id="search" placeholder="🔍 Поиск (имя / телефон)">
-      <select id="tableFilter">
-        <option value="">Все столы</option>
-        <option>1</option><option>2</option><option>3</option>
-        <option>4</option><option>5</option><option>6</option>
-        <option>VIP</option>
-      </select>
-      <input type="date" id="dateInput" style="display:none;">
-      <button onclick="refresh()">🔄 Обновить</button>
+<!-- Модалка меню -->
+<div id="menuModal" class="modal">
+  <div class="modal-content menu-modal-content">
+    <div class="modal-header">
+      <h3>🍽 МЕНЮ</h3>
+      <span class="close-modal" onclick="closeMenuModal()">✕</span>
     </div>
-    <div id="stats" class="stats"></div>
-    <div id="list"></div>
+    <div class="modal-body" id="menuItemsContainer"></div>
+    <button class="modal-book-btn" onclick="closeMenuModal()">Готово</button>
+  </div>
+</div>
+
+<!-- Модалка моих броней -->
+<div id="myBookingsModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>📋 Мои брони</h3>
+      <span class="close-modal" onclick="closeMyBookingsModal()">✕</span>
+    </div>
+    <div class="modal-body" id="myBookingsList"></div>
+  </div>
+</div>
+
+<!-- Календарь -->
+<div id="calendarModal" class="calendar-modal">
+  <div class="calendar-content">
+    <div class="calendar-header">
+      <button onclick="changeMonth(-1)">◀</button>
+      <span id="calendarMonthYear"></span>
+      <button onclick="changeMonth(1)">▶</button>
+    </div>
+    <div class="calendar-grid" id="calendarGrid"></div>
+    <button class="modal-book-btn" style="margin-top:15px;" onclick="closeCalendar()">Закрыть</button>
   </div>
 </div>
 
 <script>
-// =====================================================
-// 🔥 АВТОРИЗАЦИЯ
-// =====================================================
-const ADMIN_LOGIN = "admin";
-const ADMIN_PASSWORD = "dubrovka42";
+// ================= Telegram =================
+const tg = window.Telegram.WebApp;
+let userChatId = null;
+let userPhone = null;
 
-let isAuthenticated = false;
-
-function attemptLogin() {
-  const username = document.getElementById("loginUsername").value.trim();
-  const password = document.getElementById("loginPassword").value;
-  const errorDiv = document.getElementById("loginError");
-  
-  if (username === ADMIN_LOGIN && password === ADMIN_PASSWORD) {
-    isAuthenticated = true;
-    localStorage.setItem("admin_auth", "true");
-    showAdminPanel();
-  } else {
-    errorDiv.style.display = "block";
-    errorDiv.innerHTML = "❌ Неверный логин или пароль";
-    setTimeout(() => {
-      errorDiv.style.display = "none";
-    }, 3000);
-  }
-}
-
-function showAdminPanel() {
-  document.getElementById("loginPage").style.display = "none";
-  document.getElementById("adminPanel").style.display = "flex";
-  loadInitialData();
-}
-
-function logout() {
-  isAuthenticated = false;
-  localStorage.removeItem("admin_auth");
-  document.getElementById("loginPage").style.display = "flex";
-  document.getElementById("adminPanel").style.display = "none";
-  document.getElementById("loginUsername").value = "";
-  document.getElementById("loginPassword").value = "";
-  currentData = [];
-  previousIds.clear();
-}
-
-function checkAuth() {
-  const savedAuth = localStorage.getItem("admin_auth");
-  if (savedAuth === "true") {
-    isAuthenticated = true;
-    showAdminPanel();
-  } else {
-    document.getElementById("loginPage").style.display = "flex";
-    document.getElementById("adminPanel").style.display = "none";
-  }
-}
-
-// =====================================================
-// ОСНОВНЫЕ ФУНКЦИИ АДМИНКИ
-// =====================================================
-const API = "https://dubrovka-webapp-production.up.railway.app";
-const list = document.getElementById("list");
-const statsDiv = document.getElementById("stats");
-
-let currentData = [];
-let previousIds = new Set();
-let currentMode = "today";
-
-// Функция для расчета времени окончания брони (+2 часа)
-function getEndTime(startTime) {
-  const [hours, minutes] = startTime.split(":").map(Number);
-  let endHours = hours + 2;
-  const endMinutes = minutes;
-  const displayHours = endHours >= 24 ? endHours - 24 : endHours;
-  return `${String(displayHours).padStart(2, "0")}:${String(endMinutes).padStart(2, "0")}`;
-}
-
-function getLocalDate() {
-  let now = new Date();
-  let tz = now.getTimezoneOffset() * 60000;
-  return new Date(now - tz).toISOString().split("T")[0];
-}
-
-async function load(date) {
-  if (!date) return;
-  try {
-    console.log(`🔄 Загрузка броней на ${date}...`);
-    let res = await fetch(`${API}/bookings_by_date?date=${date}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    let data = await res.json();
-    console.log(`✅ Загружено броней: ${data.length}`);
-    handleNew(data);
-    currentData = data;
-    render();
-    renderStats(data);
-  } catch (e) {
-    console.error("❌ Ошибка:", e);
-    list.innerHTML = `<div class="error-message">
-❌ Ошибка загрузки данных<br>
-<small>${e.message}</small><br><br>
-<button onclick="refresh()">Повторить</button>
-</div>`;
-  }
-}
-
-function handleNew(data) {
-  let newIds = data.map(b => b.id);
-  let hasNew = false;
-  newIds.forEach(id => {
-    if (!previousIds.has(id)) {
-      hasNew = true;
-      console.log("🔔 Новая бронь:", id);
+if (tg) {
+  tg.expand();
+  if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+    userChatId = tg.initDataUnsafe.user.id;
+    if (tg.initDataUnsafe.user.first_name) {
+      document.getElementById("modalName").value = tg.initDataUnsafe.user.first_name;
     }
-  });
-  if (hasNew) {
-    let sound = document.getElementById("notifySound");
-    if (sound) sound.play().catch(e => console.log("Звук не воспроизведен"));
   }
-  previousIds = new Set(newIds);
 }
 
-function applyFilters(data) {
-  let search = document.getElementById("search").value.toLowerCase();
-  let table = document.getElementById("tableFilter").value;
-  return data.filter(b => {
-    let matchSearch = b.name.toLowerCase().includes(search) || b.phone.includes(search);
-    let matchTable = !table || b.table == table;
-    return matchSearch && matchTable;
+// ================= КОНФИГ =================
+const API_URL = "https://dubrovka-webapp-production.up.railway.app";
+let selectedDate = new Date().toISOString().split('T')[0];
+let selectedTime = "12:00";
+let selectedDuration = 2;
+let selectedTable = null;
+let currentZone = "all";
+let ALL_TIMES = [];
+let allBookings = [];
+let userBookings = [];
+let preorderItems = [];
+let currentCalendarDate = new Date();
+
+// Меню
+const MENU_ITEMS = [
+  { id: 1, name: "Хинкали (свинина)", price: 1200, image: "https://images.unsplash.com/photo-1599487488170-d5e6d1f752e5?w=100" },
+  { id: 2, name: "Хинкали (баранина)", price: 1300, image: "https://images.unsplash.com/photo-1599487488170-d5e6d1f752e5?w=100" },
+  { id: 3, name: "Хинкали с сыром", price: 1250, image: "https://images.unsplash.com/photo-1599487488170-d5e6d1f752e5?w=100" },
+  { id: 4, name: "Хачапури по-аджарски", price: 1800, image: "https://images.unsplash.com/photo-1561758033-d89a9ad46330?w=100" },
+  { id: 5, name: "Хачапури по-имеретински", price: 1500, image: "https://images.unsplash.com/photo-1561758033-d89a9ad46330?w=100" },
+  { id: 6, name: "Шашлык из свинины", price: 2500, image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=100" },
+  { id: 7, name: "Шашлык из курицы", price: 2200, image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=100" },
+  { id: 8, name: "Салат Цезарь", price: 1800, image: "https://images.unsplash.com/photo-1550304943-4f24f54dd8cf?w=100" },
+  { id: 9, name: "Салат Греческий", price: 1500, image: "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=100" },
+  { id: 10, name: "Суп Харчо", price: 1400, image: "https://images.unsplash.com/photo-1604152135912-04a022e23696?w=100" }
+];
+
+// Столы
+const TABLES = [
+  { id: "1", number: 1, zone: "main", zoneName: "Основной зал", capacity: 7, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: "2", number: 2, zone: "main", zoneName: "Основной зал", capacity: 5, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: "3", number: 3, zone: "main", zoneName: "Основной зал", capacity: 5, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: "4", number: 4, zone: "main", zoneName: "Основной зал", capacity: 5, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: "5", number: 5, zone: "main", zoneName: "Основной зал", capacity: 5, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: "6", number: 6, zone: "main", zoneName: "Основной зал", capacity: 3, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: "VIP", number: "VIP", zone: "vip", zoneName: "VIP комната", capacity: 20, isVip: true, image: "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=300" }
+];
+
+// ================= ФУНКЦИИ ВРЕМЕНИ =================
+function toMinutes(timeStr) {
+  const [h, m] = timeStr.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function formatTime(minutes) {
+  const h = Math.floor(minutes / 60) % 24;
+  const m = minutes % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+function getStartHour() {
+  const now = new Date();
+  const day = now.getDay();
+  if (day === 6 || day === 0) return 12;
+  return 11;
+}
+
+function getMaxHour() {
+  const now = new Date();
+  const day = now.getDay();
+  if (day === 5 || day === 6) return 26;
+  return 25;
+}
+
+function generateAllTimes() {
+  const times = [];
+  const startHour = getStartHour();
+  const maxHour = getMaxHour();
+  for (let h = startHour; h < maxHour; h++) {
+    const displayHour = h >= 24 ? h - 24 : h;
+    times.push(`${String(displayHour).padStart(2, "0")}:00`);
+    times.push(`${String(displayHour).padStart(2, "0")}:30`);
+  }
+  return times;
+}
+
+function updateTimeMarkers() {
+  const markersDiv = document.getElementById("timeMarkers");
+  if (!markersDiv) return;
+  const startHour = getStartHour();
+  const maxHour = getMaxHour();
+  const hours = [];
+  for (let h = startHour; h <= Math.min(maxHour, 25); h++) {
+    const displayHour = h >= 24 ? h - 24 : h;
+    hours.push(`${String(displayHour).padStart(2, "0")}:00`);
+  }
+  markersDiv.innerHTML = hours.map(h => `<span>${h}</span>`).join('');
+}
+
+// ================= ЗАГРУЗКА ДАННЫХ =================
+async function loadAllBookings() {
+  try {
+    const response = await fetch(`${API_URL}/all_bookings`);
+    if (response.ok) {
+      const data = await response.json();
+      allBookings = data.filter(b => b.date === selectedDate && b.status === "active");
+    }
+  } catch (error) {
+    console.log("Ошибка загрузки броней");
+  }
+}
+
+function getTableStatusAtTime(tableId, timeStr) {
+  if (tableId === "VIP") return { isBusy: false, untilTime: null };
+  const timeMinutes = toMinutes(timeStr);
+  const tableBookings = allBookings.filter(b => b.table === tableId);
+  
+  for (const booking of tableBookings) {
+    const bookingStart = toMinutes(booking.time);
+    const bookingEnd = bookingStart + 120;
+    if (timeMinutes >= bookingStart && timeMinutes < bookingEnd) {
+      return { isBusy: true, untilTime: formatTime(bookingEnd) };
+    }
+  }
+  return { isBusy: false, untilTime: null };
+}
+
+function isTableFreeAtTime(tableId, timeStr) {
+  return !getTableStatusAtTime(tableId, timeStr).isBusy;
+}
+
+function getRecommendedTable(guests) {
+  const freeTables = TABLES.filter(t => !t.isVip && isTableFreeAtTime(t.id, selectedTime));
+  const suitable = freeTables.filter(t => t.capacity >= guests);
+  if (suitable.length > 0) {
+    suitable.sort((a, b) => a.capacity - b.capacity);
+    return suitable[0];
+  }
+  return null;
+}
+
+function renderTables() {
+  let filteredTables = TABLES.filter(t => {
+    if (t.isVip && currentZone !== "vip") return false;
+    if (currentZone === "main" && t.isVip) return false;
+    if (currentZone === "vip" && !t.isVip) return false;
+    return true;
+  });
+  
+  const guestsCount = parseInt(document.getElementById("modalGuests")?.value || 2);
+  const recommended = getRecommendedTable(guestsCount);
+  
+  filteredTables.sort((a, b) => {
+    if (a.isVip && !b.isVip) return 1;
+    if (!a.isVip && b.isVip) return -1;
+    return a.number - b.number;
+  });
+  
+  const zones = [...new Map(filteredTables.map(t => [t.zone, t.zoneName]))];
+  
+  document.getElementById("tablesContainer").innerHTML = zones.map(([zoneKey, zoneName]) => {
+    const zoneTables = filteredTables.filter(t => t.zone === zoneKey);
+    const zoneTitle = zoneKey === "vip" ? "VIP ЗОНА" : "ОСНОВНОЙ ЗАЛ";
+    return `
+      <div class="zone-group">
+        <div class="zone-title">${zoneTitle}</div>
+        <div class="tables-row">
+          ${zoneTables.map(table => {
+            const status = getTableStatusAtTime(table.id, selectedTime);
+            const isBusy = status.isBusy;
+            const isRecommended = recommended && recommended.id === table.id && !table.isVip;
+            const vipClass = table.isVip ? 'vip-card' : '';
+            const busyClass = isBusy ? 'busy' : '';
+            const recommendedClass = isRecommended ? 'recommended' : '';
+            const vipBadge = table.isVip ? '<span class="vip-badge">VIP</span>' : '';
+            const recommendBadge = isRecommended ? '<div class="recommend-badge">⭐ Рекомендуем</div>' : '';
+            const statusHtml = isBusy 
+              ? `<div class="table-status status-busy">🔴 ЗАНЯТ</div>${status.untilTime ? `<div class="table-until">📅 до ${status.untilTime}</div>` : ''}`
+              : `<div class="table-status status-free">🟢 СВОБОДЕН</div>`;
+            
+            return `
+              <div class="table-card ${vipClass} ${busyClass} ${recommendedClass}" data-id="${table.id}" data-isvip="${table.isVip || false}" data-number="${table.number}" data-capacity="${table.capacity}">
+                ${recommendBadge}
+                <img src="${table.image}" class="table-img" alt="Стол" onerror="this.src='https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300'">
+                <div class="table-info">
+                  <div class="table-number">${table.isVip ? 'VIP комната' : `Стол №${table.number}`}${vipBadge}</div>
+                  <div class="table-zone">${table.zoneName}</div>
+                  <div class="table-capacity">👥 до ${table.capacity} чел.</div>
+                  ${statusHtml}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  document.querySelectorAll('.table-card:not(.busy)').forEach(card => {
+    card.addEventListener('click', () => {
+      const tableId = card.dataset.id;
+      const isVip = card.dataset.isvip === 'true';
+      if (isVip) {
+        openVipModal();
+      } else {
+        selectedTable = TABLES.find(t => t.id === tableId);
+        openBookingModal();
+      }
+    });
   });
 }
 
-function renderStats(data) {
-  const activeCount = data.filter(b => b.status === "active").length;
-  const completedCount = data.filter(b => b.status === "completed").length;
-  const cancelledCount = data.filter(b => b.status === "cancelled").length;
-  const totalCount = data.length;
+// ================= ПОЛЗУНОК =================
+function updateTimeFromPercent(percent) {
+  const startHour = getStartHour();
+  const maxHour = getMaxHour();
+  const totalMinutesRange = (maxHour - startHour) * 60;
+  const totalMinutes = startHour * 60 + percent * totalMinutesRange;
+  let hours = Math.floor(totalMinutes / 60);
+  let minutes = Math.floor((totalMinutes % 60) / 30) * 30;
+  if (hours >= 24) hours -= 24;
   
-  statsDiv.innerHTML = `
-    <div class="stat-card">📊 Всего: <span>${totalCount}</span></div>
-    <div class="stat-card">🟡 Активных: <span>${activeCount}</span></div>
-    <div class="stat-card">✅ Завершено: <span>${completedCount}</span></div>
-    <div class="stat-card">❌ Отменено: <span>${cancelledCount}</span></div>
-  `;
+  const timeStr = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+  if (ALL_TIMES.includes(timeStr)) {
+    selectedTime = timeStr;
+    document.getElementById("currentTimeDisplay").textContent = selectedTime;
+    renderTables();
+  }
 }
 
-function render() {
-  let data = applyFilters(currentData);
-  if (data.length === 0) {
-    list.innerHTML = "<div style='text-align:center;padding:40px;color:#666;'>📭 Нет броней</div>";
+function setPointerPosition(clientX) {
+  const track = document.getElementById("track");
+  if (!track) return;
+  const rect = track.getBoundingClientRect();
+  let pos = clientX - rect.left;
+  if (pos < 0) pos = 0;
+  if (pos > rect.width) pos = rect.width;
+  
+  const percent = pos / rect.width;
+  document.getElementById("pointer").style.left = `${percent * 100}%`;
+  document.getElementById("fill").style.width = `${percent * 100}%`;
+  updateTimeFromPercent(percent);
+}
+
+let isDragging = false;
+const pointer = document.getElementById("pointer");
+const track = document.getElementById("track");
+
+if (pointer) {
+  pointer.onmousedown = (e) => {
+    isDragging = true;
+    document.onmousemove = (moveEvent) => setPointerPosition(moveEvent.clientX);
+    document.onmouseup = () => {
+      isDragging = false;
+      document.onmousemove = null;
+      document.onmouseup = null;
+    };
+    e.preventDefault();
+  };
+  pointer.ontouchstart = (e) => {
+    isDragging = true;
+    setPointerPosition(e.touches[0].clientX);
+    document.ontouchmove = (moveEvent) => setPointerPosition(moveEvent.touches[0].clientX);
+    document.ontouchend = () => {
+      isDragging = false;
+      document.ontouchmove = null;
+      document.ontouchend = null;
+    };
+    e.preventDefault();
+  };
+}
+
+if (track) {
+  track.onclick = (e) => setPointerPosition(e.clientX);
+  track.ontouchstart = (e) => {
+    setPointerPosition(e.touches[0].clientX);
+    e.preventDefault();
+  };
+}
+
+// ================= ДЛИТЕЛЬНОСТЬ =================
+document.querySelectorAll('.duration-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedDuration = parseInt(btn.dataset.duration);
+  });
+});
+
+// ================= ФИЛЬТРЫ =================
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentZone = btn.dataset.zone;
+    renderTables();
+  });
+});
+
+// ================= КАЛЕНДАРЬ =================
+function openCalendar() {
+  renderCalendar();
+  document.getElementById("calendarModal").classList.add("active");
+}
+
+function closeCalendar() {
+  document.getElementById("calendarModal").classList.remove("active");
+}
+
+function renderCalendar() {
+  const year = currentCalendarDate.getFullYear();
+  const month = currentCalendarDate.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  document.getElementById("calendarMonthYear").textContent = `${year} ${['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'][month]}`;
+  
+  let html = '<div class="calendar-day">Пн</div><div class="calendar-day">Вт</div><div class="calendar-day">Ср</div><div class="calendar-day">Чт</div><div class="calendar-day">Пт</div><div class="calendar-day">Сб</div><div class="calendar-day">Вс</div>';
+  
+  let startOffset = (firstDay.getDay() + 6) % 7;
+  for (let i = 0; i < startOffset; i++) html += '<div class="calendar-day"></div>';
+  
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const date = new Date(year, month, d);
+    const isPast = date < today;
+    const isSelected = selectedDate === `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    html += `<div class="calendar-day ${isSelected ? 'selected' : ''} ${isPast ? 'disabled' : ''}" onclick="${isPast ? '' : `selectDate(${year},${month+1},${d})`}">${d}</div>`;
+  }
+  
+  document.getElementById("calendarGrid").innerHTML = html;
+}
+
+function selectDate(year, month, day) {
+  selectedDate = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  document.getElementById("currentDate").textContent = `${day} ${months[month-1]}`;
+  closeCalendar();
+  loadAllBookings().then(() => renderTables());
+}
+
+function changeMonth(delta) {
+  currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+  renderCalendar();
+}
+
+// ================= МОДАЛЬНЫЕ ОКНА =================
+function openBookingModal() {
+  if (!selectedTable) return;
+  document.getElementById("modalTableNum").textContent = `Стол №${selectedTable.number}`;
+  document.getElementById("modalGuests").max = selectedTable.capacity;
+  document.getElementById("modalGuests").value = Math.min(2, selectedTable.capacity);
+  document.getElementById("bookingModal").classList.add("active");
+}
+
+function closeBookingModal() {
+  document.getElementById("bookingModal").classList.remove("active");
+}
+
+function openVipModal() {
+  alert("👑 VIP комната бронируется через администратора. Позвоните: +7‒913‒432‒01‒01");
+}
+
+// ================= МЕНЮ =================
+function openMenuModal() {
+  const container = document.getElementById("menuItemsContainer");
+  container.innerHTML = MENU_ITEMS.map(item => `
+    <div class="menu-item">
+      <img src="${item.image}" class="menu-item-img" onerror="this.src='https://images.unsplash.com/photo-1599487488170-d5e6d1f752e5?w=100'">
+      <div class="menu-item-info">
+        <div><b>${item.name}</b></div>
+        <div class="menu-item-price">${item.price} ₸</div>
+      </div>
+      <button class="menu-item-select" onclick="addToPreorder(${item.id}, '${item.name}', ${item.price})">+</button>
+    </div>
+  `).join('');
+  document.getElementById("menuModal").classList.add("active");
+}
+
+function closeMenuModal() {
+  document.getElementById("menuModal").classList.remove("active");
+}
+
+function addToPreorder(id, name, price) {
+  const existing = preorderItems.find(i => i.id === id);
+  if (existing) {
+    existing.quantity++;
+  } else {
+    preorderItems.push({ id, name, price, quantity: 1 });
+  }
+  updatePreorderDisplay();
+}
+
+function updatePreorderDisplay() {
+  const container = document.getElementById("preorderList");
+  if (preorderItems.length === 0) {
+    container.style.display = "none";
     return;
   }
-  
-  data.sort((a, b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`));
-  
-  let grouped = {};
-  data.forEach(b => {
-    if (!grouped[b.date]) grouped[b.date] = [];
-    grouped[b.date].push(b);
-  });
-  
-  let html = "";
-  for (let date in grouped) {
-    html += `<div class="date-title">📅 ${date}</div><div class="grid">`;
-    grouped[date].forEach(b => {
-      let isNew = !previousIds.has(b.id);
-      let statusText = b.status === "active" ? "✅ Активна" : 
-                       b.status === "completed" ? "✔ Завершена" : 
-                       b.status === "cancelled" ? "❌ Отменена" : b.status;
-      
-      let endTime = getEndTime(b.time);
-      let timeInterval = `${b.time} — ${endTime} (2 часа)`;
-      
-      html += `
-        <div class="card ${isNew ? 'new' : ''}">
-          <div class="status ${b.status}">${statusText}</div>
-          <div class="time">⏰ ${b.time}</div>
-          <div class="time-interval">📆 ${timeInterval}</div>
-          <div class="name">👤 ${escapeHtml(b.name)}</div>
-          <div class="phone">📞 ${b.phone}</div>
-          <div class="table-info">
-            <span>🪑 Стол ${b.table}</span>
-            <span>👥 ${b.guests} чел.</span>
-          </div>
-      `;
-      if (b.status === "active") {
-        html += `<button class="done-btn" onclick="done(${b.id})">✅ Отметить как завершённую</button>`;
-      }
-      html += `</div>`;
-    });
-    html += `</div>`;
-  }
-  list.innerHTML = html;
+  container.style.display = "block";
+  container.innerHTML = preorderItems.map(item => `
+    <div class="preorder-item">
+      <span>${item.name} x${item.quantity}</span>
+      <span>${item.price * item.quantity} ₸</span>
+      <button onclick="removeFromPreorder(${item.id})" style="background:none;border:none;color:#e74c3c;">✕</button>
+    </div>
+  `).join('');
 }
 
-function escapeHtml(str) {
-  if (!str) return "";
-  return str.replace(/[&<>]/g, function(m) {
-    if (m === "&") return "&amp;";
-    if (m === "<") return "&lt;";
-    if (m === ">") return "&gt;";
-    return m;
-  });
+function removeFromPreorder(id) {
+  preorderItems = preorderItems.filter(i => i.id !== id);
+  updatePreorderDisplay();
 }
 
-async function done(id) {
-  if (!confirm("Отметить что гость ушел? Бронь будет завершена.")) return;
+// ================= МОИ БРОНИ =================
+async function showMyBookings() {
+  const phone = localStorage.getItem("userPhone") || prompt("Введите ваш номер телефона для поиска броней:");
+  if (!phone) return;
+  localStorage.setItem("userPhone", phone);
+  
   try {
-    let res = await fetch(`${API}/done/${id}`, { method: "POST" });
-    if (res.ok) {
-      currentData = currentData.map(b => b.id === id ? { ...b, status: "completed" } : b);
-      render();
-      renderStats(currentData);
-      console.log(`✅ Бронь ${id} завершена`);
+    const response = await fetch(`${API_URL}/all_bookings`);
+    const data = await response.json();
+    userBookings = data.filter(b => b.phone === phone && b.status === "active");
+    
+    const container = document.getElementById("myBookingsList");
+    if (userBookings.length === 0) {
+      container.innerHTML = "<div style='text-align:center;padding:20px;'>У вас нет активных броней</div>";
     } else {
-      throw new Error(`HTTP ${res.status}`);
+      container.innerHTML = userBookings.map(b => `
+        <div class="card" style="margin-bottom:10px;">
+          <div class="time">⏰ ${b.time} (${getEndTimeWithDuration(b.time, 2)})</div>
+          <div>🪑 Стол ${b.table} | 👥 ${b.guests} чел.</div>
+          <div>📅 ${b.date}</div>
+          <button class="cancel-booking-btn" onclick="cancelBooking(${b.id})">❌ Отменить бронь</button>
+          <button class="done-btn" style="background:rgba(46,204,113,0.2);color:#2ecc71;" onclick="shareBooking(${b.id}, '${b.table}', '${b.time}', '${b.date}')">📤 Поделиться</button>
+          <button class="done-btn" style="background:rgba(212,175,55,0.2);color:#d4af37;" onclick="leaveReview()">⭐ Оставить отзыв на 2ГИС</button>
+        </div>
+      `).join('');
     }
-  } catch (e) {
-    console.error("❌ Ошибка:", e);
-    alert("Ошибка: " + e.message);
+    document.getElementById("myBookingsModal").classList.add("active");
+  } catch(e) {
+    alert("Ошибка загрузки броней");
   }
 }
 
-function refresh() {
-  let date = currentMode === "today" ? getLocalDate() : document.getElementById("dateInput").value;
-  if (date) {
-    list.innerHTML = '<div class="loading">🔄 Загрузка...</div>';
-    load(date);
+function getEndTimeWithDuration(startTime, duration) {
+  const [h, m] = startTime.split(":").map(Number);
+  let endH = h + duration;
+  const endDisplay = endH >= 24 ? endH - 24 : endH;
+  return `${startTime} — ${String(endDisplay).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+}
+
+async function cancelBooking(id) {
+  if (!confirm("Вы уверены, что хотите отменить бронь?")) return;
+  try {
+    const response = await fetch(`${API_URL}/cancel/${id}`, { method: "POST" });
+    if (response.ok) {
+      alert("Бронь успешно отменена");
+      showMyBookings();
+      loadAllBookings().then(() => renderTables());
+    }
+  } catch(e) {
+    alert("Ошибка отмены");
   }
 }
 
-function showToday(el) {
-  currentMode = "today";
-  setActive(el);
-  document.getElementById("dateInput").style.display = "none";
-  load(getLocalDate());
+function shareBooking(id, table, time, date) {
+  const text = `🍷 Бронь в DUBROVKA!\n\nСтол ${table}\n${date} в ${time}\n📍 Ермакова 11, Новокузнецк\n📞 +7‒913‒432‒01‒01`;
+  if (navigator.share) {
+    navigator.share({ title: "Моя бронь в DUBROVKA", text: text });
+  } else {
+    navigator.clipboard.writeText(text);
+    alert("Текст скопирован в буфер обмена!");
+  }
 }
 
-function showCalendar(el) {
-  currentMode = "calendar";
-  setActive(el);
-  document.getElementById("dateInput").style.display = "block";
-  let date = document.getElementById("dateInput").value || getLocalDate();
-  load(date);
+function leaveReview() {
+  window.open("https://2gis.ru/novokuznetsk/review/70000001067987554", "_blank");
 }
 
-function setActive(el) {
-  document.querySelectorAll(".menu div").forEach(e => e.classList.remove("active"));
-  el.classList.add("active");
+function closeMyBookingsModal() {
+  document.getElementById("myBookingsModal").classList.remove("active");
 }
 
-function loadInitialData() {
-  const dateInput = document.getElementById("dateInput");
-  dateInput.min = new Date().toISOString().split("T")[0];
-  dateInput.value = getLocalDate();
+// ================= БРОНИРОВАНИЕ =================
+async function confirmBooking() {
+  if (!selectedTable) return;
   
-  document.getElementById("dateInput").onchange = () => {
-    if (currentMode === "calendar") load(dateInput.value);
-  };
-  document.getElementById("search").oninput = () => {
-    render();
-    renderStats(currentData);
-  };
-  document.getElementById("tableFilter").onchange = () => {
-    render();
-    renderStats(currentData);
+  const name = document.getElementById("modalName").value.trim();
+  const phone = document.getElementById("modalPhone").value.trim();
+  let guests = parseInt(document.getElementById("modalGuests").value);
+  const comment = document.getElementById("modalComment").value;
+  
+  if (!name) { alert("Введите имя"); return; }
+  if (!phone || phone.length < 10) { alert("Введите телефон"); return; }
+  if (guests > selectedTable.capacity) { alert(`Максимум гостей: ${selectedTable.capacity}`); return; }
+  if (guests >= 5 && !confirm("💨 Для компании от 5 человек обязательно бронирование 2 кальянов")) return;
+  
+  const bookingData = {
+    name: name,
+    phone: phone,
+    guests: guests,
+    table: selectedTable.id,
+    date: selectedDate,
+    time: selectedTime,
+    chat_id: userChatId ? String(userChatId) : "",
+    comment: comment,
+    preorder: preorderItems,
+    duration: selectedDuration
   };
   
-  // Автообновление каждые 10 секунд
-  setInterval(() => {
-    if (isAuthenticated) {
-      let date = currentMode === "today" ? getLocalDate() : document.getElementById("dateInput").value;
-      if (date) load(date);
+  try {
+    const response = await fetch(`${API_URL}/booking`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(bookingData),
+    });
+    
+    const result = await response.json();
+    if (response.ok && result.ok) {
+      const preorderTotal = preorderItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+      let message = `✅ Бронь создана!\n\nСтол №${selectedTable.number}\nВремя: ${selectedTime} (${selectedDuration} часа)\nГости: ${guests}\nИмя: ${name}`;
+      if (preorderTotal > 0) message += `\n🍽 Предзаказ: ${preorderTotal} ₸`;
+      if (comment) message += `\n💬 ${comment}`;
+      alert(message);
+      
+      if (tg) tg.sendData(JSON.stringify({ action: "booking_created", ...bookingData }));
+      
+      closeBookingModal();
+      preorderItems = [];
+      updatePreorderDisplay();
+      await loadAllBookings();
+      renderTables();
+    } else {
+      alert("❌ Ошибка: " + (result.detail || "Попробуйте другое время"));
     }
-  }, 10000);
-  
-  load(getLocalDate());
+  } catch(e) {
+    alert("❌ Ошибка соединения");
+  }
 }
 
-// Запуск
-checkAuth();
+// ================= АУДИО =================
+function toggleAudio() {
+  const video = document.getElementById('bgVideo');
+  const btn = document.getElementById('audioToggle');
+  if (video) {
+    video.muted = !video.muted;
+    btn.innerHTML = video.muted ? '🔇' : '🔊';
+  }
+}
+
+// ================= ИНИЦИАЛИЗАЦИЯ =================
+async function init() {
+  ALL_TIMES = generateAllTimes();
+  updateTimeMarkers();
+  selectedTime = ALL_TIMES[0] || "12:00";
+  document.getElementById("currentTimeDisplay").textContent = selectedTime;
+  
+  await loadAllBookings();
+  renderTables();
+  
+  setTimeout(() => {
+    if (track) {
+      const rect = track.getBoundingClientRect();
+      if (rect.width > 0) setPointerPosition(rect.left);
+    }
+  }, 100);
+  
+  document.getElementById("modalPhone").oninput = () => {
+    let v = document.getElementById("modalPhone").value.replace(/\D/g, "").substring(0, 11);
+    if (!v.startsWith("7")) v = "7" + v;
+    document.getElementById("modalPhone").value = "+" + v;
+  };
+  
+  document.getElementById("modalGuests").oninput = () => {
+    const guests = parseInt(document.getElementById("modalGuests").value);
+    if (guests >= 5) document.getElementById("modalHookahWarning").style.display = "block";
+    else document.getElementById("modalHookahWarning").style.display = "none";
+    renderTables();
+  };
+}
+
+document.getElementById("currentDate").textContent = "Сегодня";
+init();
 </script>
 </body>
 </html>
