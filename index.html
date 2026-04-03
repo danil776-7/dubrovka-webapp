@@ -320,9 +320,19 @@ body {
   overflow: hidden;
 }
 
-.table-card:hover {
+.table-card:hover:not(.busy) {
   border-color: #d4af37;
   transform: translateY(-2px);
+}
+
+.table-card.busy {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: rgba(50, 50, 60, 0.8);
+}
+
+.table-card.busy:hover {
+  transform: none;
 }
 
 .table-card.selected {
@@ -369,8 +379,22 @@ body {
   padding: 3px 8px;
   border-radius: 20px;
   display: inline-block;
+}
+
+.status-free {
   background: rgba(46, 204, 113, 0.2);
   color: #2ecc71;
+}
+
+.status-busy {
+  background: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+}
+
+.table-until {
+  font-size: 9px;
+  color: #ffc107;
+  margin-top: 4px;
 }
 
 .vip-badge {
@@ -580,12 +604,6 @@ body {
   line-height: 1.4;
 }
 
-.loading-spinner {
-  text-align: center;
-  padding: 30px;
-  color: #d4af37;
-}
-
 @media (min-width: 768px) {
   .container {
     padding: 20px;
@@ -746,7 +764,6 @@ if (tg) {
 }
 
 // ================= API НАСТРОЙКИ =================
-// Используем ваш Railway API
 const API_URL = "https://dubrovka-webapp-production.up.railway.app";
 
 // ================= ДАННЫЕ СТОЛОВ =================
@@ -767,7 +784,7 @@ let currentZone = "all";
 let selectedStartTime = null;
 let selectedEndTime = null;
 let ALL_TIMES = [];
-let busyTimes = {};
+let allBookings = []; // Хранит все брони с интервалами
 
 // DOM элементы
 const track = document.getElementById("track");
@@ -838,32 +855,52 @@ function updateTimeMarkers() {
 }
 
 // ================= ЗАГРУЗКА БРОНЕЙ С СЕРВЕРА =================
-async function loadBusyTimes() {
+async function loadAllBookings() {
   const today = new Date().toISOString().split('T')[0];
-  busyTimes = {};
-  
-  for (const table of TABLES) {
-    if (table.isVip) continue;
-    try {
-      const response = await fetch(`${API_URL}/busy_times?date=${today}&table=${table.id}`);
-      if (response.ok) {
-        const data = await response.json();
-        busyTimes[table.id] = Array.isArray(data) ? data : [];
-      } else {
-        busyTimes[table.id] = [];
-      }
-    } catch (error) {
-      console.log(`Ошибка загрузки для стола ${table.id}`);
-      busyTimes[table.id] = [];
+  try {
+    const response = await fetch(`${API_URL}/all_bookings`);
+    if (response.ok) {
+      const data = await response.json();
+      // Фильтруем только активные брони на сегодня
+      allBookings = data.filter(b => b.date === today && b.status === "active");
+      console.log("Загружено броней:", allBookings.length);
+    } else {
+      allBookings = [];
     }
+  } catch (error) {
+    console.log("Ошибка загрузки броней");
+    allBookings = [];
   }
 }
 
-// ================= ПРОВЕРКА СВОБОДНЫХ СТОЛОВ =================
+// ================= ПРОВЕРКА ЗАНЯТОСТИ СТОЛА (ПО ИНТЕРВАЛУ) =================
+// Возвращает объект: { isBusy: true/false, untilTime: string или null }
+function getTableStatusAtTime(tableId, timeStr) {
+  if (tableId === "VIP") return { isBusy: false, untilTime: null };
+  
+  const timeMinutes = toMinutes(timeStr);
+  const tableBookings = allBookings.filter(b => b.table === tableId);
+  
+  for (const booking of tableBookings) {
+    const bookingStart = toMinutes(booking.time);
+    // Бронь длится 2 часа (как в вашей системе)
+    const bookingEnd = bookingStart + 120;
+    
+    if (timeMinutes >= bookingStart && timeMinutes < bookingEnd) {
+      // Стол занят, показываем до скольки
+      const untilTime = formatTime(bookingEnd);
+      return { isBusy: true, untilTime: untilTime };
+    }
+  }
+  return { isBusy: false, untilTime: null };
+}
+
 function isTableFreeAtTime(tableId, timeStr) {
-  if (tableId === "VIP") return true;
-  const busy = busyTimes[tableId] || [];
-  return !busy.includes(timeStr);
+  return !getTableStatusAtTime(tableId, timeStr).isBusy;
+}
+
+function getTableUntilTime(tableId, timeStr) {
+  return getTableStatusAtTime(tableId, timeStr).untilTime;
 }
 
 function getFreeTables() {
@@ -875,7 +912,6 @@ function getFreeTables() {
 
 // ================= ДОСТУПНЫЕ ВРЕМЕНА ДЛЯ БРОНИ =================
 function getAvailableStartTimes(tableId, baseTime) {
-  const busy = busyTimes[tableId] || [];
   const available = [];
   const baseMin = toMinutes(baseTime);
   
@@ -883,13 +919,27 @@ function getAvailableStartTimes(tableId, baseTime) {
     const startSlot = ALL_TIMES[i];
     const startMin = toMinutes(startSlot);
     if (startMin < baseMin) continue;
-    if (!busy.includes(startSlot)) available.push(startSlot);
+    
+    // Проверяем, не пересекается ли это время с существующей бронью
+    let conflict = false;
+    const tableBookings = allBookings.filter(b => b.table === tableId);
+    
+    for (const booking of tableBookings) {
+      const bookingStart = toMinutes(booking.time);
+      const bookingEnd = bookingStart + 120;
+      
+      if (startMin >= bookingStart && startMin < bookingEnd) {
+        conflict = true;
+        break;
+      }
+    }
+    
+    if (!conflict) available.push(startSlot);
   }
   return available;
 }
 
 function getAvailableEndTimes(tableId, startTime) {
-  const busy = busyTimes[tableId] || [];
   const startMin = toMinutes(startTime);
   const available = [];
   
@@ -897,7 +947,22 @@ function getAvailableEndTimes(tableId, startTime) {
     const endSlot = ALL_TIMES[i];
     const endMin = toMinutes(endSlot);
     if (endMin <= startMin) continue;
-    if (!busy.includes(endSlot)) available.push(endSlot);
+    
+    // Проверяем пересечение интервала [startMin, endMin] с существующими бронями
+    let conflict = false;
+    const tableBookings = allBookings.filter(b => b.table === tableId);
+    
+    for (const booking of tableBookings) {
+      const bookingStart = toMinutes(booking.time);
+      const bookingEnd = bookingStart + 120;
+      
+      if (!(endMin <= bookingStart || startMin >= bookingEnd)) {
+        conflict = true;
+        break;
+      }
+    }
+    
+    if (!conflict) available.push(endSlot);
   }
   return available;
 }
@@ -999,16 +1064,25 @@ function renderFreeTables() {
         <div class="zone-title">${zoneTitle}</div>
         <div class="tables-row">
           ${zoneTables.map(table => {
+            const status = getTableStatusAtTime(table.id, selectedTime);
+            const isBusy = status.isBusy;
+            const untilTime = status.untilTime;
+            
             const vipClass = table.isVip ? 'vip-card' : '';
+            const busyClass = isBusy ? 'busy' : '';
             const vipBadge = table.isVip ? '<span class="vip-badge">VIP</span>' : '';
+            const statusHtml = isBusy 
+              ? `<div class="table-status status-busy">🔴 ЗАНЯТ</div>${untilTime ? `<div class="table-until">📅 до ${untilTime}</div>` : ''}`
+              : `<div class="table-status status-free">🟢 СВОБОДЕН</div>`;
+            
             return `
-              <div class="table-card ${vipClass}" data-id="${table.id}" data-isvip="${table.isVip || false}" data-number="${table.number}">
+              <div class="table-card ${vipClass} ${busyClass}" data-id="${table.id}" data-isvip="${table.isVip || false}" data-number="${table.number}">
                 <img src="${table.image}" class="table-img" alt="Стол" onerror="this.src='https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300'">
                 <div class="table-info">
                   <div class="table-number">${table.isVip ? 'VIP комната' : `Стол №${table.number}`}${vipBadge}</div>
                   <div class="table-zone">${table.zoneName}</div>
                   <div class="table-capacity">👥 до ${table.capacity} чел.</div>
-                  <div class="table-status">🟢 Свободно</div>
+                  ${statusHtml}
                 </div>
               </div>
             `;
@@ -1018,19 +1092,23 @@ function renderFreeTables() {
     `;
   }).join('');
   
-  document.querySelectorAll('.table-card').forEach(card => {
+  document.querySelectorAll('.table-card:not(.busy):not(.vip-card)').forEach(card => {
     card.addEventListener('click', (e) => {
       e.stopPropagation();
       const tableId = card.dataset.id;
-      const isVip = card.dataset.isvip === 'true';
       const table = TABLES.find(t => t.id === tableId);
-      
-      if (isVip) {
-        openVipModal();
-      } else if (table) {
+      if (table && !table.isVip) {
         selectedTable = table;
         openBookingModal();
       }
+    });
+  });
+  
+  // VIP карточки - отдельный обработчик
+  document.querySelectorAll('.vip-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openVipModal();
     });
   });
 }
@@ -1154,7 +1232,7 @@ async function confirmBooking() {
       }
       
       closeBookingModal();
-      await loadBusyTimes();
+      await loadAllBookings();
       renderFreeTables();
     } else {
       alert("❌ Ошибка при создании брони: " + (result.detail || "Попробуйте другое время"));
@@ -1174,9 +1252,9 @@ filterBtns.forEach(btn => btn.addEventListener('click', () => {
 }));
 
 // Дата
-const today = new Date();
+const todayDate = new Date();
 const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-document.getElementById("currentDate").textContent = `Сегодня, ${today.getDate()} ${months[today.getMonth()]}`;
+document.getElementById("currentDate").textContent = `Сегодня, ${todayDate.getDate()} ${months[todayDate.getMonth()]}`;
 
 function toggleAudio() {
   const video = document.getElementById('bgVideo');
@@ -1201,7 +1279,7 @@ async function init() {
   selectedTime = ALL_TIMES[0] || "12:00";
   if (currentTimeDisplay) currentTimeDisplay.textContent = selectedTime;
   
-  await loadBusyTimes();
+  await loadAllBookings();
   renderFreeTables();
   
   setTimeout(() => {
