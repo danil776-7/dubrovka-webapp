@@ -1018,37 +1018,56 @@ function renderFreeTables() {
 // ================= МОДАЛЬНЫЕ ОКНА =================
 function openBookingModal() {
   if (!selectedTable) return;
-  const displayName = selectedTable.isVip ? 'VIP комната' : `Стол №${selectedTable.number}`;
-  document.getElementById("modalTableNum").textContent = displayName;
-  document.getElementById("modalTableStatus").textContent = "Свободно";
   
-  const availableTimes = getAvailableStartTimes(selectedTable.id, selectedTime);
-  if (availableTimes.length === 0) {
-    alert("На выбранное время нет доступных слотов для бронирования.");
+  document.getElementById("modalTableNum").textContent = `Стол №${selectedTable.number}`;
+  
+  const availableStartTimes = getAvailableStartTimes(selectedTable.id, selectedTime);
+  
+  if (availableStartTimes.length === 0) {
+    alert("На выбранное время нет доступных слотов для бронирования. Пожалуйста, выберите другое время.");
     return;
   }
   
-  startTimeSelect.innerHTML = availableTimes.map(t => `<option value="${t}">${t}</option>`).join('');
-  selectedStartTime = availableTimes[0];
+  startTimeSelect.innerHTML = availableStartTimes.map(t => `<option value="${t}">${t}</option>`).join('');
+  selectedStartTime = availableStartTimes[0];
   startTimeSelect.value = selectedStartTime;
+  
   updateEndTimeOptions();
   
   modalGuests.value = Math.min(2, selectedTable.capacity);
   modalGuests.max = selectedTable.capacity;
-  modalName.value = modalName.value || "";
-  modalPhone.value = "";
   modalHookahWarning.style.display = "none";
-  modal.classList.add("active");
+  
+  bookingModal.classList.add("active");
 }
 
-function closeModal() { modal.classList.remove("active"); }
+function closeBookingModal() {
+  bookingModal.classList.remove("active");
+}
+
+function openVipModal() {
+  vipModal.classList.add("active");
+}
+
+function closeVipModal() {
+  vipModal.classList.remove("active");
+}
 
 function updateEndTimeOptions() {
-  if (!selectedStartTime) return;
-  const endMin = toMinutes(selectedStartTime) + 120;
-  selectedEndTime = formatTime(endMin);
-  endTimeSelect.innerHTML = `<option value="${selectedEndTime}">${selectedEndTime} (2 часа)</option>`;
-  durationInfo.textContent = `Длительность: 2 часа (до ${selectedEndTime})`;
+  if (!selectedStartTime || !selectedTable) return;
+  
+  const availableEndTimes = getAvailableEndTimes(selectedTable.id, selectedStartTime);
+  
+  if (availableEndTimes.length === 0) {
+    endTimeSelect.innerHTML = `<option disabled>Нет доступного времени</option>`;
+    durationInfo.textContent = "Нет доступного времени окончания";
+    return;
+  }
+  
+  endTimeSelect.innerHTML = availableEndTimes.map(t => `<option value="${t}">${t}</option>`).join('');
+  selectedEndTime = availableEndTimes[0];
+  endTimeSelect.value = selectedEndTime;
+  durationInfo.textContent = `Длительность: ${selectedStartTime} - ${selectedEndTime}`;
 }
 
 startTimeSelect.onchange = () => {
@@ -1056,9 +1075,9 @@ startTimeSelect.onchange = () => {
   updateEndTimeOptions();
 };
 
-modalGuests.oninput = () => {
-  if (selectedTable && parseInt(modalGuests.value) > selectedTable.capacity) modalGuests.value = selectedTable.capacity;
-  modalHookahWarning.style.display = parseInt(modalGuests.value) >= 5 ? "block" : "none";
+endTimeSelect.onchange = () => {
+  selectedEndTime = endTimeSelect.value;
+  durationInfo.textContent = `Длительность: ${selectedStartTime} - ${selectedEndTime}`;
 };
 
 modalPhone.oninput = () => {
@@ -1067,46 +1086,44 @@ modalPhone.oninput = () => {
   modalPhone.value = "+" + v;
 };
 
+modalGuests.oninput = () => {
+  if (selectedTable && parseInt(modalGuests.value) > selectedTable.capacity) {
+    modalGuests.value = selectedTable.capacity;
+  }
+  modalHookahWarning.style.display = parseInt(modalGuests.value) >= 5 ? "block" : "none";
+};
+
 function confirmBooking() {
+  if (!selectedTable) return;
+  
   const name = modalName.value.trim();
   const phone = modalPhone.value.trim();
   let guests = parseInt(modalGuests.value);
-  if (!name) { alert("Введите имя"); return; }
-  if (!phone || phone.length < 10) { alert("Введите телефон"); return; }
+  
+  if (!name) { alert("Введите ваше имя"); return; }
+  if (!phone || phone.length < 10) { alert("Введите корректный номер телефона"); return; }
   if (guests < 1) guests = 2;
-  if (guests > selectedTable.capacity) { alert(`Максимум гостей: ${selectedTable.capacity}`); return; }
+  if (guests > selectedTable.capacity) { alert(`Максимум гостей для стола №${selectedTable.number}: ${selectedTable.capacity}`); return; }
   if (guests >= 5 && !confirm("💨 Для компании от 5 человек обязательно бронирование 2 кальянов. Подтверждаете?")) return;
   
   if (!BOOKINGS[selectedTable.id]) BOOKINGS[selectedTable.id] = [];
   BOOKINGS[selectedTable.id].push({ start: selectedStartTime, end: selectedEndTime });
   BOOKINGS[selectedTable.id].sort((a, b) => toMinutes(a.start) - toMinutes(b.start));
   
-  const displayName = selectedTable.isVip ? 'VIP комнату' : `Стол №${selectedTable.number}`;
-  alert(`✅ Бронь создана!\n\n${displayName}\nВремя: ${selectedStartTime} - ${selectedEndTime}\nГости: ${guests}\nИмя: ${name}`);
+  alert(`✅ Бронь создана!\n\nСтол №${selectedTable.number}\nДата: Сегодня\nВремя: ${selectedStartTime} - ${selectedEndTime}\nГости: ${guests}\nИмя: ${name}\nТелефон: ${phone}`);
   
-  closeModal();
-  clearSelectedTable();
-  renderTables();
-  if (tg) tg.sendData(JSON.stringify({ table: selectedTable.id, time: selectedStartTime }));
+  if (tg) tg.sendData(JSON.stringify({ table: selectedTable.id, start: selectedStartTime, end: selectedEndTime }));
+  
+  closeBookingModal();
+  renderFreeTables();
 }
 
-bookBtn.onclick = openModal;
-
-// Фильтры и сортировка
+// Фильтры
 filterBtns.forEach(btn => btn.addEventListener('click', () => {
   filterBtns.forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   currentZone = btn.dataset.zone;
-  renderTables();
-  clearSelectedTable();
-}));
-
-sortBtns.forEach(btn => btn.addEventListener('click', () => {
-  sortBtns.forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  currentSort = btn.dataset.sort;
-  renderTables();
-  clearSelectedTable();
+  renderFreeTables();
 }));
 
 // Дата
@@ -1114,27 +1131,35 @@ const today = new Date();
 const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
 document.getElementById("currentDate").textContent = `Сегодня, ${today.getDate()} ${months[today.getMonth()]}`;
 
-// Аудио/видео управление
-let audioEnabled = false;
+// Аудио
 function toggleAudio() {
   const video = document.getElementById('bgVideo');
   const btn = document.getElementById('audioToggle');
   if (video.muted) {
     video.muted = false;
     btn.innerHTML = '🔊';
-    audioEnabled = true;
   } else {
     video.muted = true;
     btn.innerHTML = '🔇';
-    audioEnabled = false;
   }
 }
 
-// Инициализация
-renderTimeButtons();
-renderTables();
+// Закрытие модалок
+bookingModal.addEventListener('click', (e) => { if (e.target === bookingModal) closeBookingModal(); });
+vipModal.addEventListener('click', (e) => { if (e.target === vipModal) closeVipModal(); });
 
-modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+// Инициализация ползунка и отображения
+window.addEventListener('load', () => {
+  const rect = track.getBoundingClientRect();
+  if (rect.width > 0) {
+    setPointerPosition(rect.left);
+  } else {
+    setTimeout(() => {
+      const newRect = track.getBoundingClientRect();
+      if (newRect.width > 0) setPointerPosition(newRect.left);
+    }, 100);
+  }
+});
 </script>
 </body>
 </html>
