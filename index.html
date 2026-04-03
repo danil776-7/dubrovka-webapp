@@ -20,7 +20,6 @@ body {
   min-height: 100vh;
 }
 
-/* ВИДЕО ФОН */
 .video-background {
   position: fixed;
   top: 0;
@@ -60,7 +59,6 @@ body {
   padding-bottom: 100px;
 }
 
-/* ШАПКА */
 .header {
   display: flex;
   justify-content: space-between;
@@ -118,7 +116,6 @@ body {
   margin-top: 4px;
 }
 
-/* СЕКЦИЯ БРОНИРОВАНИЯ */
 .booking-section {
   background: rgba(20, 20, 30, 0.6);
   border-radius: 20px;
@@ -154,7 +151,7 @@ body {
   color: #d4af37;
 }
 
-/* ПОЛЗУНОК ВРЕМЕНИ */
+/* ПОЛЗУНОК */
 .timeline-section {
   background: rgba(30, 30, 40, 0.8);
   border-radius: 16px;
@@ -178,7 +175,7 @@ body {
 
 .timeline-track {
   position: relative;
-  height: 8px;
+  height: 6px;
   background: #3a2a1a;
   border-radius: 10px;
   cursor: pointer;
@@ -190,20 +187,18 @@ body {
   background: #d4af37;
   border-radius: 10px;
   width: 0%;
-  transition: width 0.05s ease;
 }
 
 .timeline-pointer {
   position: absolute;
-  top: -10px;
-  width: 28px;
-  height: 28px;
+  top: -9px;
+  width: 24px;
+  height: 24px;
   background: #fff;
   border-radius: 50%;
   cursor: grab;
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
   border: 2px solid #d4af37;
-  transition: left 0.05s ease;
 }
 
 .timeline-pointer:active {
@@ -263,7 +258,6 @@ body {
   background: #d4af37;
 }
 
-/* СОРТИРОВКА */
 .sort-row {
   display: flex;
   gap: 20px;
@@ -285,7 +279,6 @@ body {
   border-bottom: 2px solid #d4af37;
 }
 
-/* СЕТКА СТОЛОВ - ТОЛЬКО СВОБОДНЫЕ */
 .tables-grid {
   display: flex;
   flex-direction: column;
@@ -329,7 +322,6 @@ body {
 .table-card.selected {
   border-color: #d4af37;
   background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(184, 141, 42, 0.1));
-  box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
 }
 
 .table-card.vip-card {
@@ -394,7 +386,6 @@ body {
   border-radius: 16px;
 }
 
-/* МОДАЛЬНОЕ ОКНО */
 .modal {
   position: fixed;
   inset: 0;
@@ -539,7 +530,6 @@ body {
   color: #d4af37;
 }
 
-/* VIP МОДАЛЬ */
 .vip-modal-content {
   text-align: center;
 }
@@ -556,7 +546,6 @@ body {
   margin: 15px 0;
 }
 
-/* ФУТЕР */
 .footer {
   margin-top: 30px;
   text-align: center;
@@ -575,6 +564,13 @@ body {
   color: #d4af37;
   font-size: 11px;
   border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.work-hours {
+  margin-top: 10px;
+  font-size: 10px;
+  color: #888;
+  line-height: 1.4;
 }
 
 @media (max-width: 550px) {
@@ -606,12 +602,9 @@ body {
   <source src="bg.mp4" type="video/mp4">
 </video>
 
-<div class="audio-toggle" id="audioToggle" onclick="toggleAudio()">
-  🔇
-</div>
+<div class="audio-toggle" id="audioToggle" onclick="toggleAudio()">🔇</div>
 
 <div class="container">
-  <!-- ШАПКА -->
   <div class="header">
     <div class="logo-container">
       <img src="logo.png" alt="DUBROVKA Lounge & Bar" class="logo-img" onerror="this.style.display='none'">
@@ -626,7 +619,6 @@ body {
     </div>
   </div>
 
-  <!-- СЕКЦИЯ БРОНИРОВАНИЯ -->
   <div class="booking-section">
     <div class="booking-title">🍷 Забронировать</div>
     
@@ -635,7 +627,7 @@ body {
       <span class="date-value" id="currentDate">Сегодня</span>
     </div>
     
-    <!-- ПОЛЗУНОК ВРЕМЕНИ -->
+    <!-- ПОЛЗУНОК -->
     <div class="timeline-section">
       <div class="timeline-label">⏰ ПЕРЕМЕСТИТЕ ПОЛЗУНОК, ЧТОБЫ ВЫБРАТЬ ВРЕМЯ</div>
       <div class="timeline-track-container">
@@ -644,41 +636,45 @@ body {
           <div id="pointer" class="timeline-pointer"></div>
         </div>
         <div class="time-markers">
-          <span>12:00</span>
-          <span>14:00</span>
-          <span>16:00</span>
-          <span>18:00</span>
-          <span>20:00</span>
-          <span>22:00</span>
-          <span>00:00</span>
+          <span>11:00</span>
+          <span>13:00</span>
+          <span>15:00</span>
+          <span>17:00</span>
+          <span>19:00</span>
+          <span>21:00</span>
+          <span>23:00</span>
+          <span>01:00</span>
         </div>
       </div>
       <div id="currentTimeDisplay" class="current-time-display">12:00</div>
     </div>
     
-    <!-- ФИЛЬТРЫ -->
     <div class="filters">
       <button class="filter-btn active" data-zone="all">Все залы</button>
       <button class="filter-btn" data-zone="main">Основной зал</button>
       <button class="filter-btn" data-zone="vip">VIP комната</button>
     </div>
     
-    <!-- СОРТИРОВКА -->
     <div class="sort-row">
       <button class="sort-btn active" data-sort="number">По порядку</button>
     </div>
     
-    <!-- СЕТКА СТОЛОВ (ТОЛЬКО СВОБОДНЫЕ) -->
     <div id="tablesContainer" class="tables-grid"></div>
   </div>
 
   <div class="footer">
     <a class="map-btn" href="https://2gis.ru/novokuznetsk/geo/70000001067987554" target="_blank">🗺 ОТКРЫТЬ В 2ГИС</a>
-    <p style="margin-top: 12px;">Работаем ежедневно с 12:00 до 02:00</p>
+    <div class="work-hours">
+      🕒 Режим работы:<br>
+      Пн — Чт: 11:00–01:00<br>
+      Пт: 11:00–02:00<br>
+      Сб: 12:00–02:00<br>
+      Вс: 12:00–01:00
+    </div>
   </div>
 </div>
 
-<!-- МОДАЛЬНОЕ ОКНО БРОНИРОВАНИЯ -->
+<!-- МОДАЛКА БРОНИРОВАНИЯ -->
 <div id="bookingModal" class="modal">
   <div class="modal-content">
     <div class="modal-header">
@@ -686,7 +682,7 @@ body {
       <span class="close-modal" onclick="closeBookingModal()">✕</span>
     </div>
     <div class="modal-body">
-      <div class="table-detail" id="modalTableInfo">
+      <div class="table-detail">
         <span class="table-num" id="modalTableNum">Стол №1</span>
       </div>
       
@@ -696,7 +692,7 @@ body {
         <span style="color:#d4af37;">→</span>
         <select id="endTimeSelect" class="time-select"></select>
       </div>
-      <div class="duration-info" id="durationInfo">Выберите время начала и окончания</div>
+      <div class="duration-info" id="durationInfo">Длительность: 1 час</div>
       
       <input type="text" id="modalName" class="modal-input" placeholder="👤 ВАШЕ ИМЯ" autocomplete="name">
       <input type="tel" id="modalPhone" class="modal-input" placeholder="📞 ТЕЛЕФОН (+7XXXXXXXXXX)" maxlength="12">
@@ -711,7 +707,7 @@ body {
   </div>
 </div>
 
-<!-- МОДАЛЬНОЕ ОКНО ДЛЯ VIP -->
+<!-- МОДАЛКА VIP -->
 <div id="vipModal" class="modal">
   <div class="modal-content vip-modal-content">
     <div class="modal-header">
@@ -729,37 +725,33 @@ body {
 </div>
 
 <script>
-// Telegram WebApp
 const tg = window.Telegram.WebApp;
 if (tg) {
   tg.expand();
-  if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-    const user = tg.initDataUnsafe.user;
-    if (user.first_name) {
-      document.getElementById("modalName").value = user.first_name;
-    }
+  if (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) {
+    document.getElementById("modalName").value = tg.initDataUnsafe.user.first_name;
   }
 }
 
-// ================= ДАННЫЕ СТОЛОВ =================
+// ================= ДАННЫЕ =================
 const TABLES = [
-  { id: 1, number: 1, zone: "main", zoneName: "Основной зал", capacity: 4, name: "Стол №1", image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
-  { id: 2, number: 2, zone: "main", zoneName: "Основной зал", capacity: 4, name: "Стол №2", image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
-  { id: 3, number: 3, zone: "main", zoneName: "Основной зал", capacity: 4, name: "Стол №3", image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
-  { id: 4, number: 4, zone: "main", zoneName: "Основной зал", capacity: 4, name: "Стол №4", image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
-  { id: 5, number: 5, zone: "main", zoneName: "Основной зал", capacity: 4, name: "Стол №5", image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
-  { id: 6, number: 6, zone: "main", zoneName: "Основной зал", capacity: 4, name: "Стол №6", image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
-  { id: 7, number: "VIP", zone: "vip", zoneName: "VIP комната", capacity: 10, name: "VIP комната", isVip: true, image: "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=300" }
+  { id: 1, number: 1, zone: "main", zoneName: "Основной зал", capacity: 4, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: 2, number: 2, zone: "main", zoneName: "Основной зал", capacity: 4, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: 3, number: 3, zone: "main", zoneName: "Основной зал", capacity: 4, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: 4, number: 4, zone: "main", zoneName: "Основной зал", capacity: 4, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: 5, number: 5, zone: "main", zoneName: "Основной зал", capacity: 4, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: 6, number: 6, zone: "main", zoneName: "Основной зал", capacity: 4, image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300" },
+  { id: 7, number: "VIP", zone: "vip", zoneName: "VIP комната", capacity: 10, isVip: true, image: "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=300" }
 ];
 
-// БРОНИ
+// Брони
 const BOOKINGS = {
   1: [],
-  2: [{ start: "18:00", end: "20:30" }],
+  2: [{ start: "18:00", end: "19:00" }],
   3: [],
   4: [],
   5: [],
-  6: [{ start: "19:00", end: "21:00" }],
+  6: [{ start: "19:00", end: "20:00" }],
   7: []
 };
 
@@ -787,7 +779,7 @@ const modalPhone = document.getElementById("modalPhone");
 const modalGuests = document.getElementById("modalGuests");
 const modalHookahWarning = document.getElementById("modalHookahWarning");
 
-// ================= УТИЛИТЫ =================
+// ================= ФУНКЦИИ ВРЕМЕНИ =================
 function toMinutes(timeStr) {
   const [h, m] = timeStr.split(":").map(Number);
   return h * 60 + m;
@@ -799,10 +791,30 @@ function formatTime(minutes) {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-// Генерация всех времен
+// Получить максимальное время работы в зависимости от дня недели
+function getMaxHour() {
+  const now = new Date();
+  const day = now.getDay();
+  // Пн=1, Вт=2, Ср=3, Чт=4, Пт=5, Сб=6, Вс=0
+  if (day === 5) return 26; // Пт до 02:00 (26 часов)
+  if (day === 6) return 26; // Сб до 02:00
+  if (day === 0) return 25; // Вс до 01:00
+  return 25; // Пн-Чт до 01:00
+}
+
+function getStartHour() {
+  const now = new Date();
+  const day = now.getDay();
+  if (day === 6 || day === 0) return 12; // Сб, Вс с 12:00
+  return 11; // Пн-Пт с 11:00
+}
+
+// Генерация времен с шагом 30 минут
 function generateAllTimes() {
   const times = [];
-  for (let h = 12; h < 26; h++) {
+  const startHour = getStartHour();
+  const maxHour = getMaxHour();
+  for (let h = startHour; h < maxHour; h++) {
     const displayHour = h >= 24 ? h - 24 : h;
     times.push(`${String(displayHour).padStart(2, "0")}:00`);
     times.push(`${String(displayHour).padStart(2, "0")}:30`);
@@ -810,9 +822,33 @@ function generateAllTimes() {
   return times;
 }
 
-const ALL_TIMES = generateAllTimes();
+let ALL_TIMES = generateAllTimes();
 
-// Проверка, свободен ли стол в выбранное время
+// Обновление времен при смене дня
+function updateTimesByDay() {
+  ALL_TIMES = generateAllTimes();
+  renderTimeMarkers();
+  if (ALL_TIMES.length > 0) {
+    selectedTime = ALL_TIMES[0];
+    currentTimeDisplay.textContent = selectedTime;
+    renderFreeTables();
+  }
+}
+
+function renderTimeMarkers() {
+  const markers = document.querySelector('.time-markers');
+  if (!markers) return;
+  const startHour = getStartHour();
+  const maxHour = getMaxHour();
+  const hours = [];
+  for (let h = startHour; h <= Math.min(maxHour, 25); h++) {
+    const displayHour = h >= 24 ? h - 24 : h;
+    hours.push(`${String(displayHour).padStart(2, "0")}:00`);
+  }
+  markers.innerHTML = hours.map(h => `<span>${h}</span>`).join('');
+}
+
+// ================= ПРОВЕРКА СВОБОДНЫХ СТОЛОВ =================
 function isTableFreeAtTime(tableId, timeStr) {
   if (tableId === 7) return true;
   const bookings = BOOKINGS[tableId] || [];
@@ -825,7 +861,6 @@ function isTableFreeAtTime(tableId, timeStr) {
   return true;
 }
 
-// Получить свободные столы на выбранное время
 function getFreeTables() {
   return TABLES.filter(table => {
     if (table.isVip) return true;
@@ -833,7 +868,7 @@ function getFreeTables() {
   });
 }
 
-// Получить доступные времена для бронирования
+// ================= ДОСТУПНЫЕ ВРЕМЕНА ДЛЯ БРОНИ (1 час) =================
 function getAvailableStartTimes(tableId, baseTime) {
   const bookings = BOOKINGS[tableId] || [];
   const available = [];
@@ -861,12 +896,14 @@ function getAvailableStartTimes(tableId, baseTime) {
 function getAvailableEndTimes(tableId, startTime) {
   const bookings = BOOKINGS[tableId] || [];
   const startMin = toMinutes(startTime);
+  const endMinTarget = startMin + 60; // 1 час
   const available = [];
   
   for (let i = 0; i < ALL_TIMES.length; i++) {
     const endSlot = ALL_TIMES[i];
     const endMin = toMinutes(endSlot);
     if (endMin <= startMin) continue;
+    if (endMin > endMinTarget + 30) break;
     
     let conflict = false;
     for (const booking of bookings) {
@@ -877,23 +914,27 @@ function getAvailableEndTimes(tableId, startTime) {
         break;
       }
     }
-    if (!conflict) available.push(endSlot);
+    if (!conflict && endMin <= endMinTarget + 30) available.push(endSlot);
   }
   return available;
 }
 
 // ================= ПОЛЗУНОК =================
 function updateTimeFromPercent(percent) {
-  const totalMinutes = 12 * 60 + percent * 840;
+  const startHour = getStartHour();
+  const maxHour = getMaxHour();
+  const totalDuration = (maxHour - startHour) * 60;
+  const totalMinutes = startHour * 60 + percent * totalDuration;
   let hours = Math.floor(totalMinutes / 60);
   let minutes = Math.floor((totalMinutes % 60) / 30) * 30;
   if (hours >= 24) hours -= 24;
   
-  selectedTime = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-  currentTimeDisplay.textContent = selectedTime;
-  
-  // Обновляем отображение столов (только свободные)
-  renderFreeTables();
+  const timeStr = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+  if (ALL_TIMES.includes(timeStr)) {
+    selectedTime = timeStr;
+    currentTimeDisplay.textContent = selectedTime;
+    renderFreeTables();
+  }
 }
 
 function setPointerPosition(clientX) {
@@ -912,9 +953,7 @@ let isDragging = false;
 
 pointer.onmousedown = (e) => {
   isDragging = true;
-  document.onmousemove = (moveEvent) => {
-    if (isDragging) setPointerPosition(moveEvent.clientX);
-  };
+  document.onmousemove = (moveEvent) => setPointerPosition(moveEvent.clientX);
   document.onmouseup = () => {
     isDragging = false;
     document.onmousemove = null;
@@ -923,18 +962,12 @@ pointer.onmousedown = (e) => {
   e.preventDefault();
 };
 
-track.onclick = (e) => {
-  setPointerPosition(e.clientX);
-};
+track.onclick = (e) => setPointerPosition(e.clientX);
 
-// Touch support
 pointer.ontouchstart = (e) => {
   isDragging = true;
-  const touch = e.touches[0];
-  setPointerPosition(touch.clientX);
-  document.ontouchmove = (moveEvent) => {
-    if (isDragging) setPointerPosition(moveEvent.touches[0].clientX);
-  };
+  setPointerPosition(e.touches[0].clientX);
+  document.ontouchmove = (moveEvent) => setPointerPosition(moveEvent.touches[0].clientX);
   document.ontouchend = () => {
     isDragging = false;
     document.ontouchmove = null;
@@ -944,20 +977,15 @@ pointer.ontouchstart = (e) => {
 };
 
 track.ontouchstart = (e) => {
-  const touch = e.touches[0];
-  setPointerPosition(touch.clientX);
+  setPointerPosition(e.touches[0].clientX);
   e.preventDefault();
 };
 
-// ================= ОТРИСОВКА ТОЛЬКО СВОБОДНЫХ СТОЛОВ =================
+// ================= ОТРИСОВКА СТОЛОВ =================
 function renderFreeTables() {
   const freeTables = getFreeTables();
   let filteredTables = [...freeTables];
-  
-  if (currentZone !== "all") {
-    filteredTables = filteredTables.filter(t => t.zone === currentZone);
-  }
-  
+  if (currentZone !== "all") filteredTables = filteredTables.filter(t => t.zone === currentZone);
   filteredTables.sort((a, b) => {
     if (a.isVip && !b.isVip) return 1;
     if (!a.isVip && b.isVip) return -1;
@@ -982,8 +1010,8 @@ function renderFreeTables() {
             const vipClass = table.isVip ? 'vip-card' : '';
             const vipBadge = table.isVip ? '<span class="vip-badge">VIP</span>' : '';
             return `
-              <div class="table-card ${vipClass}" data-id="${table.id}" data-isvip="${table.isVip || false}">
-                <img src="${table.image}" class="table-img" alt="${table.name}" onerror="this.src='https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300'">
+              <div class="table-card ${vipClass}" data-id="${table.id}" data-isvip="${table.isVip || false}" data-number="${table.number}">
+                <img src="${table.image}" class="table-img" alt="Стол" onerror="this.src='https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300'">
                 <div class="table-info">
                   <div class="table-number">${table.isVip ? 'VIP комната' : `Стол №${table.number}`}${vipBadge}</div>
                   <div class="table-zone">${table.zoneName}</div>
@@ -998,16 +1026,17 @@ function renderFreeTables() {
     `;
   }).join('');
   
-  // Обработчики кликов
+  // НАВЕШИВАЕМ ОБРАБОТЧИКИ - ПРЯМО ЗДЕСЬ
   document.querySelectorAll('.table-card').forEach(card => {
-    card.addEventListener('click', () => {
+    card.addEventListener('click', (e) => {
+      e.stopPropagation();
       const tableId = parseInt(card.dataset.id);
       const isVip = card.dataset.isvip === 'true';
       const table = TABLES.find(t => t.id === tableId);
       
       if (isVip) {
         openVipModal();
-      } else {
+      } else if (table) {
         selectedTable = table;
         openBookingModal();
       }
@@ -1022,7 +1051,6 @@ function openBookingModal() {
   document.getElementById("modalTableNum").textContent = `Стол №${selectedTable.number}`;
   
   const availableStartTimes = getAvailableStartTimes(selectedTable.id, selectedTime);
-  
   if (availableStartTimes.length === 0) {
     alert("На выбранное время нет доступных слотов для бронирования. Пожалуйста, выберите другое время.");
     return;
@@ -1032,7 +1060,16 @@ function openBookingModal() {
   selectedStartTime = availableStartTimes[0];
   startTimeSelect.value = selectedStartTime;
   
-  updateEndTimeOptions();
+  const availableEndTimes = getAvailableEndTimes(selectedTable.id, selectedStartTime);
+  if (availableEndTimes.length > 0) {
+    selectedEndTime = availableEndTimes[0];
+    endTimeSelect.innerHTML = availableEndTimes.map(t => `<option value="${t}">${t}</option>`).join('');
+    endTimeSelect.value = selectedEndTime;
+    durationInfo.textContent = `Длительность: 1 час (до ${selectedEndTime})`;
+  } else {
+    endTimeSelect.innerHTML = '<option disabled>Нет времени</option>';
+    durationInfo.textContent = "Нет доступного времени";
+  }
   
   modalGuests.value = Math.min(2, selectedTable.capacity);
   modalGuests.max = selectedTable.capacity;
@@ -1041,43 +1078,19 @@ function openBookingModal() {
   bookingModal.classList.add("active");
 }
 
-function closeBookingModal() {
-  bookingModal.classList.remove("active");
-}
-
-function openVipModal() {
-  vipModal.classList.add("active");
-}
-
-function closeVipModal() {
-  vipModal.classList.remove("active");
-}
-
-function updateEndTimeOptions() {
-  if (!selectedStartTime || !selectedTable) return;
-  
-  const availableEndTimes = getAvailableEndTimes(selectedTable.id, selectedStartTime);
-  
-  if (availableEndTimes.length === 0) {
-    endTimeSelect.innerHTML = `<option disabled>Нет доступного времени</option>`;
-    durationInfo.textContent = "Нет доступного времени окончания";
-    return;
-  }
-  
-  endTimeSelect.innerHTML = availableEndTimes.map(t => `<option value="${t}">${t}</option>`).join('');
-  selectedEndTime = availableEndTimes[0];
-  endTimeSelect.value = selectedEndTime;
-  durationInfo.textContent = `Длительность: ${selectedStartTime} - ${selectedEndTime}`;
-}
+function closeBookingModal() { bookingModal.classList.remove("active"); }
+function openVipModal() { vipModal.classList.add("active"); }
+function closeVipModal() { vipModal.classList.remove("active"); }
 
 startTimeSelect.onchange = () => {
   selectedStartTime = startTimeSelect.value;
-  updateEndTimeOptions();
-};
-
-endTimeSelect.onchange = () => {
-  selectedEndTime = endTimeSelect.value;
-  durationInfo.textContent = `Длительность: ${selectedStartTime} - ${selectedEndTime}`;
+  const availableEndTimes = getAvailableEndTimes(selectedTable.id, selectedStartTime);
+  if (availableEndTimes.length > 0) {
+    selectedEndTime = availableEndTimes[0];
+    endTimeSelect.innerHTML = availableEndTimes.map(t => `<option value="${t}">${t}</option>`).join('');
+    endTimeSelect.value = selectedEndTime;
+    durationInfo.textContent = `Длительность: 1 час (до ${selectedEndTime})`;
+  }
 };
 
 modalPhone.oninput = () => {
@@ -1103,14 +1116,14 @@ function confirmBooking() {
   if (!name) { alert("Введите ваше имя"); return; }
   if (!phone || phone.length < 10) { alert("Введите корректный номер телефона"); return; }
   if (guests < 1) guests = 2;
-  if (guests > selectedTable.capacity) { alert(`Максимум гостей для стола №${selectedTable.number}: ${selectedTable.capacity}`); return; }
+  if (guests > selectedTable.capacity) { alert(`Максимум гостей: ${selectedTable.capacity}`); return; }
   if (guests >= 5 && !confirm("💨 Для компании от 5 человек обязательно бронирование 2 кальянов. Подтверждаете?")) return;
   
   if (!BOOKINGS[selectedTable.id]) BOOKINGS[selectedTable.id] = [];
   BOOKINGS[selectedTable.id].push({ start: selectedStartTime, end: selectedEndTime });
   BOOKINGS[selectedTable.id].sort((a, b) => toMinutes(a.start) - toMinutes(b.start));
   
-  alert(`✅ Бронь создана!\n\nСтол №${selectedTable.number}\nДата: Сегодня\nВремя: ${selectedStartTime} - ${selectedEndTime}\nГости: ${guests}\nИмя: ${name}\nТелефон: ${phone}`);
+  alert(`✅ Бронь создана!\n\nСтол №${selectedTable.number}\nВремя: ${selectedStartTime} - ${selectedEndTime}\nГости: ${guests}\nИмя: ${name}`);
   
   if (tg) tg.sendData(JSON.stringify({ table: selectedTable.id, start: selectedStartTime, end: selectedEndTime }));
   
@@ -1131,34 +1144,23 @@ const today = new Date();
 const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
 document.getElementById("currentDate").textContent = `Сегодня, ${today.getDate()} ${months[today.getMonth()]}`;
 
-// Аудио
 function toggleAudio() {
   const video = document.getElementById('bgVideo');
   const btn = document.getElementById('audioToggle');
-  if (video.muted) {
-    video.muted = false;
-    btn.innerHTML = '🔊';
-  } else {
-    video.muted = true;
-    btn.innerHTML = '🔇';
-  }
+  video.muted = !video.muted;
+  btn.innerHTML = video.muted ? '🔇' : '🔊';
 }
 
-// Закрытие модалок
 bookingModal.addEventListener('click', (e) => { if (e.target === bookingModal) closeBookingModal(); });
 vipModal.addEventListener('click', (e) => { if (e.target === vipModal) closeVipModal(); });
 
-// Инициализация ползунка и отображения
+// Инициализация
+updateTimesByDay();
 window.addEventListener('load', () => {
-  const rect = track.getBoundingClientRect();
-  if (rect.width > 0) {
-    setPointerPosition(rect.left);
-  } else {
-    setTimeout(() => {
-      const newRect = track.getBoundingClientRect();
-      if (newRect.width > 0) setPointerPosition(newRect.left);
-    }, 100);
-  }
+  setTimeout(() => {
+    const rect = track.getBoundingClientRect();
+    if (rect.width > 0) setPointerPosition(rect.left);
+  }, 100);
 });
 </script>
 </body>
