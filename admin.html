@@ -6,19 +6,26 @@
 <title>DUBROVKA PRO - Админ панель</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', Arial, sans-serif;
   background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
   color: #fff;
   min-height: 100vh;
 }
+
 .login-container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
 }
+
 .login-card {
   background: rgba(20, 20, 30, 0.95);
   padding: 40px;
@@ -27,7 +34,13 @@ body {
   width: 100%;
   max-width: 400px;
 }
-.login-logo h2 { color: #d4af37; font-size: 28px; margin-bottom: 5px; }
+
+.login-logo h2 {
+  color: #d4af37;
+  font-size: 28px;
+  margin-bottom: 5px;
+}
+
 .login-input {
   width: 100%;
   padding: 14px;
@@ -37,6 +50,7 @@ body {
   background: rgba(30, 30, 40, 0.9);
   color: #fff;
 }
+
 .login-btn {
   width: 100%;
   padding: 14px;
@@ -48,7 +62,13 @@ body {
   font-weight: 700;
   cursor: pointer;
 }
-.admin-container { display: flex; height: 100vh; display: none; }
+
+.admin-container {
+  display: flex;
+  height: 100vh;
+  display: none;
+}
+
 .sidebar {
   width: 260px;
   background: rgba(10, 10, 15, 0.95);
@@ -56,6 +76,7 @@ body {
   border-right: 1px solid rgba(212, 175, 55, 0.2);
   overflow-y: auto;
 }
+
 .logo {
   color: #d4af37;
   font-size: 20px;
@@ -65,6 +86,7 @@ body {
   padding-bottom: 15px;
   border-bottom: 1px solid rgba(212, 175, 55, 0.2);
 }
+
 .menu-item {
   padding: 12px 15px;
   margin-bottom: 8px;
@@ -72,9 +94,22 @@ body {
   cursor: pointer;
   transition: all 0.2s;
 }
-.menu-item:hover { background: rgba(212, 175, 55, 0.15); }
-.menu-item.active { background: linear-gradient(135deg, #d4af37 0%, #b88d2a 100%); color: #0a0a0f; }
-.content { flex: 1; padding: 20px; overflow-y: auto; }
+
+.menu-item:hover {
+  background: rgba(212, 175, 55, 0.15);
+}
+
+.menu-item.active {
+  background: linear-gradient(135deg, #d4af37 0%, #b88d2a 100%);
+  color: #0a0a0f;
+}
+
+.content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
 .header-bar {
   display: flex;
   gap: 12px;
@@ -84,6 +119,7 @@ body {
   padding: 15px;
   border-radius: 16px;
 }
+
 .header-bar input, .header-bar select {
   padding: 10px 14px;
   border-radius: 12px;
@@ -92,6 +128,7 @@ body {
   color: #fff;
   flex: 1;
 }
+
 .header-bar button {
   padding: 10px 20px;
   background: rgba(212, 175, 55, 0.2);
@@ -100,32 +137,54 @@ body {
   color: #d4af37;
   cursor: pointer;
 }
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 15px;
   margin-bottom: 20px;
 }
+
 .stat-card {
   background: rgba(20, 20, 30, 0.8);
-  padding: 15px;
+  padding: 20px;
   border-radius: 16px;
   text-align: center;
   border: 1px solid rgba(212, 175, 55, 0.2);
 }
-.stat-card .number { font-size: 28px; color: #d4af37; font-weight: 700; }
+
+.stat-card .number {
+  font-size: 32px;
+  color: #d4af37;
+  font-weight: 700;
+}
+
 .bookings-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 16px;
 }
+
 .booking-card {
   background: rgba(20, 20, 30, 0.9);
   padding: 16px;
   border-radius: 16px;
   border: 1px solid rgba(212, 175, 55, 0.2);
+  transition: all 0.2s;
 }
-.time-badge { font-size: 20px; color: #d4af37; font-weight: 700; }
+
+.booking-card:hover {
+  transform: translateY(-2px);
+  border-color: #d4af37;
+}
+
+.time-badge {
+  font-size: 20px;
+  color: #d4af37;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
 .status {
   display: inline-block;
   padding: 4px 10px;
@@ -133,10 +192,29 @@ body {
   font-size: 11px;
   margin: 8px 0;
 }
-.status.active { background: rgba(212, 175, 55, 0.2); color: #d4af37; }
-.status.completed { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
-.status.cancelled { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
-.booking-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+.status.active {
+  background: rgba(212, 175, 55, 0.2);
+  color: #d4af37;
+}
+
+.status.completed {
+  background: rgba(46, 204, 113, 0.2);
+  color: #2ecc71;
+}
+
+.status.cancelled {
+  background: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+}
+
+.booking-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
 .btn-sm {
   padding: 8px 12px;
   border-radius: 10px;
@@ -145,55 +223,56 @@ body {
   font-size: 12px;
   font-weight: 500;
 }
-.btn-edit { background: rgba(52, 152, 219, 0.2); color: #3498db; border: 1px solid #3498db; }
-.btn-extend { background: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid #2ecc71; }
-.btn-complete { background: rgba(212, 175, 55, 0.2); color: #d4af37; border: 1px solid #d4af37; }
-.btn-cancel { background: rgba(231, 76, 60, 0.2); color: #e74c3c; border: 1px solid #e74c3c; }
-.btn-block { background: rgba(241, 196, 15, 0.2); color: #f1c40f; border: 1px solid #f1c40f; }
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.95);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  opacity: 0;
-  visibility: hidden;
-  transition: 0.2s;
+
+.btn-complete {
+  background: rgba(212, 175, 55, 0.2);
+  color: #d4af37;
+  border: 1px solid #d4af37;
 }
-.modal.active { opacity: 1; visibility: visible; }
-.modal-content {
-  background: #1a1a1f;
-  border-radius: 24px;
-  width: 90%;
-  max-width: 500px;
-  max-height: 85vh;
-  overflow-y: auto;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  padding: 20px;
+
+.btn-cancel {
+  background: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+  border: 1px solid #e74c3c;
 }
-.modal-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
-.modal-input {
-  width: 100%;
-  padding: 12px;
-  margin: 8px 0;
-  border-radius: 12px;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  background: rgba(30, 30, 40, 0.9);
-  color: #fff;
+
+.btn-extend {
+  background: rgba(46, 204, 113, 0.2);
+  color: #2ecc71;
+  border: 1px solid #2ecc71;
 }
-.bulk-actions { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-.checkbox { width: 20px; height: 20px; cursor: pointer; margin-right: 10px; }
-.blocked-badge {
-  background: rgba(241, 196, 15, 0.2);
-  color: #f1c40f;
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 10px;
-  margin-left: 5px;
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #888;
 }
-@media (max-width: 768px) { .sidebar { width: 200px; } .bookings-grid { grid-template-columns: 1fr; } }
+
+.error-message {
+  text-align: center;
+  padding: 40px;
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.1);
+  border-radius: 16px;
+  margin: 20px;
+}
+
+.empty-message {
+  text-align: center;
+  padding: 40px;
+  color: #888;
+  background: rgba(30, 30, 40, 0.5);
+  border-radius: 16px;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 200px;
+  }
+  .bookings-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
 </head>
 
@@ -201,8 +280,11 @@ body {
 
 <div id="loginPage" class="login-container">
   <div class="login-card">
-    <div class="login-logo"><h2>🍷 DUBROVKA PRO</h2><p>Административная панель</p></div>
-    <input type="text" id="loginUsername" class="login-input" placeholder="Логин">
+    <div class="login-logo">
+      <h2>🍷 DUBROVKA PRO</h2>
+      <p>Административная панель</p>
+    </div>
+    <input type="text" id="loginUsername" class="login-input" placeholder="Логин" autocomplete="off">
     <input type="password" id="loginPassword" class="login-input" placeholder="Пароль">
     <button class="login-btn" onclick="attemptLogin()">Войти</button>
     <div id="loginError" style="color:#e74c3c; margin-top:10px; text-align:center;"></div>
@@ -211,22 +293,31 @@ body {
 
 <div id="adminPanel" class="admin-container">
   <div class="sidebar">
-    <div class="logo">🍷 DUBROVKA PRO</div>
+    <div class="logo">🍷 DUBROVKA<br>PRO</div>
     <div class="menu-item active" data-page="bookings">📅 Бронирования</div>
     <div class="menu-item" data-page="stats">📊 Статистика</div>
-    <div class="menu-item" data-page="tables">🪑 Управление столами</div>
     <div class="menu-item" data-page="export">📎 Экспорт</div>
     <div style="margin-top: 30px; padding: 15px; background: rgba(30,30,40,0.8); border-radius: 12px;">
       👤 Администратор<br>
-      <button onclick="logout()" style="width:100%; margin-top:10px; padding:8px; background:rgba(231,76,60,0.2); border:none; border-radius:8px; color:#e74c3c; cursor:pointer;">Выйти</button>
+      <button onclick="logout()" style="width:100%; margin-top:10px; padding:8px; background:rgba(231,76,60,0.2); border:none; border-radius:8px; color:#e74c3c; cursor:pointer;">🚪 Выйти</button>
     </div>
   </div>
 
   <div class="content">
     <div class="header-bar">
       <input type="text" id="searchInput" placeholder="🔍 Поиск по имени или телефону">
-      <select id="statusFilter"><option value="">Все статусы</option><option value="active">Активные</option><option value="completed">Завершённые</option><option value="cancelled">Отменённые</option></select>
-      <select id="tableFilter"><option value="">Все столы</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>VIP</option></select>
+      <select id="statusFilter">
+        <option value="">📌 Все статусы</option>
+        <option value="active">🟡 Активные</option>
+        <option value="completed">✅ Завершённые</option>
+        <option value="cancelled">❌ Отменённые</option>
+      </select>
+      <select id="tableFilter">
+        <option value="">🪑 Все столы</option>
+        <option>1</option><option>2</option><option>3</option>
+        <option>4</option><option>5</option><option>6</option>
+        <option>VIP</option>
+      </select>
       <input type="date" id="dateFilter">
       <button onclick="refreshData()">🔄 Обновить</button>
     </div>
@@ -236,38 +327,31 @@ body {
     </div>
 
     <div id="bookingsPage" class="page">
-      <div class="bulk-actions">
-        <button class="btn-sm" onclick="selectAll()">✓ Выбрать все</button>
-        <button class="btn-sm btn-complete" onclick="bulkComplete()">✅ Завершить выбранные</button>
-        <button class="btn-sm btn-cancel" onclick="bulkCancel()">❌ Отменить выбранные</button>
+      <div id="bookingsList" class="bookings-grid">
+        <div class="loading">🔄 Загрузка броней...</div>
       </div>
-      <div id="bookingsList" class="bookings-grid"></div>
-    </div>
-
-    <div id="tablesPage" class="page" style="display:none;">
-      <div class="stats-grid" id="tablesList"></div>
     </div>
 
     <div id="exportPage" class="page" style="display:none;">
       <div class="stats-grid">
-        <div class="stat-card"><button class="btn-sm" onclick="exportToExcel('day')">📊 Экспорт за день</button></div>
-        <div class="stat-card"><button class="btn-sm" onclick="exportToExcel('week')">📊 Экспорт за неделю</button></div>
-        <div class="stat-card"><button class="btn-sm" onclick="exportToExcel('month')">📊 Экспорт за месяц</button></div>
-        <div class="stat-card"><button class="btn-sm" onclick="exportToExcel('all')">📊 Экспорт все</button></div>
+        <div class="stat-card">
+          <div class="number">📅</div>
+          <button class="btn-sm" style="margin-top:10px; width:100%; background:rgba(52,152,219,0.2); color:#3498db; border:1px solid #3498db; padding:10px;" onclick="exportToExcel('day')">Экспорт за сегодня</button>
+        </div>
+        <div class="stat-card">
+          <div class="number">📆</div>
+          <button class="btn-sm" style="margin-top:10px; width:100%; background:rgba(52,152,219,0.2); color:#3498db; border:1px solid #3498db; padding:10px;" onclick="exportToExcel('week')">Экспорт за неделю</button>
+        </div>
+        <div class="stat-card">
+          <div class="number">📊</div>
+          <button class="btn-sm" style="margin-top:10px; width:100%; background:rgba(52,152,219,0.2); color:#3498db; border:1px solid #3498db; padding:10px;" onclick="exportToExcel('month')">Экспорт за месяц</button>
+        </div>
+        <div class="stat-card">
+          <div class="number">📁</div>
+          <button class="btn-sm" style="margin-top:10px; width:100%; background:rgba(52,152,219,0.2); color:#3498db; border:1px solid #3498db; padding:10px;" onclick="exportToExcel('all')">Экспорт все</button>
+        </div>
       </div>
     </div>
-  </div>
-</div>
-
-<!-- Модалка блокировки стола -->
-<div id="blockModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header"><h3>🔒 Блокировка стола</h3><span onclick="closeBlockModal()" style="cursor:pointer;">✕</span></div>
-    <input type="text" id="blockTableId" class="modal-input" readonly>
-    <input type="text" id="blockReason" class="modal-input" placeholder="Причина блокировки">
-    <input type="datetime-local" id="blockUntil" class="modal-input">
-    <button class="login-btn" onclick="confirmBlock()">Заблокировать</button>
-    <button class="login-btn" style="background:rgba(231,76,60,0.2); color:#e74c3c; margin-top:10px;" onclick="unblockTable()">Разблокировать</button>
   </div>
 </div>
 
@@ -277,166 +361,292 @@ const ADMIN_LOGIN = "admin";
 const ADMIN_PASSWORD = "dubrovka42";
 
 let currentData = [];
-let selectedBookings = new Set();
-let blockedTables = [];
 
-function getEndTime(start) { let [h,m]=start.split(":").map(Number); let eh=h+2; let ed=eh>=24?eh-24:eh; return `${start} — ${String(ed).padStart(2,"0")}:${String(m).padStart(2,"0")}`; }
+function getEndTime(startTime) {
+  if (!startTime) return "—";
+  const [hours, minutes] = startTime.split(":").map(Number);
+  let endHours = hours + 2;
+  const displayHours = endHours >= 24 ? endHours - 24 : endHours;
+  return `${startTime} — ${String(displayHours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  return `${d.getDate()}.${d.getMonth()+1}.${d.getFullYear()}`;
+}
+
+function escapeHtml(str) {
+  if (!str) return "";
+  return str.replace(/[&<>]/g, function(m) {
+    if (m === "&") return "&amp;";
+    if (m === "<") return "&lt;";
+    if (m === ">") return "&gt;";
+    return m;
+  });
+}
 
 async function loadData() {
+  const bookingsList = document.getElementById("bookingsList");
+  bookingsList.innerHTML = '<div class="loading">🔄 Загрузка броней...</div>';
+  
   try {
-    let res = await fetch(`${API}/all_bookings`);
-    let data = await res.json();
+    console.log("Загрузка данных с API...");
+    const response = await fetch(`${API}/all_bookings`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log("Получено броней:", data.length);
     currentData = data;
-    await loadBlockedTables();
     renderCurrentPage();
-  } catch(e) { console.error(e); }
-}
-
-async function loadBlockedTables() {
-  try {
-    let res = await fetch(`${API}/blocked_tables`);
-    blockedTables = await res.json();
-  } catch(e) { blockedTables = []; }
-}
-
-function isTableBlocked(tableId) {
-  return blockedTables.some(b => b.table_id === tableId);
+    
+  } catch (error) {
+    console.error("Ошибка загрузки:", error);
+    bookingsList.innerHTML = `
+      <div class="error-message">
+        ❌ Ошибка загрузки данных<br>
+        <small>${error.message}</small><br><br>
+        <button onclick="refreshData()" style="background:#d4af37; border:none; padding:8px 16px; border-radius:8px; cursor:pointer;">Повторить</button>
+      </div>
+    `;
+  }
 }
 
 function renderCurrentPage() {
-  let activePage = document.querySelector(".menu-item.active").dataset.page;
-  if(activePage === "bookings") renderBookings();
-  else if(activePage === "stats") renderStats();
-  else if(activePage === "tables") renderTablesManagement();
-  else if(activePage === "export") {}
+  const activePage = document.querySelector(".menu-item.active").dataset.page;
+  if (activePage === "bookings") renderBookings();
+  else if (activePage === "stats") renderStats();
 }
 
 function renderStats() {
-  let active = currentData.filter(b=>b.status==="active").length;
-  let completed = currentData.filter(b=>b.status==="completed").length;
-  let cancelled = currentData.filter(b=>b.status==="cancelled").length;
+  const active = currentData.filter(b => b.status === "active").length;
+  const completed = currentData.filter(b => b.status === "completed").length;
+  const cancelled = currentData.filter(b => b.status === "cancelled").length;
+  
   document.getElementById("statsGrid").innerHTML = `
-    <div class="stat-card"><div class="number">${active}</div><div>Активных</div></div>
-    <div class="stat-card"><div class="number">${completed}</div><div>Завершённых</div></div>
-    <div class="stat-card"><div class="number">${cancelled}</div><div>Отменённых</div></div>
-    <div class="stat-card"><div class="number">${currentData.length}</div><div>Всего</div></div>
+    <div class="stat-card">
+      <div class="number">${currentData.length}</div>
+      <div>📋 Всего броней</div>
+    </div>
+    <div class="stat-card">
+      <div class="number">${active}</div>
+      <div>🟡 Активных</div>
+    </div>
+    <div class="stat-card">
+      <div class="number">${completed}</div>
+      <div>✅ Завершённых</div>
+    </div>
+    <div class="stat-card">
+      <div class="number">${cancelled}</div>
+      <div>❌ Отменённых</div>
+    </div>
   `;
 }
 
-function renderTablesManagement() {
-  const tables = [1,2,3,4,5,6,"VIP"];
-  document.getElementById("tablesList").innerHTML = tables.map(t => {
-    const isBlocked = isTableBlocked(t.toString());
-    return `
-      <div class="stat-card">
-        <div class="number">Стол ${t}</div>
-        <div>${isBlocked ? '🔒 Заблокирован' : '🟢 Свободен'}</div>
-        <button class="btn-sm btn-block" style="margin-top:10px;" onclick="openBlockModal('${t}')">${isBlocked ? '🔓 Управление' : '🔒 Заблокировать'}</button>
-      </div>
-    `;
-  }).join('');
-}
-
 function renderBookings() {
-  let search = document.getElementById("searchInput").value.toLowerCase();
-  let status = document.getElementById("statusFilter").value;
-  let table = document.getElementById("tableFilter").value;
-  let date = document.getElementById("dateFilter").value;
+  const search = document.getElementById("searchInput").value.toLowerCase();
+  const status = document.getElementById("statusFilter").value;
+  const table = document.getElementById("tableFilter").value;
+  const date = document.getElementById("dateFilter").value;
   
   let filtered = currentData.filter(b => {
-    if(status && b.status !== status) return false;
-    if(table && b.table !== table) return false;
-    if(date && b.date !== date) return false;
-    if(search && !b.name.toLowerCase().includes(search) && !b.phone.includes(search)) return false;
+    if (status && b.status !== status) return false;
+    if (table && b.table !== table) return false;
+    if (date && b.date !== date) return false;
+    if (search && !b.name.toLowerCase().includes(search) && !b.phone.includes(search)) return false;
     return true;
   });
   
-  filtered.sort((a,b)=>a.time.localeCompare(b.time));
+  filtered.sort((a, b) => {
+    if (a.date !== b.date) return a.date.localeCompare(b.date);
+    return a.time.localeCompare(b.time);
+  });
   
-  document.getElementById("bookingsList").innerHTML = filtered.map(b => {
-    const isBlocked = isTableBlocked(b.table);
+  const bookingsList = document.getElementById("bookingsList");
+  
+  if (filtered.length === 0) {
+    bookingsList.innerHTML = '<div class="empty-message">📭 Нет броней по заданным критериям</div>';
+    return;
+  }
+  
+  bookingsList.innerHTML = filtered.map(b => {
+    let statusText = "";
+    let statusClass = "";
+    if (b.status === "active") {
+      statusText = "🟡 Активна";
+      statusClass = "active";
+    } else if (b.status === "completed") {
+      statusText = "✅ Завершена";
+      statusClass = "completed";
+    } else if (b.status === "cancelled") {
+      statusText = "❌ Отменена";
+      statusClass = "cancelled";
+    } else {
+      statusText = b.status;
+      statusClass = "";
+    }
+    
     return `
-      <div class="booking-card">
-        <div class="status ${b.status}">${b.status==='active'?'✅ Активна':b.status==='completed'?'✔ Завершена':'❌ Отменена'}</div>
-        <div class="time-badge">⏰ ${getEndTime(b.time)}</div>
-        <div><strong>👤 ${escapeHtml(b.name)}</strong></div>
-        <div>📞 ${b.phone}</div>
-        <div>🪑 Стол ${b.table} ${isBlocked ? '<span class="blocked-badge">🔒 ЗАБЛОКИРОВАН</span>' : ''}| 👥 ${b.guests} чел.</div>
-        <div>📅 ${b.date}</div>
+      <div class="booking-card" data-id="${b.id}">
+        <div class="status ${statusClass}">${statusText}</div>
+        <div class="time-badge">⏰ ${b.time}</div>
+        <div class="time-interval" style="font-size:12px; color:#d4af37; margin-bottom:8px;">📆 ${getEndTime(b.time)}</div>
+        <div style="font-size:16px; font-weight:600; margin:8px 0 4px;">👤 ${escapeHtml(b.name)}</div>
+        <div style="color:#888; font-size:13px; margin-bottom:8px;">📞 ${b.phone}</div>
+        <div style="display:flex; gap:12px; margin:8px 0; font-size:13px; color:#aaa;">
+          <span>🪑 Стол ${b.table}</span>
+          <span>👥 ${b.guests} чел.</span>
+        </div>
+        <div style="font-size:12px; color:#888;">📅 ${formatDate(b.date)}</div>
+        ${b.comment ? `<div style="font-size:11px; color:#d4af37; margin-top:8px;">💬 ${escapeHtml(b.comment)}</div>` : ''}
         <div class="booking-actions">
-          <button class="btn-sm btn-edit" onclick="editBooking(${b.id})">✏ Редактировать</button>
-          ${b.status === 'active' && !isBlocked ? `<button class="btn-sm btn-extend" onclick="extendBooking(${b.id})">⏰ Продлить (+1 час)</button>` : ''}
-          ${b.status === 'active' ? `<button class="btn-sm btn-complete" onclick="completeBooking(${b.id})">✅ Завершить</button>` : ''}
-          ${b.status === 'active' ? `<button class="btn-sm btn-cancel" onclick="cancelBooking(${b.id})">❌ Отменить</button>` : ''}
+          ${b.status === "active" ? `
+            <button class="btn-sm btn-extend" onclick="extendBooking(${b.id})">⏰ Продлить (+1 час)</button>
+            <button class="btn-sm btn-complete" onclick="completeBooking(${b.id})">✅ Завершить</button>
+            <button class="btn-sm btn-cancel" onclick="cancelBooking(${b.id})">❌ Отменить</button>
+          ` : ''}
         </div>
       </div>
     `;
   }).join('');
 }
 
-function escapeHtml(str) { if(!str) return ""; return str.replace(/[&<>]/g, function(m){ if(m==="&") return "&amp;"; if(m==="<") return "&lt;"; if(m===">") return "&gt;"; return m;}); }
+async function completeBooking(id) {
+  if (!confirm("Отметить что гость ушел?")) return;
+  try {
+    const response = await fetch(`${API}/done/${id}`, { method: "POST" });
+    if (response.ok) {
+      await loadData();
+    } else {
+      alert("Ошибка при завершении");
+    }
+  } catch(e) {
+    alert("Ошибка соединения");
+  }
+}
 
-function selectAll() { document.querySelectorAll('.booking-card').forEach(c=>{let id=parseInt(c.dataset.id); if(id) selectedBookings.add(id);}); renderBookings(); }
-async function completeBooking(id) { await fetch(`${API}/done/${id}`,{method:"POST"}); await loadData(); }
-async function cancelBooking(id) { if(confirm("Отменить бронь?")){ await fetch(`${API}/cancel/${id}`,{method:"POST"}); await loadData(); } }
-async function extendBooking(id) { if(confirm("Продлить бронь на 1 час?")){ await fetch(`${API}/extend_booking/${id}?hours=1`,{method:"POST"}); await loadData(); } }
-async function bulkComplete() { for(let id of selectedBookings) await fetch(`${API}/done/${id}`,{method:"POST"}); selectedBookings.clear(); await loadData(); }
-async function bulkCancel() { for(let id of selectedBookings) await fetch(`${API}/cancel/${id}`,{method:"POST"}); selectedBookings.clear(); await loadData(); }
+async function cancelBooking(id) {
+  if (!confirm("Отменить бронь?")) return;
+  try {
+    const response = await fetch(`${API}/cancel/${id}`, { method: "POST" });
+    if (response.ok) {
+      await loadData();
+    } else {
+      alert("Ошибка при отмене");
+    }
+  } catch(e) {
+    alert("Ошибка соединения");
+  }
+}
 
-let currentBlockTableId = null;
-function openBlockModal(tableId) { currentBlockTableId = tableId; document.getElementById("blockTableId").value = `Стол ${tableId}`; document.getElementById("blockReason").value = ""; document.getElementById("blockUntil").value = ""; document.getElementById("blockModal").classList.add("active"); }
-function closeBlockModal() { document.getElementById("blockModal").classList.remove("active"); }
-async function confirmBlock() { await fetch(`${API}/block_table?table_id=${currentBlockTableId}&reason=${encodeURIComponent(document.getElementById("blockReason").value)}`,{method:"POST"}); closeBlockModal(); await loadData(); }
-async function unblockTable() { await fetch(`${API}/unblock_table?table_id=${currentBlockTableId}`,{method:"POST"}); closeBlockModal(); await loadData(); }
-
-function editBooking(id) { alert("Редактирование брони (функция в разработке)"); }
+async function extendBooking(id) {
+  if (!confirm("Продлить бронь на 1 час?")) return;
+  try {
+    const response = await fetch(`${API}/extend_booking/${id}?hours=1`, { method: "POST" });
+    if (response.ok) {
+      alert("✅ Бронь продлена на 1 час");
+      await loadData();
+    } else {
+      alert("Ошибка при продлении");
+    }
+  } catch(e) {
+    alert("Ошибка соединения");
+  }
+}
 
 function exportToExcel(period) {
   let data = [...currentData];
-  let today = new Date().toISOString().split('T')[0];
-  if(period === 'day') data = data.filter(b => b.date === today);
-  else if(period === 'week') { let weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate()-7); data = data.filter(b => new Date(b.date) >= weekAgo); }
-  else if(period === 'month') { let monthAgo = new Date(); monthAgo.setMonth(monthAgo.getMonth()-1); data = data.filter(b => new Date(b.date) >= monthAgo); }
+  const today = new Date().toISOString().split('T')[0];
   
-  let ws = XLSX.utils.json_to_sheet(data.map(b=>({ ID:b.id, Имя:b.name, Телефон:b.phone, Стол:b.table, Гостей:b.guests, Дата:b.date, Время:b.time, Статус:b.status })));
-  let wb = XLSX.utils.book_new();
+  if (period === 'day') {
+    data = data.filter(b => b.date === today);
+  } else if (period === 'week') {
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    data = data.filter(b => new Date(b.date) >= weekAgo);
+  } else if (period === 'month') {
+    const monthAgo = new Date();
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+    data = data.filter(b => new Date(b.date) >= monthAgo);
+  }
+  
+  const exportData = data.map(b => ({
+    'ID': b.id,
+    'Имя': b.name,
+    'Телефон': b.phone,
+    'Стол': b.table,
+    'Гостей': b.guests,
+    'Дата': b.date,
+    'Время': b.time,
+    'Время окончания': getEndTime(b.time),
+    'Статус': b.status === 'active' ? 'Активна' : b.status === 'completed' ? 'Завершена' : 'Отменена',
+    'Комментарий': b.comment || ''
+  }));
+  
+  const ws = XLSX.utils.json_to_sheet(exportData);
+  const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Брони');
-  XLSX.writeFile(wb, `dubrovka_${period}_${today}.xlsx`);
+  XLSX.writeFile(wb, `dubrovka_brony_${period}_${today}.xlsx`);
+  
+  alert(`✅ Экспорт завершён!\nФайл: dubrovka_brony_${period}_${today}.xlsx`);
 }
 
-async function refreshData() { await loadData(); }
+async function refreshData() {
+  await loadData();
+}
 
 document.querySelectorAll(".menu-item").forEach(item => {
   item.addEventListener("click", () => {
-    document.querySelectorAll(".menu-item").forEach(i=>i.classList.remove("active"));
+    document.querySelectorAll(".menu-item").forEach(i => i.classList.remove("active"));
     item.classList.add("active");
-    document.querySelectorAll(".page").forEach(p=>p.style.display="none");
-    document.getElementById(`${item.dataset.page}Page`).style.display = "block";
+    
+    document.querySelectorAll(".page").forEach(page => page.style.display = "none");
+    const pageId = `${item.dataset.page}Page`;
+    document.getElementById(pageId).style.display = "block";
+    
     renderCurrentPage();
   });
 });
-
-function attemptLogin() {
-  if(document.getElementById("loginUsername").value === ADMIN_LOGIN && document.getElementById("loginPassword").value === ADMIN_PASSWORD) {
-    localStorage.setItem("admin_auth", "true");
-    document.getElementById("loginPage").style.display = "none";
-    document.getElementById("adminPanel").style.display = "flex";
-    loadData();
-  } else { document.getElementById("loginError").innerText = "Неверный логин или пароль"; }
-}
-
-function logout() { localStorage.removeItem("admin_auth"); document.getElementById("loginPage").style.display = "flex"; document.getElementById("adminPanel").style.display = "none"; }
-
-if(localStorage.getItem("admin_auth") === "true") {
-  document.getElementById("loginPage").style.display = "none";
-  document.getElementById("adminPanel").style.display = "flex";
-  loadData();
-}
 
 document.getElementById("searchInput").oninput = renderBookings;
 document.getElementById("statusFilter").onchange = renderBookings;
 document.getElementById("tableFilter").onchange = renderBookings;
 document.getElementById("dateFilter").onchange = renderBookings;
+
+function attemptLogin() {
+  const username = document.getElementById("loginUsername").value.trim();
+  const password = document.getElementById("loginPassword").value;
+  const errorDiv = document.getElementById("loginError");
+  
+  if (username === ADMIN_LOGIN && password === ADMIN_PASSWORD) {
+    localStorage.setItem("admin_auth", "true");
+    document.getElementById("loginPage").style.display = "none";
+    document.getElementById("adminPanel").style.display = "flex";
+    loadData();
+  } else {
+    errorDiv.innerText = "❌ Неверный логин или пароль";
+    setTimeout(() => { errorDiv.innerText = ""; }, 3000);
+  }
+}
+
+function logout() {
+  localStorage.removeItem("admin_auth");
+  document.getElementById("loginPage").style.display = "flex";
+  document.getElementById("adminPanel").style.display = "none";
+  currentData = [];
+}
+
+if (localStorage.getItem("admin_auth") === "true") {
+  document.getElementById("loginPage").style.display = "none";
+  document.getElementById("adminPanel").style.display = "flex";
+  loadData();
+}
+
+// Установка даты по умолчанию
+document.getElementById("dateFilter").value = new Date().toISOString().split('T')[0];
 </script>
 </body>
 </html>
