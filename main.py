@@ -99,10 +99,18 @@ except Exception as e:
 # =====================
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8769949339:AAFwvdkPFgj7l4BQwGfmcljauMWXRx7qves")
-ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID", "7545540622")
+
+# 👇👇👇 СПИСОК ID АДМИНОВ 👇👇👇
+# Добавьте сюда всех админов, которым нужно отправлять уведомления
+ADMIN_CHAT_IDS = [
+    "7545540622",  # Первый админ
+    "81239213"    # Второй админ (добавлен)
+]
+
 TWO_GIS_REVIEW_URL = "https://2gis.ru/novokuznetsk/review/70000001067987554"
 
 print(f"✅ Telegram configured")
+print(f"👥 Админы для уведомлений: {ADMIN_CHAT_IDS}")
 
 # =====================
 # LIMITS
@@ -140,20 +148,27 @@ def send_telegram_to_user(chat_id, text):
         )
         return response.status_code == 200
     except Exception as e:
-        print(f"❌ Ошибка: {e}")
+        print(f"❌ Ошибка отправки пользователю: {e}")
         return False
 
-def send_telegram_to_admin(text):
-    try:
-        response = requests.post(
-            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
-            json={"chat_id": ADMIN_CHAT_ID, "text": text, "parse_mode": "HTML"},
-            timeout=5
-        )
-        if response.status_code == 200:
-            print("✅ Уведомление отправлено админу")
-    except Exception as e:
-        print("❌ Ошибка:", e)
+def send_telegram_to_admins(text):
+    """Отправляет сообщение ВСЕМ админам из списка ADMIN_CHAT_IDS"""
+    success_count = 0
+    for admin_id in ADMIN_CHAT_IDS:
+        try:
+            response = requests.post(
+                f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
+                json={"chat_id": admin_id, "text": text, "parse_mode": "HTML"},
+                timeout=5
+            )
+            if response.status_code == 200:
+                success_count += 1
+                print(f"✅ Уведомление отправлено админу {admin_id}")
+            else:
+                print(f"❌ Ошибка отправки админу {admin_id}: {response.status_code}")
+        except Exception as e:
+            print(f"❌ Ошибка отправки админу {admin_id}: {e}")
+    return success_count
 
 def send_booking_confirmation(booking):
     message = (
@@ -197,7 +212,7 @@ def schedule_reminder(booking):
             reminder_timers[booking.id] = timer
             print(f"⏰ Напоминание запланировано на {reminder_time}")
     except Exception as e:
-        print(f"❌ Ошибка: {e}")
+        print(f"❌ Ошибка планирования напоминания: {e}")
 
 def schedule_auto_complete(booking):
     try:
@@ -207,7 +222,7 @@ def schedule_auto_complete(booking):
         completion_timers[booking.id] = timer
         print(f"🤖 Авто-завершение через 4 часа")
     except Exception as e:
-        print(f"❌ Ошибка: {e}")
+        print(f"❌ Ошибка планирования авто-завершения: {e}")
 
 def auto_complete_booking(booking_id):
     try:
@@ -224,7 +239,7 @@ def auto_complete_booking(booking_id):
             print(f"🤖 Авто-завершение брони {booking_id}")
         db.close()
     except Exception as e:
-        print(f"Ошибка: {e}")
+        print(f"Ошибка авто-завершения: {e}")
     finally:
         if booking_id in completion_timers:
             del completion_timers[booking_id]
@@ -360,8 +375,8 @@ def create_booking(data: dict):
         # Планируем авто-завершение
         schedule_auto_complete(booking)
 
-        # Уведомление админу
-        send_telegram_to_admin(
+        # 👇👇👇 Уведомление ВСЕМ админам 👇👇👇
+        admin_message = (
             f"🔥 <b>НОВАЯ БРОНЬ!</b>\n\n"
             f"🆔 ID: {booking.id}\n"
             f"👤 {data['name']}\n"
@@ -369,8 +384,10 @@ def create_booking(data: dict):
             f"👥 {guests}\n"
             f"🪑 Стол {table}\n"
             f"📅 {date}\n"
-            f"⏰ {time}"
+            f"⏰ {time}\n\n"
+            f"📌 <a href='https://t.me/c/--/message'>Открыть в админке</a>"
         )
+        send_telegram_to_admins(admin_message)
 
         return {"ok": True, "id": booking.id}
 
@@ -407,14 +424,15 @@ def done(id: int):
 
         print(f"✅ Бронь {id} завершена")
 
-        # Уведомляем админа
-        send_telegram_to_admin(
+        # 👇👇👇 Уведомление ВСЕМ админам о завершении 👇👇👇
+        admin_message = (
             f"✅ <b>ГОСТЬ УШЕЛ</b>\n\n"
             f"🆔 ID: {id}\n"
             f"👤 {booking.name}\n"
             f"🪑 Стол {booking.table}\n"
             f"📅 {booking.date} {booking.time}"
         )
+        send_telegram_to_admins(admin_message)
 
         return {"ok": True, "message": "Booking completed"}
 
@@ -455,6 +473,16 @@ def cancel(id: int):
             )
             send_telegram_to_user(booking.chat_id, cancel_message)
 
+        # 👇👇👇 Уведомление ВСЕМ админам об отмене 👇👇👇
+        admin_message = (
+            f"❌ <b>БРОНЬ ОТМЕНЕНА</b>\n\n"
+            f"🆔 ID: {id}\n"
+            f"👤 {booking.name}\n"
+            f"🪑 Стол {booking.table}\n"
+            f"📅 {booking.date} {booking.time}"
+        )
+        send_telegram_to_admins(admin_message)
+
         return {"ok": True, "message": "Booking cancelled"}
 
     except HTTPException:
@@ -482,3 +510,12 @@ def all_bookings():
         ]
     finally:
         db.close()
+
+# =====================
+# ДОПОЛНИТЕЛЬНЫЙ ЭНДПОИНТ ДЛЯ ПРОВЕРКИ АДМИНОВ
+# =====================
+
+@app.get("/admins")
+def get_admins():
+    """Возвращает список ID админов (для проверки)"""
+    return {"admins": ADMIN_CHAT_IDS, "count": len(ADMIN_CHAT_IDS)}
