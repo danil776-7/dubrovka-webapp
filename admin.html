@@ -220,7 +220,7 @@ body {
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 16px;
 }
 
@@ -238,9 +238,19 @@ body {
 }
 
 .time {
-  font-size: 24px;
+  font-size: 20px;
   color: #d4af37;
   font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.time-interval {
+  display: inline-block;
+  background: rgba(212, 175, 55, 0.15);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #d4af37;
   margin-bottom: 8px;
 }
 
@@ -254,6 +264,14 @@ body {
   color: #888;
   font-size: 13px;
   margin-bottom: 8px;
+}
+
+.table-info {
+  display: flex;
+  gap: 12px;
+  margin: 8px 0;
+  font-size: 13px;
+  color: #aaa;
 }
 
 .status {
@@ -303,6 +321,8 @@ body {
   font-size: 18px;
   color: #d4af37;
   font-weight: 600;
+  padding-left: 8px;
+  border-left: 3px solid #d4af37;
 }
 
 .error-message {
@@ -319,6 +339,26 @@ body {
   text-align: center;
   padding: 40px;
   color: #888;
+}
+
+.stats {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  background: rgba(20, 20, 30, 0.8);
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.stat-card span {
+  color: #d4af37;
+  font-size: 20px;
+  font-weight: 700;
 }
 
 @keyframes fadeInUp {
@@ -391,6 +431,7 @@ body {
       <input type="date" id="dateInput" style="display:none;">
       <button onclick="refresh()">🔄 Обновить</button>
     </div>
+    <div id="stats" class="stats"></div>
     <div id="list"></div>
   </div>
 </div>
@@ -455,145 +496,192 @@ function checkAuth() {
 // =====================================================
 const API = "https://dubrovka-webapp-production.up.railway.app";
 const list = document.getElementById("list");
+const statsDiv = document.getElementById("stats");
 
 let currentData = [];
 let previousIds = new Set();
 let currentMode = "today";
 
-function getLocalDate(){
-let now=new Date();
-let tz=now.getTimezoneOffset()*60000;
-return new Date(now-tz).toISOString().split("T")[0];
+// Функция для расчета времени окончания брони (+2 часа)
+function getEndTime(startTime) {
+  const [hours, minutes] = startTime.split(":").map(Number);
+  let endHours = hours + 2;
+  const endMinutes = minutes;
+  const displayHours = endHours >= 24 ? endHours - 24 : endHours;
+  return `${String(displayHours).padStart(2, "0")}:${String(endMinutes).padStart(2, "0")}`;
 }
 
-async function load(date){
-if(!date) return;
-try {
-console.log(`🔄 Загрузка броней на ${date}...`);
-let res = await fetch(`${API}/bookings_by_date?date=${date}`);
-if(!res.ok) throw new Error(`HTTP ${res.status}`);
-let data = await res.json();
-console.log(`✅ Загружено броней: ${data.length}`);
-handleNew(data);
-currentData = data;
-render();
-} catch(e) {
-console.error("❌ Ошибка:", e);
-list.innerHTML = `<div class="error-message">
+function getLocalDate() {
+  let now = new Date();
+  let tz = now.getTimezoneOffset() * 60000;
+  return new Date(now - tz).toISOString().split("T")[0];
+}
+
+async function load(date) {
+  if (!date) return;
+  try {
+    console.log(`🔄 Загрузка броней на ${date}...`);
+    let res = await fetch(`${API}/bookings_by_date?date=${date}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    let data = await res.json();
+    console.log(`✅ Загружено броней: ${data.length}`);
+    handleNew(data);
+    currentData = data;
+    render();
+    renderStats(data);
+  } catch (e) {
+    console.error("❌ Ошибка:", e);
+    list.innerHTML = `<div class="error-message">
 ❌ Ошибка загрузки данных<br>
 <small>${e.message}</small><br><br>
 <button onclick="refresh()">Повторить</button>
 </div>`;
-}
-}
-
-function handleNew(data){
-let newIds = data.map(b=>b.id);
-let hasNew = false;
-newIds.forEach(id=>{
-if(!previousIds.has(id)){
-hasNew = true;
-console.log("🔔 Новая бронь:", id);
-}
-});
-if(hasNew){
-let sound = document.getElementById("notifySound");
-if(sound) sound.play().catch(e=>console.log("Звук не воспроизведен"));
-}
-previousIds = new Set(newIds);
+  }
 }
 
-function applyFilters(data){
-let search = document.getElementById("search").value.toLowerCase();
-let table = document.getElementById("tableFilter").value;
-return data.filter(b=>{
-let matchSearch = b.name.toLowerCase().includes(search) || b.phone.includes(search);
-let matchTable = !table || b.table == table;
-return matchSearch && matchTable;
-});
+function handleNew(data) {
+  let newIds = data.map(b => b.id);
+  let hasNew = false;
+  newIds.forEach(id => {
+    if (!previousIds.has(id)) {
+      hasNew = true;
+      console.log("🔔 Новая бронь:", id);
+    }
+  });
+  if (hasNew) {
+    let sound = document.getElementById("notifySound");
+    if (sound) sound.play().catch(e => console.log("Звук не воспроизведен"));
+  }
+  previousIds = new Set(newIds);
 }
 
-function render(){
-let data = applyFilters(currentData);
-if(data.length === 0){
-list.innerHTML = "<div style='text-align:center;padding:40px;color:#666;'>📭 Нет броней</div>";
-return;
-}
-data.sort((a,b)=> new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`));
-let grouped = {};
-data.forEach(b=>{
-if(!grouped[b.date]) grouped[b.date]=[];
-grouped[b.date].push(b);
-});
-let html="";
-for(let date in grouped){
-html += `<div class="date-title">📅 ${date}</div><div class="grid">`;
-grouped[date].forEach(b=>{
-let isNew = !previousIds.has(b.id);
-let statusText = b.status === "active" ? "✅ Активна" : 
-                 b.status === "completed" ? "✔ Завершена" : 
-                 b.status === "cancelled" ? "❌ Отменена" : b.status;
-html += `
-<div class="card ${isNew ? 'new':''}">
-<div class="status ${b.status}">${statusText}</div>
-<div class="time">⏰ ${b.time}</div>
-<div class="name">👤 ${b.name}</div>
-<div class="phone">📞 ${b.phone}</div>
-<div>🪑 Стол ${b.table} | 👥 ${b.guests} чел.</div>
-`;
-if(b.status === "active"){
-html += `<button class="done-btn" onclick="done(${b.id})">✅ Гость ушёл</button>`;
-}
-html += `</div>`;
-});
-html += `</div>`;
-}
-list.innerHTML = html;
+function applyFilters(data) {
+  let search = document.getElementById("search").value.toLowerCase();
+  let table = document.getElementById("tableFilter").value;
+  return data.filter(b => {
+    let matchSearch = b.name.toLowerCase().includes(search) || b.phone.includes(search);
+    let matchTable = !table || b.table == table;
+    return matchSearch && matchTable;
+  });
 }
 
-async function done(id){
-if(!confirm("Отметить что гость ушел?")) return;
-try {
-let res = await fetch(`${API}/done/${id}`,{method:"POST"});
-if(res.ok){
-currentData = currentData.map(b=> b.id===id ? {...b,status:"completed"} : b);
-render();
-console.log(`✅ Бронь ${id} завершена`);
-} else {
-throw new Error(`HTTP ${res.status}`);
-}
-} catch(e) {
-console.error("❌ Ошибка:", e);
-alert("Ошибка: " + e.message);
-}
+function renderStats(data) {
+  const activeCount = data.filter(b => b.status === "active").length;
+  const completedCount = data.filter(b => b.status === "completed").length;
+  const cancelledCount = data.filter(b => b.status === "cancelled").length;
+  const totalCount = data.length;
+  
+  statsDiv.innerHTML = `
+    <div class="stat-card">📊 Всего: <span>${totalCount}</span></div>
+    <div class="stat-card">🟡 Активных: <span>${activeCount}</span></div>
+    <div class="stat-card">✅ Завершено: <span>${completedCount}</span></div>
+    <div class="stat-card">❌ Отменено: <span>${cancelledCount}</span></div>
+  `;
 }
 
-function refresh(){
-let date = currentMode === "today" ? getLocalDate() : dateInput.value;
-if(date) {
-list.innerHTML = '<div class="loading">🔄 Загрузка...</div>';
-load(date);
-}
+function render() {
+  let data = applyFilters(currentData);
+  if (data.length === 0) {
+    list.innerHTML = "<div style='text-align:center;padding:40px;color:#666;'>📭 Нет броней</div>";
+    return;
+  }
+  
+  data.sort((a, b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`));
+  
+  let grouped = {};
+  data.forEach(b => {
+    if (!grouped[b.date]) grouped[b.date] = [];
+    grouped[b.date].push(b);
+  });
+  
+  let html = "";
+  for (let date in grouped) {
+    html += `<div class="date-title">📅 ${date}</div><div class="grid">`;
+    grouped[date].forEach(b => {
+      let isNew = !previousIds.has(b.id);
+      let statusText = b.status === "active" ? "✅ Активна" : 
+                       b.status === "completed" ? "✔ Завершена" : 
+                       b.status === "cancelled" ? "❌ Отменена" : b.status;
+      
+      let endTime = getEndTime(b.time);
+      let timeInterval = `${b.time} — ${endTime} (2 часа)`;
+      
+      html += `
+        <div class="card ${isNew ? 'new' : ''}">
+          <div class="status ${b.status}">${statusText}</div>
+          <div class="time">⏰ ${b.time}</div>
+          <div class="time-interval">📆 ${timeInterval}</div>
+          <div class="name">👤 ${escapeHtml(b.name)}</div>
+          <div class="phone">📞 ${b.phone}</div>
+          <div class="table-info">
+            <span>🪑 Стол ${b.table}</span>
+            <span>👥 ${b.guests} чел.</span>
+          </div>
+      `;
+      if (b.status === "active") {
+        html += `<button class="done-btn" onclick="done(${b.id})">✅ Отметить как завершённую</button>`;
+      }
+      html += `</div>`;
+    });
+    html += `</div>`;
+  }
+  list.innerHTML = html;
 }
 
-function showToday(el){
-currentMode = "today";
-setActive(el);
-document.getElementById("dateInput").style.display="none";
-load(getLocalDate());
+function escapeHtml(str) {
+  if (!str) return "";
+  return str.replace(/[&<>]/g, function(m) {
+    if (m === "&") return "&amp;";
+    if (m === "<") return "&lt;";
+    if (m === ">") return "&gt;";
+    return m;
+  });
 }
 
-function showCalendar(el){
-currentMode = "calendar";
-setActive(el);
-document.getElementById("dateInput").style.display="block";
-let date = document.getElementById("dateInput").value || getLocalDate();
-load(date);
+async function done(id) {
+  if (!confirm("Отметить что гость ушел? Бронь будет завершена.")) return;
+  try {
+    let res = await fetch(`${API}/done/${id}`, { method: "POST" });
+    if (res.ok) {
+      currentData = currentData.map(b => b.id === id ? { ...b, status: "completed" } : b);
+      render();
+      renderStats(currentData);
+      console.log(`✅ Бронь ${id} завершена`);
+    } else {
+      throw new Error(`HTTP ${res.status}`);
+    }
+  } catch (e) {
+    console.error("❌ Ошибка:", e);
+    alert("Ошибка: " + e.message);
+  }
 }
 
-function setActive(el){
-document.querySelectorAll(".menu div").forEach(e=>e.classList.remove("active"));
-el.classList.add("active");
+function refresh() {
+  let date = currentMode === "today" ? getLocalDate() : document.getElementById("dateInput").value;
+  if (date) {
+    list.innerHTML = '<div class="loading">🔄 Загрузка...</div>';
+    load(date);
+  }
+}
+
+function showToday(el) {
+  currentMode = "today";
+  setActive(el);
+  document.getElementById("dateInput").style.display = "none";
+  load(getLocalDate());
+}
+
+function showCalendar(el) {
+  currentMode = "calendar";
+  setActive(el);
+  document.getElementById("dateInput").style.display = "block";
+  let date = document.getElementById("dateInput").value || getLocalDate();
+  load(date);
+}
+
+function setActive(el) {
+  document.querySelectorAll(".menu div").forEach(e => e.classList.remove("active"));
+  el.classList.add("active");
 }
 
 function loadInitialData() {
@@ -602,11 +690,18 @@ function loadInitialData() {
   dateInput.value = getLocalDate();
   
   document.getElementById("dateInput").onchange = () => {
-    if(currentMode === "calendar") load(dateInput.value);
+    if (currentMode === "calendar") load(dateInput.value);
   };
-  document.getElementById("search").oninput = render;
-  document.getElementById("tableFilter").onchange = render;
+  document.getElementById("search").oninput = () => {
+    render();
+    renderStats(currentData);
+  };
+  document.getElementById("tableFilter").onchange = () => {
+    render();
+    renderStats(currentData);
+  };
   
+  // Автообновление каждые 10 секунд
   setInterval(() => {
     if (isAuthenticated) {
       let date = currentMode === "today" ? getLocalDate() : document.getElementById("dateInput").value;
