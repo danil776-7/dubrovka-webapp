@@ -3,281 +3,223 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dubrovka PRO</title>
+<title>Dubrovka PRO FULL</title>
 
 <style>
+
 /* ================= RESET ================= */
 *{margin:0;padding:0;box-sizing:border-box}
 body{
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto;
-  background:#2b1208;color:#fff;
-  overflow-x:hidden;
+ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto;
+ background:#2b1208;color:#fff;
+ overflow-x:hidden;
+ user-select:none;
 }
 
 /* ================= HEADER ================= */
 .header{
-  background:#eee;color:#000;
-  padding:12px 16px;
-  display:flex;justify-content:space-between;align-items:center;
+ background:#eee;color:#000;
+ padding:12px 16px;
+ display:flex;justify-content:space-between;
+ align-items:center;
 }
 
 /* ================= TIMELINE ================= */
 .timeline{
-  background:#3b1509;
-  padding:16px;
+ background:#3b1509;
+ padding:20px;
 }
-.timeline-bar{
-  position:relative;
-  height:40px;
-}
-.timeline-track{
-  height:4px;
-  background:#6b3a2a;
-  border-radius:4px;
-  position:absolute;top:18px;left:0;right:0;
-}
-.timeline-pointer{
-  position:absolute;
-  top:10px;
-  width:16px;height:16px;
-  background:#fff;border-radius:50%;
-  transform:translateX(-50%);
-  cursor:pointer;
-}
+
 .timeline-label{
-  text-align:center;
-  margin-bottom:8px;
-  font-weight:600;
+ text-align:center;
+ font-weight:600;
+ margin-bottom:10px;
+}
+
+.timeline-track{
+ position:relative;
+ height:6px;
+ background:#6b3a2a;
+ border-radius:10px;
+}
+
+.timeline-fill{
+ position:absolute;
+ height:100%;
+ background:#fff;
+ border-radius:10px;
+ width:0%;
+}
+
+.timeline-pointer{
+ position:absolute;
+ top:-5px;
+ width:16px;height:16px;
+ background:#fff;
+ border-radius:50%;
+ cursor:pointer;
 }
 
 /* ================= GRID ================= */
 .grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
-  gap:12px;
-  padding:16px;
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+ gap:12px;padding:16px;
 }
 
 /* ================= CARD ================= */
 .card{
-  position:relative;
-  border-radius:14px;
-  overflow:hidden;
-  cursor:pointer;
-  transition:.25s;
+ position:relative;
+ border-radius:14px;
+ overflow:hidden;
+ cursor:pointer;
+ transition:.2s;
 }
-.card:hover{transform:scale(1.03)}
+.card:hover{transform:scale(1.02)}
+.card.disabled{
+ opacity:.35;
+ pointer-events:none;
+}
 
 .card img{
-  width:100%;
-  height:160px;
-  object-fit:cover;
+ width:100%;
+ height:160px;
+ object-fit:cover;
 }
 
 .overlay{
-  position:absolute;
-  inset:0;
-  padding:10px;
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
-  background:linear-gradient(transparent,rgba(0,0,0,.85));
+ position:absolute;
+ inset:0;
+ padding:10px;
+ display:flex;
+ flex-direction:column;
+ justify-content:space-between;
+ background:linear-gradient(transparent,rgba(0,0,0,.85));
 }
 
 .badge{
-  font-size:12px;
-  padding:4px 8px;
-  border-radius:8px;
-  width:max-content;
+ padding:4px 8px;
+ border-radius:8px;
+ font-size:12px;
+ width:max-content;
 }
+
 .free{background:#1faa5c}
 .partial{background:#cfa72a}
 .busy{background:#c0392b}
 
 /* ================= MODAL ================= */
 .modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.85);
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  opacity:0;
-  pointer-events:none;
-  transition:.25s;
+ position:fixed;
+ inset:0;
+ background:rgba(0,0,0,.85);
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ opacity:0;
+ pointer-events:none;
+ transition:.25s;
 }
 .modal.active{
-  opacity:1;
-  pointer-events:auto;
+ opacity:1;
+ pointer-events:auto;
 }
 
 .box{
-  width:420px;
-  background:#111;
-  border-radius:14px;
-  overflow:hidden;
-  transform:translateY(20px);
-  transition:.25s;
+ width:420px;
+ background:#111;
+ border-radius:14px;
+ overflow:hidden;
+ transform:translateY(20px);
+ transition:.25s;
 }
 .modal.active .box{
-  transform:translateY(0);
+ transform:translateY(0);
 }
 
-/* ================= MODAL HEADER ================= */
 .modal-header{
-  padding:14px;
-  background:#1c1c1c;
-  display:flex;
-  justify-content:space-between;
+ padding:14px;
+ background:#1c1c1c;
+ display:flex;
+ justify-content:space-between;
 }
 
-/* ================= TIME ================= */
-.time-header{
-  padding:12px;
+/* ================= FORM ================= */
+input{
+ width:calc(100% - 24px);
+ margin:8px 12px;
+ padding:14px;
+ border-radius:10px;
+ border:1px solid #333;
+ background:#1c1c1c;
+ color:#fff;
 }
 
-.tabs{
-  display:flex;
-  margin:10px;
-}
-.tab{
-  flex:1;
-  padding:10px;
-  text-align:center;
-  background:#222;
-  cursor:pointer;
-}
-.tab.active{
-  background:#fff;
-  color:#000;
-}
-
-.time-grid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:8px;
-  padding:12px;
-}
-
-.cell{
-  padding:14px;
-  text-align:center;
-  border-radius:8px;
-  border:1px solid #333;
-  cursor:pointer;
-}
-.cell:hover{background:#2a2a2a}
-.cell.active{background:#fff;color:#000}
-.cell.busy{
-  opacity:.3;
-  pointer-events:none;
-}
-
-/* ================= BUTTON ================= */
 .btn{
-  margin:12px;
-  padding:14px;
-  text-align:center;
-  border-radius:10px;
-  background:#fff;
-  color:#000;
-  cursor:pointer;
+ margin:12px;
+ padding:14px;
+ text-align:center;
+ border-radius:10px;
+ background:#fff;
+ color:#000;
+ cursor:pointer;
 }
 .btn.disabled{
-  background:#555;
-  color:#aaa;
-  pointer-events:none;
-}
-
-/* ================= INPUT ================= */
-input{
-  width:calc(100% - 24px);
-  margin:8px 12px;
-  padding:14px;
-  border-radius:10px;
-  border:1px solid #333;
-  background:#1c1c1c;
-  color:#fff;
+ background:#555;color:#aaa;
+ pointer-events:none;
 }
 
 /* ================= MOBILE ================= */
 @media(max-width:500px){
-  .box{width:95%}
+ .box{width:95%}
 }
+
 </style>
 </head>
 
 <body>
 
 <div class="header">
-  <b>DUBROVKA</b>
-  <div>+7‒913‒432‒01‒01</div>
+ <b>DUBROVKA</b>
+ <div>+7‒913‒432‒01‒01</div>
 </div>
 
 <!-- TIMELINE -->
 <div class="timeline">
-  <div class="timeline-label" id="timelineLabel">с 12:00 ч.</div>
-  <div class="timeline-bar">
-    <div class="timeline-track"></div>
-    <div id="pointer" class="timeline-pointer" style="left:0%"></div>
-  </div>
+ <div id="timeLabel" class="timeline-label">12:00</div>
+
+ <div id="track" class="timeline-track">
+   <div id="fill" class="timeline-fill"></div>
+   <div id="pointer" class="timeline-pointer"></div>
+ </div>
 </div>
 
 <!-- TABLES -->
 <div id="grid" class="grid"></div>
 
-<!-- TIME MODAL -->
-<div id="timeModal" class="modal">
-  <div class="box">
-
-    <div class="modal-header">
-      <div>Дата и время</div>
-      <div onclick="closeTime()">✕</div>
-    </div>
-
-    <div class="time-header">
-      С: <b id="from">--</b><br>
-      До: <b id="to">--</b>
-    </div>
-
-    <div class="tabs">
-      <div class="tab active" onclick="setMode('hour')">Часы</div>
-      <div class="tab" onclick="setMode('minute')">Минуты</div>
-    </div>
-
-    <div id="timeGrid" class="time-grid"></div>
-
-    <div id="continueBtn" class="btn disabled">Продолжить</div>
-
-  </div>
-</div>
-
 <!-- FORM -->
 <div id="formModal" class="modal">
-  <div class="box">
+ <div class="box">
+   <div class="modal-header">
+     <div>Бронирование</div>
+     <div onclick="closeForm()">✕</div>
+   </div>
 
-    <div class="modal-header">
-      <div>Бронирование</div>
-      <div onclick="closeForm()">✕</div>
-    </div>
+   <input placeholder="Имя">
 
-    <input placeholder="Имя">
+   <input id="phone" placeholder="+7 XXX XXX XX XX" maxlength="18">
 
-    <input id="phone" placeholder="+7 XXX XXX XX XX" maxlength="18">
+   <input id="guests" type="number" min="1" max="8" value="2">
 
-    <input id="guests" type="number" min="1" max="8" value="2">
-
-    <div class="btn" onclick="book()">Подтвердить</div>
-
-  </div>
+   <div class="btn" onclick="book()">Подтвердить</div>
+ </div>
 </div>
 
 <script>
 
-/* ================= TABLES ================= */
+/* ================= DATA ================= */
 const TABLES=[1,2,3,4,5,6,"VIP"];
 
-/* ================= BUSY ================= */
 const BUSY={
  1:[["18:00","20:00"]],
  2:[["17:30","19:00"]],
@@ -289,11 +231,8 @@ const BUSY={
 };
 
 /* ================= STATE ================= */
+let selectedTime="12:00";
 let selectedTable=null;
-let selectedFrom=null;
-let selectedTo=null;
-let tempHour=null;
-let mode="hour";
 
 /* ================= UTILS ================= */
 function toMin(t){
@@ -302,23 +241,29 @@ function toMin(t){
 }
 
 /* ================= STATUS ================= */
-function getStatus(t){
- let now=12*60;
- let busy=BUSY[t]||[];
+function getStatus(table,time){
+
+ let busy=BUSY[table]||[];
 
  if(!busy.length){
   return ["free","Свободно"];
  }
 
  let current=busy.find(([s,e])=>{
-  return toMin(s)<=now && toMin(e)>now;
+  return toMin(time)>=toMin(s) && toMin(time)<toMin(e);
  });
 
  if(current){
   return ["busy","Занято"];
  }
 
- return ["partial","Свободно до "+busy[0][0]];
+ let next=busy.find(([s])=>toMin(s)>toMin(time));
+
+ if(next){
+  return ["partial","Свободно до "+next[0]];
+ }
+
+ return ["free","Свободно"];
 }
 
 /* ================= RENDER ================= */
@@ -326,10 +271,11 @@ function render(){
  grid.innerHTML="";
 
  TABLES.forEach(t=>{
-  let [cls,text]=getStatus(t);
+
+  let [cls,text]=getStatus(t,selectedTime);
 
   let el=document.createElement("div");
-  el.className="card";
+  el.className="card "+(cls==="busy"?"disabled":"");
 
   el.innerHTML=`
     <img src="https://images.unsplash.com/photo-1552566626-52f8b828add9">
@@ -339,128 +285,63 @@ function render(){
     </div>
   `;
 
-  el.onclick=()=>{
-    selectedTable=t;
-    openTime();
-  };
+  if(cls!=="busy"){
+    el.onclick=()=>{
+      selectedTable=t;
+      openForm();
+    };
+  }
 
   grid.appendChild(el);
  });
 }
 
-/* ================= TIME ================= */
-function openTime(){
- timeModal.classList.add("active");
+/* ================= TIMELINE ================= */
+let pointer=document.getElementById("pointer");
+let track=document.getElementById("track");
+let fill=document.getElementById("fill");
 
- selectedFrom=null;
- selectedTo=null;
+function updateTime(percent){
 
- from.innerText="--";
- to.innerText="--";
+ let total=12*60 + percent*12*60;
 
- setMode("hour");
+ let h=Math.floor(total/60);
+ let m=Math.floor((total%60)/30)*30;
+
+ selectedTime=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+
+ timeLabel.innerText=selectedTime;
+
+ render();
 }
 
-function closeTime(){
- timeModal.classList.remove("active");
+function setPointer(x){
+
+ let rect=track.getBoundingClientRect();
+ let pos=x-rect.left;
+
+ if(pos<0)pos=0;
+ if(pos>rect.width)pos=rect.width;
+
+ let percent=pos/rect.width;
+
+ pointer.style.left=(percent*100)+"%";
+ fill.style.width=(percent*100)+"%";
+
+ updateTime(percent);
 }
 
-/* ================= MODE ================= */
-function setMode(m){
- mode=m;
-
- document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
- document.querySelectorAll(".tab")[m==="hour"?0:1].classList.add("active");
-
- renderGrid();
-}
-
-/* ================= GRID ================= */
-function renderGrid(){
- timeGrid.innerHTML="";
-
- if(mode==="hour"){
-  for(let h=12;h<24;h++){
-    let el=document.createElement("div");
-    el.className="cell";
-    el.innerText=h;
-
-    el.onclick=()=>{
-      tempHour=h;
-      setMode("minute");
-    };
-
-    timeGrid.appendChild(el);
-  }
- }else{
-  [0,15,30,45].forEach(m=>{
-    let t=`${tempHour}:${String(m).padStart(2,'0')}`;
-
-    let el=document.createElement("div");
-    el.className="cell";
-    el.innerText=String(m).padStart(2,'0');
-
-    if(isBusy(t)){
-      el.classList.add("busy");
-    }
-
-    el.onclick=()=>selectTime(t);
-
-    timeGrid.appendChild(el);
-  });
- }
-}
-
-/* ================= BUSY CHECK ================= */
-function isBusy(t){
- let busy=BUSY[selectedTable]||[];
- return busy.some(([s,e])=>{
-   return toMin(t)>=toMin(s) && toMin(t)<toMin(e);
- });
-}
-
-/* ================= SELECT ================= */
-function selectTime(t){
-
- if(!selectedFrom){
-  selectedFrom=t;
-  from.innerText=t;
-  return;
- }
-
- if(selectedFrom && !selectedTo){
-
-  if(toMin(t)<=toMin(selectedFrom)){
-    selectedFrom=t;
-    from.innerText=t;
-    return;
-  }
-
-  selectedTo=t;
-  to.innerText=t;
-
-  continueBtn.classList.remove("disabled");
-  return;
- }
-
- selectedFrom=t;
- selectedTo=null;
-
- from.innerText=t;
- to.innerText="--";
-
- continueBtn.classList.add("disabled");
-}
-
-/* ================= CONTINUE ================= */
-continueBtn.onclick=()=>{
- if(!selectedFrom || !selectedTo) return;
-
- timeModal.classList.remove("active");
- formModal.classList.add("active");
+pointer.onmousedown=()=>{
+ document.onmousemove=(e)=>setPointer(e.clientX);
+ document.onmouseup=()=>document.onmousemove=null;
 };
 
+track.onclick=(e)=>setPointer(e.clientX);
+
 /* ================= FORM ================= */
+function openForm(){
+ formModal.classList.add("active");
+}
 function closeForm(){
  formModal.classList.remove("active");
 }
@@ -479,7 +360,7 @@ phone.oninput=()=>{
  phone.value=f;
 };
 
-/* ================= GUEST LIMIT ================= */
+/* ================= LIMIT ================= */
 guests.oninput=()=>{
  if(guests.value>8) guests.value=8;
  if(guests.value<1) guests.value=1;
@@ -487,32 +368,11 @@ guests.oninput=()=>{
 
 /* ================= BOOK ================= */
 function book(){
- alert(`Стол ${selectedTable}\n${selectedFrom}-${selectedTo}`);
+ alert(`Стол ${selectedTable}\nВремя ${selectedTime}`);
 }
 
-/* ================= TIMELINE DRAG ================= */
-let pointer=document.getElementById("pointer");
-let bar=document.querySelector(".timeline-bar");
-
-pointer.onmousedown=(e)=>{
- document.onmousemove=(e2)=>{
-  let rect=bar.getBoundingClientRect();
-  let x=e2.clientX-rect.left;
-
-  if(x<0)x=0;
-  if(x>rect.width)x=rect.width;
-
-  let percent=x/rect.width;
-
-  pointer.style.left=(percent*100)+"%";
-
-  let hour=12+Math.floor(percent*12);
-  timelineLabel.innerText="с "+hour+":00 ч.";
- };
- document.onmouseup=()=>document.onmousemove=null;
-};
-
 /* ================= INIT ================= */
+setPointer(track.getBoundingClientRect().left);
 render();
 
 </script>
