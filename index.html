@@ -151,7 +151,6 @@ body {
   color: #d4af37;
 }
 
-/* ПОЛЗУНОК */
 .timeline-section {
   background: rgba(30, 30, 40, 0.8);
   border-radius: 16px;
@@ -223,7 +222,6 @@ body {
   letter-spacing: 2px;
 }
 
-/* ФИЛЬТРЫ */
 .filters {
   display: flex;
   gap: 12px;
@@ -627,7 +625,6 @@ body {
       <span class="date-value" id="currentDate">Сегодня</span>
     </div>
     
-    <!-- ПОЛЗУНОК -->
     <div class="timeline-section">
       <div class="timeline-label">⏰ ПЕРЕМЕСТИТЕ ПОЛЗУНОК, ЧТОБЫ ВЫБРАТЬ ВРЕМЯ</div>
       <div class="timeline-track-container">
@@ -635,16 +632,7 @@ body {
           <div id="fill" class="timeline-fill"></div>
           <div id="pointer" class="timeline-pointer"></div>
         </div>
-        <div class="time-markers">
-          <span>11:00</span>
-          <span>13:00</span>
-          <span>15:00</span>
-          <span>17:00</span>
-          <span>19:00</span>
-          <span>21:00</span>
-          <span>23:00</span>
-          <span>01:00</span>
-        </div>
+        <div class="time-markers" id="timeMarkers"></div>
       </div>
       <div id="currentTimeDisplay" class="current-time-display">12:00</div>
     </div>
@@ -674,7 +662,6 @@ body {
   </div>
 </div>
 
-<!-- МОДАЛКА БРОНИРОВАНИЯ -->
 <div id="bookingModal" class="modal">
   <div class="modal-content">
     <div class="modal-header">
@@ -692,7 +679,7 @@ body {
         <span style="color:#d4af37;">→</span>
         <select id="endTimeSelect" class="time-select"></select>
       </div>
-      <div class="duration-info" id="durationInfo">Длительность: 1 час</div>
+      <div class="duration-info" id="durationInfo">Выберите время</div>
       
       <input type="text" id="modalName" class="modal-input" placeholder="👤 ВАШЕ ИМЯ" autocomplete="name">
       <input type="tel" id="modalPhone" class="modal-input" placeholder="📞 ТЕЛЕФОН (+7XXXXXXXXXX)" maxlength="12">
@@ -707,7 +694,6 @@ body {
   </div>
 </div>
 
-<!-- МОДАЛКА VIP -->
 <div id="vipModal" class="modal">
   <div class="modal-content vip-modal-content">
     <div class="modal-header">
@@ -744,14 +730,14 @@ const TABLES = [
   { id: 7, number: "VIP", zone: "vip", zoneName: "VIP комната", capacity: 10, isVip: true, image: "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=300" }
 ];
 
-// Брони
+// Брони - ПУСТЫЕ, чтобы все столы были свободны
 const BOOKINGS = {
   1: [],
-  2: [{ start: "18:00", end: "19:00" }],
+  2: [],
   3: [],
   4: [],
   5: [],
-  6: [{ start: "19:00", end: "20:00" }],
+  6: [],
   7: []
 };
 
@@ -761,6 +747,7 @@ let selectedTable = null;
 let currentZone = "all";
 let selectedStartTime = null;
 let selectedEndTime = null;
+let ALL_TIMES = [];
 
 // DOM элементы
 const track = document.getElementById("track");
@@ -791,25 +778,20 @@ function formatTime(minutes) {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-// Получить максимальное время работы в зависимости от дня недели
-function getMaxHour() {
-  const now = new Date();
-  const day = now.getDay();
-  // Пн=1, Вт=2, Ср=3, Чт=4, Пт=5, Сб=6, Вс=0
-  if (day === 5) return 26; // Пт до 02:00 (26 часов)
-  if (day === 6) return 26; // Сб до 02:00
-  if (day === 0) return 25; // Вс до 01:00
-  return 25; // Пн-Чт до 01:00
-}
-
 function getStartHour() {
   const now = new Date();
   const day = now.getDay();
-  if (day === 6 || day === 0) return 12; // Сб, Вс с 12:00
-  return 11; // Пн-Пт с 11:00
+  if (day === 6 || day === 0) return 12;
+  return 11;
 }
 
-// Генерация времен с шагом 30 минут
+function getMaxHour() {
+  const now = new Date();
+  const day = now.getDay();
+  if (day === 5 || day === 6) return 26;
+  return 25;
+}
+
 function generateAllTimes() {
   const times = [];
   const startHour = getStartHour();
@@ -822,22 +804,8 @@ function generateAllTimes() {
   return times;
 }
 
-let ALL_TIMES = generateAllTimes();
-
-// Обновление времен при смене дня
-function updateTimesByDay() {
-  ALL_TIMES = generateAllTimes();
-  renderTimeMarkers();
-  if (ALL_TIMES.length > 0) {
-    selectedTime = ALL_TIMES[0];
-    currentTimeDisplay.textContent = selectedTime;
-    renderFreeTables();
-  }
-}
-
-function renderTimeMarkers() {
-  const markers = document.querySelector('.time-markers');
-  if (!markers) return;
+function updateTimeMarkers() {
+  const markersDiv = document.getElementById("timeMarkers");
   const startHour = getStartHour();
   const maxHour = getMaxHour();
   const hours = [];
@@ -845,7 +813,7 @@ function renderTimeMarkers() {
     const displayHour = h >= 24 ? h - 24 : h;
     hours.push(`${String(displayHour).padStart(2, "0")}:00`);
   }
-  markers.innerHTML = hours.map(h => `<span>${h}</span>`).join('');
+  markersDiv.innerHTML = hours.map(h => `<span>${h}</span>`).join('');
 }
 
 // ================= ПРОВЕРКА СВОБОДНЫХ СТОЛОВ =================
@@ -868,7 +836,7 @@ function getFreeTables() {
   });
 }
 
-// ================= ДОСТУПНЫЕ ВРЕМЕНА ДЛЯ БРОНИ (1 час) =================
+// ================= ДОСТУПНЫЕ ВРЕМЕНА (ЛЮБОЙ ИНТЕРВАЛ) =================
 function getAvailableStartTimes(tableId, baseTime) {
   const bookings = BOOKINGS[tableId] || [];
   const available = [];
@@ -896,25 +864,24 @@ function getAvailableStartTimes(tableId, baseTime) {
 function getAvailableEndTimes(tableId, startTime) {
   const bookings = BOOKINGS[tableId] || [];
   const startMin = toMinutes(startTime);
-  const endMinTarget = startMin + 60; // 1 час
   const available = [];
   
   for (let i = 0; i < ALL_TIMES.length; i++) {
     const endSlot = ALL_TIMES[i];
     const endMin = toMinutes(endSlot);
     if (endMin <= startMin) continue;
-    if (endMin > endMinTarget + 30) break;
     
     let conflict = false;
     for (const booking of bookings) {
       const bookingStart = toMinutes(booking.start);
       const bookingEnd = toMinutes(booking.end);
+      // Проверяем пересечение интервала [startMin, endMin] с существующей бронью
       if (!(endMin <= bookingStart || startMin >= bookingEnd)) {
         conflict = true;
         break;
       }
     }
-    if (!conflict && endMin <= endMinTarget + 30) available.push(endSlot);
+    if (!conflict) available.push(endSlot);
   }
   return available;
 }
@@ -923,13 +890,14 @@ function getAvailableEndTimes(tableId, startTime) {
 function updateTimeFromPercent(percent) {
   const startHour = getStartHour();
   const maxHour = getMaxHour();
-  const totalDuration = (maxHour - startHour) * 60;
-  const totalMinutes = startHour * 60 + percent * totalDuration;
+  const totalMinutesRange = (maxHour - startHour) * 60;
+  const totalMinutes = startHour * 60 + percent * totalMinutesRange;
   let hours = Math.floor(totalMinutes / 60);
   let minutes = Math.floor((totalMinutes % 60) / 30) * 30;
   if (hours >= 24) hours -= 24;
   
   const timeStr = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+  // Проверяем, есть ли такое время в списке
   if (ALL_TIMES.includes(timeStr)) {
     selectedTime = timeStr;
     currentTimeDisplay.textContent = selectedTime;
@@ -1026,7 +994,7 @@ function renderFreeTables() {
     `;
   }).join('');
   
-  // НАВЕШИВАЕМ ОБРАБОТЧИКИ - ПРЯМО ЗДЕСЬ
+  // Обработчики кликов
   document.querySelectorAll('.table-card').forEach(card => {
     card.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -1060,16 +1028,8 @@ function openBookingModal() {
   selectedStartTime = availableStartTimes[0];
   startTimeSelect.value = selectedStartTime;
   
-  const availableEndTimes = getAvailableEndTimes(selectedTable.id, selectedStartTime);
-  if (availableEndTimes.length > 0) {
-    selectedEndTime = availableEndTimes[0];
-    endTimeSelect.innerHTML = availableEndTimes.map(t => `<option value="${t}">${t}</option>`).join('');
-    endTimeSelect.value = selectedEndTime;
-    durationInfo.textContent = `Длительность: 1 час (до ${selectedEndTime})`;
-  } else {
-    endTimeSelect.innerHTML = '<option disabled>Нет времени</option>';
-    durationInfo.textContent = "Нет доступного времени";
-  }
+  // Обновляем доступные времена окончания
+  updateEndTimeOptions();
   
   modalGuests.value = Math.min(2, selectedTable.capacity);
   modalGuests.max = selectedTable.capacity;
@@ -1078,19 +1038,35 @@ function openBookingModal() {
   bookingModal.classList.add("active");
 }
 
+function updateEndTimeOptions() {
+  if (!selectedStartTime || !selectedTable) return;
+  
+  const availableEndTimes = getAvailableEndTimes(selectedTable.id, selectedStartTime);
+  
+  if (availableEndTimes.length === 0) {
+    endTimeSelect.innerHTML = `<option disabled>Нет доступного времени</option>`;
+    durationInfo.textContent = "Нет доступного времени окончания";
+    return;
+  }
+  
+  endTimeSelect.innerHTML = availableEndTimes.map(t => `<option value="${t}">${t}</option>`).join('');
+  selectedEndTime = availableEndTimes[0];
+  endTimeSelect.value = selectedEndTime;
+  durationInfo.textContent = `Длительность: ${selectedStartTime} - ${selectedEndTime}`;
+}
+
 function closeBookingModal() { bookingModal.classList.remove("active"); }
 function openVipModal() { vipModal.classList.add("active"); }
 function closeVipModal() { vipModal.classList.remove("active"); }
 
 startTimeSelect.onchange = () => {
   selectedStartTime = startTimeSelect.value;
-  const availableEndTimes = getAvailableEndTimes(selectedTable.id, selectedStartTime);
-  if (availableEndTimes.length > 0) {
-    selectedEndTime = availableEndTimes[0];
-    endTimeSelect.innerHTML = availableEndTimes.map(t => `<option value="${t}">${t}</option>`).join('');
-    endTimeSelect.value = selectedEndTime;
-    durationInfo.textContent = `Длительность: 1 час (до ${selectedEndTime})`;
-  }
+  updateEndTimeOptions();
+};
+
+endTimeSelect.onchange = () => {
+  selectedEndTime = endTimeSelect.value;
+  durationInfo.textContent = `Длительность: ${selectedStartTime} - ${selectedEndTime}`;
 };
 
 modalPhone.oninput = () => {
@@ -1154,14 +1130,21 @@ function toggleAudio() {
 bookingModal.addEventListener('click', (e) => { if (e.target === bookingModal) closeBookingModal(); });
 vipModal.addEventListener('click', (e) => { if (e.target === vipModal) closeVipModal(); });
 
-// Инициализация
-updateTimesByDay();
-window.addEventListener('load', () => {
+// ИНИЦИАЛИЗАЦИЯ
+function init() {
+  ALL_TIMES = generateAllTimes();
+  updateTimeMarkers();
+  selectedTime = ALL_TIMES[0] || "12:00";
+  currentTimeDisplay.textContent = selectedTime;
+  renderFreeTables();
+  
   setTimeout(() => {
     const rect = track.getBoundingClientRect();
     if (rect.width > 0) setPointerPosition(rect.left);
   }, 100);
-});
+}
+
+init();
 </script>
 </body>
 </html>
