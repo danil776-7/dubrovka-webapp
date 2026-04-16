@@ -290,12 +290,20 @@ body {
   background: rgba(50, 50, 60, 0.8);
 }
 
-.table-img {
+.table-icon {
   width: 100%;
-  height: 130px;
-  object-fit: cover;
-  background: #1a1a2a;
-  display: block;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #2a2a3a, #1a1a2a);
+  font-size: 48px;
+  color: #d4af37;
+}
+
+.vip-icon {
+  background: linear-gradient(135deg, #d4af37, #b88d2a);
+  color: #0a0a0f;
 }
 
 .table-info {
@@ -517,7 +525,7 @@ body {
     font-size: 20px;
   }
   .menu-btn { bottom: 80px; }
-  .table-img { height: 100px; }
+  .table-icon { height: 80px; font-size: 36px; }
 }
 </style>
 </head>
@@ -636,16 +644,15 @@ if (tg) {
 
 const API_URL = "https://dubrovka-webapp-production.up.railway.app";
 
-// ================= ДАННЫЕ СТОЛОВ С ФОТО =================
-// ВАЖНО: Файлы фото должны лежать в ТОЙ ЖЕ ПАПКЕ что и index.html
+// ================= ДАННЫЕ СТОЛОВ (БЕЗ ФОТО, ТОЛЬКО ИКОНКИ) =================
 const TABLES = [
-  { id: "1", number: 1, zone: "main", zoneName: "Основной зал", capacity: 7, image: "table1.jpg" },
-  { id: "2", number: 2, zone: "main", zoneName: "Основной зал", capacity: 5, image: "table2.jpg" },
-  { id: "3", number: 3, zone: "main", zoneName: "Основной зал", capacity: 5, image: "table3.jpg" },
-  { id: "4", number: 4, zone: "main", zoneName: "Основной зал", capacity: 5, image: "table4.jpg" },
-  { id: "5", number: 5, zone: "main", zoneName: "Основной зал", capacity: 5, image: "table5.jpg" },
-  { id: "6", number: 6, zone: "main", zoneName: "Основной зал", capacity: 3, image: "table6.jpg" },
-  { id: "VIP", number: "VIP", zone: "vip", zoneName: "VIP комната", capacity: 20, isVip: true, image: "" }
+  { id: "1", number: 1, zone: "main", zoneName: "Основной зал", capacity: 7, icon: "🍽️" },
+  { id: "2", number: 2, zone: "main", zoneName: "Основной зал", capacity: 5, icon: "🍽️" },
+  { id: "3", number: 3, zone: "main", zoneName: "Основной зал", capacity: 5, icon: "🍽️" },
+  { id: "4", number: 4, zone: "main", zoneName: "Основной зал", capacity: 5, icon: "🍽️" },
+  { id: "5", number: 5, zone: "main", zoneName: "Основной зал", capacity: 5, icon: "🍽️" },
+  { id: "6", number: 6, zone: "main", zoneName: "Основной зал", capacity: 3, icon: "🍽️" },
+  { id: "VIP", number: "VIP", zone: "vip", zoneName: "VIP комната", capacity: 20, isVip: true, icon: "👑" }
 ];
 
 let selectedTime = "12:00";
@@ -809,14 +816,14 @@ function renderTables() {
             const untilTime = getTableUntilTime(table.id, selectedTime);
             const isBusy = !isFree;
             const vipBadge = table.isVip ? '<span class="vip-badge">VIP</span>' : '';
-            const imagePath = table.image || '';
+            const iconClass = table.isVip ? 'vip-icon' : '';
             const statusHtml = isBusy 
               ? `<div class="table-status status-busy">🔴 ЗАНЯТ</div>${untilTime ? `<div class="table-until">📅 до ${untilTime}</div>` : ''}`
               : `<div class="table-status status-free">🟢 СВОБОДЕН</div>`;
             
             return `
               <div class="table-card ${isBusy ? 'busy' : ''}" data-id="${table.id}" data-isvip="${table.isVip || false}" data-number="${table.number}" data-capacity="${table.capacity}">
-                ${imagePath ? `<img src="${imagePath}" class="table-img" alt="Стол ${table.number}" onerror="this.style.display='none'">` : '<div class="table-img" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#d4af37,#b88d2a);"><span style="font-size:30px;">🍽️</span></div>'}
+                <div class="table-icon ${iconClass}">${table.icon}</div>
                 <div class="table-info">
                   <div class="table-number">${table.isVip ? 'VIP комната' : `Стол №${table.number}`}${vipBadge}</div>
                   <div class="table-zone">${table.zoneName}</div>
@@ -958,7 +965,7 @@ async function cancelUserBooking(id) {
 }
 
 function shareBooking(table, time, date) {
-  let text = `🍷 Бронь в DUBROVKA!\nСтол ${table}\n${date} в ${time}\n📍 Ермакова 11\n📞 +7‒913‒432‒01‏01`;
+  let text = `🍷 Бронь в DUBROVKA!\nСтол ${table}\n${date} в ${time}\n📍 Ермакова 11\n📞 +7‒913‒432‒01‒01`;
   if(navigator.share) navigator.share({title:"Моя бронь", text:text});
   else { navigator.clipboard.writeText(text); alert("Скопировано!"); }
 }
