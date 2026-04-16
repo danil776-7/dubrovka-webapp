@@ -6,226 +6,295 @@
 <title>DUBROVKA Lounge & Bar - Бронирование</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-  /* ===== ОСНОВНЫЕ СТИЛИ (адаптивные) ===== */
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #0a0a0f;
-    color: #fff;
-    padding-bottom: 80px;
-  }
-  .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
-  
-  /* Шапка */
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 15px;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid rgba(212, 175, 55, 0.3);
-  }
-  .logo-container { display: flex; align-items: center; gap: 12px; }
-  .logo-img {
-    width: 50px; height: 50px;
-    border-radius: 50%;
-    border: 2px solid #d4af37;
-    object-fit: cover;
-  }
-  .logo-text {
-    font-size: 22px;
-    font-weight: 700;
-    background: linear-gradient(135deg, #d4af37, #f5e5a3);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  .logo-subtitle { font-size: 10px; color: #d4af37; letter-spacing: 1.5px; }
-  .contact-info { text-align: right; }
-  .phone { font-size: 16px; font-weight: 600; color: #d4af37; }
-  .address { font-size: 11px; color: #888; }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-  /* Ползунок времени */
-  .timeline-section {
-    background: rgba(30,30,40,0.8);
-    border-radius: 16px;
-    padding: 16px;
-    margin-bottom: 20px;
-    text-align: center;
-  }
-  .timeline-label {
-    font-size: 13px;
-    color: #d4af37;
-    margin-bottom: 12px;
-  }
-  .track {
-    position: relative;
-    height: 6px;
-    background: #3a2a1a;
-    border-radius: 10px;
-    margin: 15px 0;
-    cursor: pointer;
-  }
-  .fill {
-    position: absolute;
-    height: 100%;
-    background: #d4af37;
-    border-radius: 10px;
-    width: 0%;
-  }
-  .pointer {
-    position: absolute;
-    top: -9px;
-    width: 24px;
-    height: 24px;
-    background: white;
-    border-radius: 50%;
-    border: 2px solid #d4af37;
-    cursor: grab;
-  }
-  .time-markers {
-    display: flex;
-    justify-content: space-between;
-    font-size: 10px;
-    color: #888;
-    margin-top: 8px;
-  }
-  .current-time {
-    font-size: 26px;
-    font-weight: bold;
-    color: #d4af37;
-    margin-top: 10px;
-  }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #0a0a0f;
+  color: #fff;
+  padding-bottom: 80px;
+}
 
-  /* Фильтры */
-  .filters {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid rgba(212,175,55,0.2);
-    padding-bottom: 10px;
-  }
-  .filter-btn {
-    background: none;
-    border: none;
-    color: #888;
-    font-size: 15px;
-    cursor: pointer;
-    padding: 5px 0;
-  }
-  .filter-btn.active {
-    color: #d4af37;
-    border-bottom: 2px solid #d4af37;
-  }
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+}
 
-  /* Сетка столов */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-img {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid #d4af37;
+  object-fit: cover;
+  background: #1a1a1a;
+}
+
+.logo-text {
+  font-size: 22px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #d4af37, #f5e5a3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.logo-subtitle {
+  font-size: 10px;
+  color: #d4af37;
+  letter-spacing: 1.5px;
+}
+
+.contact-info {
+  text-align: right;
+}
+
+.phone {
+  font-size: 16px;
+  font-weight: 600;
+  color: #d4af37;
+}
+
+.address {
+  font-size: 11px;
+  color: #888;
+}
+
+.timeline-section {
+  background: rgba(30,30,40,0.8);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.timeline-label {
+  font-size: 13px;
+  color: #d4af37;
+  margin-bottom: 12px;
+}
+
+.track {
+  position: relative;
+  height: 6px;
+  background: #3a2a1a;
+  border-radius: 10px;
+  margin: 15px 0;
+  cursor: pointer;
+}
+
+.fill {
+  position: absolute;
+  height: 100%;
+  background: #d4af37;
+  border-radius: 10px;
+  width: 0%;
+}
+
+.pointer {
+  position: absolute;
+  top: -9px;
+  width: 24px;
+  height: 24px;
+  background: white;
+  border-radius: 50%;
+  border: 2px solid #d4af37;
+  cursor: grab;
+}
+
+.time-markers {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #888;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.current-time {
+  font-size: 26px;
+  font-weight: bold;
+  color: #d4af37;
+  margin-top: 10px;
+}
+
+.filters {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(212,175,55,0.2);
+  padding-bottom: 10px;
+}
+
+.filter-btn {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 5px 0;
+}
+
+.filter-btn.active {
+  color: #d4af37;
+  border-bottom: 2px solid #d4af37;
+}
+
+.tables-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.table-card {
+  background: rgba(30,30,40,0.9);
+  border: 1px solid rgba(212,175,55,0.2);
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.table-card:hover {
+  transform: translateY(-3px);
+  border-color: #d4af37;
+}
+
+.table-img {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  background: #2a2a3a;
+}
+
+.table-info {
+  padding: 10px;
+  text-align: center;
+}
+
+.table-number {
+  font-weight: bold;
+  font-size: 15px;
+}
+
+.table-capacity {
+  font-size: 11px;
+  color: #aaa;
+  margin: 5px 0;
+}
+
+.status {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  display: inline-block;
+}
+
+.status.free {
+  background: rgba(46,204,113,0.2);
+  color: #2ecc71;
+}
+
+.status.busy {
+  background: rgba(231,76,60,0.2);
+  color: #e74c3c;
+}
+
+.vip-card {
+  background: rgba(212,175,55,0.1);
+  border-color: #d4af37;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  visibility: hidden;
+  opacity: 0;
+  transition: 0.2s;
+}
+
+.modal.active {
+  visibility: visible;
+  opacity: 1;
+}
+
+.modal-content {
+  background: #1a1a1f;
+  border-radius: 24px;
+  width: 90%;
+  max-width: 450px;
+  padding: 20px;
+  border: 1px solid #d4af37;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  font-size: 18px;
+  color: #d4af37;
+}
+
+.modal input, .modal select, .modal textarea {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  border-radius: 30px;
+  border: 1px solid #333;
+  background: #2a2a2a;
+  color: white;
+}
+
+.modal button {
+  width: 100%;
+  padding: 12px;
+  background: #d4af37;
+  border: none;
+  border-radius: 30px;
+  font-weight: bold;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+@media (max-width: 550px) {
   .tables-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 16px;
-  }
-  .table-card {
-    background: rgba(30,30,40,0.9);
-    border: 1px solid rgba(212,175,55,0.2);
-    border-radius: 14px;
-    overflow: hidden;
-    cursor: pointer;
-    transition: 0.2s;
-  }
-  .table-card:hover {
-    transform: translateY(-3px);
-    border-color: #d4af37;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
   .table-img {
-    width: 100%;
-    height: 130px;
-    object-fit: cover;
-    background: #1a1a2a;
+    height: 100px;
   }
-  .table-info {
-    padding: 10px;
-    text-align: center;
-  }
-  .table-number {
-    font-weight: bold;
-    font-size: 15px;
-  }
-  .table-capacity {
-    font-size: 11px;
-    color: #aaa;
-    margin: 5px 0;
-  }
-  .status {
-    font-size: 10px;
-    padding: 3px 8px;
-    border-radius: 20px;
-    display: inline-block;
-  }
-  .status.free { background: rgba(46,204,113,0.2); color: #2ecc71; }
-  .status.busy { background: rgba(231,76,60,0.2); color: #e74c3c; }
-
-  /* Модальное окно */
-  .modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.95);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    visibility: hidden;
-    opacity: 0;
-    transition: 0.2s;
-  }
-  .modal.active {
-    visibility: visible;
-    opacity: 1;
-  }
-  .modal-content {
-    background: #1a1a1f;
-    border-radius: 24px;
-    width: 90%;
-    max-width: 450px;
-    padding: 20px;
-    border: 1px solid #d4af37;
-  }
-  .modal-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 15px;
-    font-size: 18px;
-    color: #d4af37;
-  }
-  .modal input, .modal select, .modal textarea {
-    width: 100%;
-    padding: 12px;
-    margin: 8px 0;
-    border-radius: 30px;
-    border: 1px solid #333;
-    background: #2a2a2a;
-    color: white;
-  }
-  .modal button {
-    width: 100%;
-    padding: 12px;
-    background: #d4af37;
-    border: none;
-    border-radius: 30px;
-    font-weight: bold;
-    margin-top: 10px;
-    cursor: pointer;
-  }
-  @media (max-width: 550px) {
-    .tables-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
-    .table-img { height: 100px; }
-  }
+}
 </style>
 </head>
+
 <body>
 
 <div class="container">
-  <!-- ШАПКА -->
   <div class="header">
     <div class="logo-container">
       <img src="logo.png" class="logo-img" onerror="this.style.display='none'">
@@ -240,7 +309,6 @@
     </div>
   </div>
 
-  <!-- ПОЛЗУНОК -->
   <div class="timeline-section">
     <div class="timeline-label">⏰ ПЕРЕМЕСТИТЕ ПОЛЗУНОК</div>
     <div id="track" class="track">
@@ -251,18 +319,15 @@
     <div id="currentTime" class="current-time">12:00</div>
   </div>
 
-  <!-- ФИЛЬТРЫ -->
   <div class="filters">
     <button class="filter-btn active" data-zone="all">Все залы</button>
     <button class="filter-btn" data-zone="main">Основной зал</button>
     <button class="filter-btn" data-zone="vip">VIP комната</button>
   </div>
 
-  <!-- СЕТКА СТОЛОВ -->
   <div id="tablesGrid" class="tables-grid"></div>
 </div>
 
-<!-- МОДАЛКА БРОНИРОВАНИЯ -->
 <div id="bookingModal" class="modal">
   <div class="modal-content">
     <div class="modal-header">
@@ -272,16 +337,15 @@
     <div id="modalTableName" style="font-weight:bold; text-align:center; margin-bottom:15px;">Стол №1</div>
     <select id="startTime"></select>
     <select id="endTime"></select>
-    <input type="text" id="name" placeholder="Ваше имя">
-    <input type="tel" id="phone" placeholder="+7 XXX XXX XX XX">
-    <input type="number" id="guests" placeholder="Количество гостей" min="1" value="2">
+    <input type="text" id="name" placeholder="👤 ВАШЕ ИМЯ">
+    <input type="tel" id="phone" placeholder="📞 ТЕЛЕФОН (+7XXXXXXXXXX)">
+    <input type="number" id="guests" placeholder="👥 КОЛИЧЕСТВО ГОСТЕЙ" min="1" value="2">
     <button onclick="sendBooking()">ЗАБРОНИРОВАТЬ</button>
   </div>
 </div>
 
 <script>
-// ================= ДАННЫЕ =================
-// ВАЖНО: Файлы table1.jpg ... table6.jpg должны лежать в корне сайта!
+// ================= ДАННЫЕ СТОЛОВ =================
 const TABLES = [
   { id: 1, num: 1, zone: "main", capacity: 7, image: "table1.jpg" },
   { id: 2, num: 2, zone: "main", capacity: 5, image: "table2.jpg" },
@@ -298,7 +362,7 @@ let currentZone = "all";
 let allBookings = [];
 let allTimes = [];
 
-// Генерация времени (шаг 30 минут)
+// Генерация времени
 function generateTimes() {
   let times = [];
   for (let h = 11; h <= 25; h++) {
@@ -308,7 +372,7 @@ function generateTimes() {
   return times;
 }
 
-// Обновление маркеров ползунка
+// Маркеры ползунка
 function updateMarkers() {
   let markers = document.getElementById("markers");
   markers.innerHTML = "";
@@ -318,17 +382,17 @@ function updateMarkers() {
   }
 }
 
-// Загрузка броней с сервера
+// Загрузка броней
 async function loadBookings() {
   try {
     let res = await fetch("https://dubrovka-webapp-production.up.railway.app/all_bookings");
     let data = await res.json();
-    let today = new Date().toISOString().split("T")[0];
+    let today = new Date().toISOString().split('T')[0];
     allBookings = data.filter(b => b.date === today && b.status === "active");
   } catch(e) { console.log(e); }
 }
 
-// Проверка занятости стола
+// Проверка свободен ли стол
 function isFree(tableId, time) {
   if (tableId === 7) return true;
   let timeMin = parseInt(time.split(":")[0])*60 + parseInt(time.split(":")[1]);
@@ -354,33 +418,51 @@ function renderTables() {
     let free = isFree(table.id, selectedTime);
     let statusClass = free ? "free" : "busy";
     let statusText = free ? "🟢 СВОБОДЕН" : "🔴 ЗАНЯТ";
-    let vipBadge = table.isVip ? '<span style="background:#d4af37; color:#000; padding:2px 6px; border-radius:20px; font-size:10px;">VIP</span>' : '';
+    let vipClass = table.isVip ? "vip-card" : "";
     
-    html += `
-      <div class="table-card" onclick="${free && !table.isVip ? `openBooking(${table.id})` : (table.isVip ? 'alert(\"VIP через администратора, звоните +7‒913‒432‒01‒01\")' : '')}">
-        ${table.isVip ? '<div class="table-img" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#d4af37,#b88d2a);"><span style="font-size:40px;">👑</span></div>' : `<img src="${table.image}" class="table-img" onerror="this.src='https://placehold.co/300x200/2a2a3a/d4af37?text=Стол+${table.num}'">`}
-        <div class="table-info">
-          <div class="table-number">${table.isVip ? 'VIP комната' : `Стол №${table.num}`} ${vipBadge}</div>
-          <div class="table-capacity">👥 до ${table.capacity} чел.</div>
-          <div class="status ${statusClass}">${statusText}</div>
+    // Для VIP - без иконки, просто текст
+    if (table.isVip) {
+      html += `
+        <div class="table-card ${vipClass}" onclick="alert('VIP комната бронируется через администратора. Позвоните: +7‒913‒432‒01‒01')">
+          <div class="table-img" style="display:flex; align-items:center; justify-content:center; background:rgba(212,175,55,0.1);">
+            <span style="font-size:24px; color:#d4af37;">👑 VIP</span>
+          </div>
+          <div class="table-info">
+            <div class="table-number">VIP комната</div>
+            <div class="table-capacity">👥 до ${table.capacity} чел.</div>
+            <div class="status ${statusClass}">${statusText}</div>
+          </div>
         </div>
-      </div>
-    `;
+      `;
+    } else {
+      // Обычные столы с фото
+      html += `
+        <div class="table-card" onclick="openBooking(${table.id})">
+          <img src="${table.image}" class="table-img" onerror="this.src='https://placehold.co/300x200/2a2a3a/d4af37?text=Стол+${table.num}'">
+          <div class="table-info">
+            <div class="table-number">Стол №${table.num}</div>
+            <div class="table-capacity">👥 до ${table.capacity} чел.</div>
+            <div class="status ${statusClass}">${statusText}</div>
+          </div>
+        </div>
+      `;
+    }
   }
   document.getElementById("tablesGrid").innerHTML = html;
 }
 
-// ОТКРЫТИЕ МОДАЛКИ
+// Открытие модалки бронирования
 function openBooking(tableId) {
   selectedTable = TABLES.find(t => t.id === tableId);
   if (!selectedTable) return;
   document.getElementById("modalTableName").innerHTML = `Стол №${selectedTable.num}`;
   
-  // Доступное время для брони
   let available = [];
+  let selMin = parseInt(selectedTime.split(":")[0])*60 + parseInt(selectedTime.split(":")[1]);
   for (let t of allTimes) {
-    if (parseInt(t.split(":")[0])*60 + parseInt(t.split(":")[1]) >= parseInt(selectedTime.split(":")[0])*60 + parseInt(selectedTime.split(":")[1])) {
-      if (isFree(selectedTable.id, t)) available.push(t);
+    let tMin = parseInt(t.split(":")[0])*60 + parseInt(t.split(":")[1]);
+    if (tMin >= selMin && isFree(selectedTable.id, t)) {
+      available.push(t);
     }
   }
   
@@ -392,7 +474,9 @@ function openBooking(tableId) {
   }
   endSelect.innerHTML = "";
   for (let t of available) {
-    if (t > available[0]) endSelect.innerHTML += `<option value="${t}">${t}</option>`;
+    if (t > available[0]) {
+      endSelect.innerHTML += `<option value="${t}">${t}</option>`;
+    }
   }
   
   document.getElementById("guests").max = selectedTable.capacity;
@@ -404,7 +488,7 @@ function closeModal() {
   document.getElementById("bookingModal").classList.remove("active");
 }
 
-// ОТПРАВКА БРОНИ
+// Отправка брони
 async function sendBooking() {
   if (!selectedTable) return;
   let name = document.getElementById("name").value.trim();
@@ -413,13 +497,14 @@ async function sendBooking() {
   let start = document.getElementById("startTime").value;
   let end = document.getElementById("endTime").value;
   
-  if (!name || !phone) { alert("Заполните имя и телефон"); return; }
+  if (!name) { alert("Введите имя"); return; }
+  if (!phone || phone.length < 10) { alert("Введите телефон"); return; }
   if (guests > selectedTable.capacity) { alert(`Максимум гостей: ${selectedTable.capacity}`); return; }
   
-  let today = new Date().toISOString().split("T")[0];
+  let today = new Date().toISOString().split('T')[0];
   let bookingData = {
-    name, phone, guests, table: selectedTable.id,
-    date: today, time: start, chat_id: ""
+    name, phone, guests: parseInt(guests),
+    table: selectedTable.id, date: today, time: start, chat_id: ""
   };
   
   try {
@@ -430,21 +515,22 @@ async function sendBooking() {
     });
     let result = await res.json();
     if (res.ok && result.ok) {
-      alert(`✅ Бронь создана!\nСтол ${selectedTable.num}\nВремя: ${start} — ${end}\nГости: ${guests}`);
+      alert(`✅ Бронь создана!\nСтол №${selectedTable.num}\nВремя: ${start} — ${end}\nГости: ${guests}`);
       closeModal();
       await loadBookings();
       renderTables();
     } else {
-      alert("Ошибка: " + (result.detail || "Время уже занято"));
+      alert("❌ Ошибка: " + (result.detail || "Время уже занято"));
     }
-  } catch(e) { alert("Ошибка соединения"); }
+  } catch(e) {
+    alert("❌ Ошибка соединения");
+  }
 }
 
-// ПОЛЗУНОК
+// ================= ПОЛЗУНОК =================
 let track = document.getElementById("track");
 let fill = document.getElementById("fill");
 let pointer = document.getElementById("pointer");
-let dragging = false;
 
 function updateTime(percent) {
   let totalSlots = allTimes.length;
@@ -486,7 +572,6 @@ async function init() {
   await loadBookings();
   renderTables();
   
-  // Фильтры
   document.querySelectorAll(".filter-btn").forEach(btn => {
     btn.onclick = () => {
       document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
