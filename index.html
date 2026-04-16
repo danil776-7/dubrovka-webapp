@@ -265,8 +265,8 @@ body {
 
 .tables-row {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 15px;
 }
 
 .table-card {
@@ -281,7 +281,7 @@ body {
 
 .table-card:hover:not(.busy) {
   border-color: #d4af37;
-  transform: translateY(-2px);
+  transform: translateY(-3px);
 }
 
 .table-card.busy {
@@ -292,8 +292,9 @@ body {
 
 .table-img {
   width: 100%;
-  height: 120px;
+  height: 130px;
   object-fit: cover;
+  background: #1a1a2a;
 }
 
 .photo-count {
@@ -590,6 +591,7 @@ body {
   }
   .menu-btn { bottom: 80px; }
   .carousel-slide img { height: 180px; }
+  .table-img { height: 100px; }
 }
 </style>
 </head>
@@ -726,7 +728,7 @@ if (tg) {
 
 const API_URL = "https://dubrovka-webapp-production.up.railway.app";
 
-// ================= ДАННЫЕ СТОЛОВ С 2 ФОТКАМИ ДЛЯ КАЖДОГО =================
+// ================= ДАННЫЕ СТОЛОВ С ВАШИМИ ФОТКАМИ =================
 const TABLES = [
   { id: "1", number: 1, zone: "main", zoneName: "Основной зал", capacity: 7, images: ["table1.jpg", "table1-2.jpg"] },
   { id: "2", number: 2, zone: "main", zoneName: "Основной зал", capacity: 5, images: ["table2.jpg", "table2-2.jpg"] },
@@ -938,6 +940,7 @@ function renderTables() {
       const tableId = card.dataset.id;
       const table = TABLES.find(t => t.id === tableId);
       if(table) {
+        // Показываем галерею фото, а потом открываем бронирование
         if(table.images && table.images.length > 0) {
           showPhotoGallery(table);
         } else {
@@ -961,6 +964,8 @@ function showPhotoGallery(table) {
 function renderCarousel() {
   const slidesContainer = document.getElementById("carouselSlides");
   const dotsContainer = document.getElementById("carouselDots");
+  
+  if(!slidesContainer) return;
   
   slidesContainer.innerHTML = currentPhotoList.map((img, index) => `
     <div class="carousel-slide">
