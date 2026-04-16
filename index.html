@@ -633,13 +633,11 @@ if (tg) {
 
 const API_URL = "https://dubrovka-webapp-production.up.railway.app";
 
-// ================= ДАННЫЕ СТОЛОВ - ИСПОЛЬЗУЕМ ТОЛЬКО ТЕ ФОТО, КОТОРЫЕ ЕСТЬ =================
-// У вас есть: table1.jpg, table2.jpg, table1-2.jpg, table2-2.jpg, table4.jpg, table5.jpg, table6.jpg
-// table3.jpg - НЕТ! Поэтому для стола 3 используем заглушку
+// ================= ДАННЫЕ СТОЛОВ С ВАШИМИ ФОТОГРАФИЯМИ =================
 const TABLES = [
   { id: "1", number: 1, zone: "main", zoneName: "Основной зал", capacity: 7, image: "table1.jpg" },
   { id: "2", number: 2, zone: "main", zoneName: "Основной зал", capacity: 5, image: "table2.jpg" },
-  { id: "3", number: 3, zone: "main", zoneName: "Основной зал", capacity: 5, image: null },
+  { id: "3", number: 3, zone: "main", zoneName: "Основной зал", capacity: 5, image: "table3.jpg" },
   { id: "4", number: 4, zone: "main", zoneName: "Основной зал", capacity: 5, image: "table4.jpg" },
   { id: "5", number: 5, zone: "main", zoneName: "Основной зал", capacity: 5, image: "table5.jpg" },
   { id: "6", number: 6, zone: "main", zoneName: "Основной зал", capacity: 3, image: "table6.jpg" },
@@ -811,7 +809,6 @@ function renderTables() {
               ? `<div class="table-status status-busy">🔴 ЗАНЯТ</div>${untilTime ? `<div class="table-until">📅 до ${untilTime}</div>` : ''}`
               : `<div class="table-status status-free">🟢 СВОБОДЕН</div>`;
             
-            // Для VIP - золотой фон
             if(table.isVip) {
               return `
                 <div class="table-card" data-id="${table.id}" data-isvip="true" data-number="${table.number}" data-capacity="${table.capacity}">
@@ -828,14 +825,9 @@ function renderTables() {
               `;
             }
             
-            // Для столов без фото - показываем заглушку
-            const imageHtml = table.image 
-              ? `<img src="${table.image}" class="table-img" alt="Стол ${table.number}" onerror="this.src='https://placehold.co/300x200/2a2a3a/d4af37?text=Стол+${table.number}'">`
-              : `<div class="table-img" style="display:flex;align-items:center;justify-content:center;background:#2a2a3a;"><span style="font-size:24px; color:#d4af37;">🍽️ Стол ${table.number}</span></div>`;
-            
             return `
               <div class="table-card ${isBusy ? 'busy' : ''}" data-id="${table.id}" data-isvip="false" data-number="${table.number}" data-capacity="${table.capacity}">
-                ${imageHtml}
+                <img src="${table.image}" class="table-img" alt="Стол ${table.number}" onerror="this.src='https://placehold.co/300x200/2a2a3a/d4af37?text=Стол+${table.number}'">
                 <div class="table-info">
                   <div class="table-number">Стол №${table.number}${vipBadge}</div>
                   <div class="table-zone">${table.zoneName}</div>
@@ -850,7 +842,6 @@ function renderTables() {
     `;
   }).join('');
   
-  // Обработчики кликов
   document.querySelectorAll('.table-card').forEach(card => {
     card.addEventListener('click', (e) => {
       const isVip = card.dataset.isvip === 'true';
